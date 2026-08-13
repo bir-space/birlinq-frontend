@@ -85,7 +85,7 @@
     "recommended": "рекомендуем",
     "presetSafe": "Безопасный",
     "presetSafeLine1": "Видны: марка, модель, цвет",
-    "presetSafeLine2": "Скрыты: имя, телефон, госномер",
+    "presetSafeLine2": "Скрыты: имя, телефон, госномер, email",
     "presetSafeLine3": "Связь: только через форму birlinq",
     "presetOpen": "Открытый",
     "presetOpenLine1": "Видно всё, включая имя и WhatsApp",
@@ -95,12 +95,13 @@
     "presetMaxLine2": "Связь: только через форму",
     "fineTuning": "Тонкая настройка",
     "toggles": {
-      "show_owner_name": "Показывать имя владельца",
+      "show_display_name": "Показывать имя владельца",
       "show_phone": "Показывать телефон",
       "show_whatsapp": "WhatsApp напрямую",
       "show_telegram": "Telegram напрямую",
-      "show_plate_number": "Показывать госномер",
-      "show_vehicle_details": "Показывать детали авто"
+      "show_email": "Показывать email",
+      "show_license_plate": "Показывать госномер",
+      "show_year": "Показывать год выпуска"
     }
   },
   "activationErrors": {

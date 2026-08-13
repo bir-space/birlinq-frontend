@@ -3,7 +3,7 @@
 import { use, useEffect, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { entitiesApi, qrApi } from "@/lib/api/endpoints";
+import { entitiesApi, entityLabel, qrApi } from "@/lib/api/endpoints";
 import { ApiRequestError } from "@/lib/api/client";
 import type { Entity, PrivacySettings, QrCode } from "@/lib/api/types";
 import { Badge } from "@/components/ui/Badge";
@@ -23,13 +23,18 @@ import {
 } from "@/components/dashboard/bits";
 import { formatRelativeTime, qrBadgeTone } from "@/components/dashboard/format";
 
+/**
+ * Car-relevant slice of App\Domain\Entity\Data\PrivacySettingsData.
+ * show_phone2 / show_company / show_bio belong to `personal` entities.
+ */
 const PRIVACY_KEYS = [
-  "show_owner_name",
+  "show_display_name",
   "show_phone",
   "show_whatsapp",
   "show_telegram",
-  "show_plate_number",
-  "show_vehicle_details",
+  "show_email",
+  "show_license_plate",
+  "show_year",
 ] as const;
 type PrivacyKey = (typeof PRIVACY_KEYS)[number];
 
@@ -38,16 +43,19 @@ interface VehicleForm {
   make: string;
   model: string;
   color: string;
+  year: string;
   plate: string;
 }
 
 function formFromEntity(entity: Entity): VehicleForm {
+  const v = entity.vehicle_profile;
   return {
-    title: entity.title,
-    make: entity.vehicle.make,
-    model: entity.vehicle.model,
-    color: entity.vehicle.color,
-    plate: entity.vehicle.plate_number ?? "",
+    title: entity.title ?? "",
+    make: v?.make ?? "",
+    model: v?.model ?? "",
+    color: v?.color ?? "",
+    year: v?.year != null ? String(v.year) : "",
+    plate: v?.license_plate ?? "",
   };
 }
 
@@ -100,18 +108,13 @@ function QrDetail({ id }: { id: string }) {
         if (cancelled) return;
         setQr(qr_code);
         if (qr_code.entity_id) {
-          const [entRes, privRes] = await Promise.allSettled([
-            entitiesApi.get(qr_code.entity_id),
-            entitiesApi.getPrivacy(qr_code.entity_id),
-          ]);
+          // Privacy flags ride along on the entity payload — there is no
+          // GET /entities/{id}/privacy endpoint.
+          const { entity: ent } = await entitiesApi.get(qr_code.entity_id);
           if (cancelled) return;
-          if (entRes.status === "fulfilled") {
-            setEntity(entRes.value.entity);
-            setForm(formFromEntity(entRes.value.entity));
-          }
-          if (privRes.status === "fulfilled") {
-            setPrivacy(privRes.value.privacy);
-          }
+          setEntity(ent);
+          setForm(formFromEntity(ent));
+          setPrivacy(ent.privacy_settings);
         }
       } catch (err) {
         if (!cancelled) {
@@ -142,17 +145,22 @@ function QrDetail({ id }: { id: string }) {
     setSaving(true);
     setSaveError(null);
     try {
-      const { entity: updated } = await entitiesApi.update(entity.id, {
-        title: form.title.trim() || undefined,
-        vehicle: {
-          make: form.make.trim(),
-          model: form.model.trim(),
-          color: form.color.trim(),
-          plate_number: form.plate.trim(),
-        },
+      // Title lives on the entity, the rest on the vehicle profile — two
+      // separate endpoints on this backend.
+      await entitiesApi.update(entity.id, {
+        title: form.title.trim() || null,
+      });
+      const year = Number.parseInt(form.year.trim(), 10);
+      const { entity: updated } = await entitiesApi.upsertVehicle(entity.id, {
+        make: form.make.trim(),
+        model: form.model.trim(),
+        color: form.color.trim(),
+        year: Number.isFinite(year) ? year : null,
+        license_plate: form.plate.trim() || null,
       });
       setEntity(updated);
       setForm(formFromEntity(updated));
+      setPrivacy(updated.privacy_settings);
       setSaved(true);
     } catch {
       setSaveError(t("detail.saveError"));
@@ -169,10 +177,11 @@ function QrDetail({ id }: { id: string }) {
     // Optimistic flip.
     setPrivacy({ ...privacy, [key]: next });
     try {
-      const { privacy: updated } = await entitiesApi.updatePrivacy(entity.id, {
+      const { entity: updated } = await entitiesApi.updatePrivacy(entity.id, {
         [key]: next,
       });
-      setPrivacy(updated);
+      setEntity(updated);
+      setPrivacy(updated.privacy_settings);
     } catch {
       setPrivacy((cur) => (cur ? { ...cur, [key]: !next } : cur));
       setPrivacyError(t("detail.privacyError"));
@@ -215,10 +224,9 @@ function QrDetail({ id }: { id: string }) {
     );
   }
 
-  const vehicleDesc = entity
-    ? [entity.vehicle.color, entity.vehicle.make, entity.vehicle.model]
-        .filter(Boolean)
-        .join(" · ")
+  const v = entity?.vehicle_profile;
+  const vehicleDesc = v
+    ? [v.color, v.make, v.model].filter(Boolean).join(" · ")
     : null;
   const canPause = qr.status === "activated";
   const canResume = qr.status === "paused";
@@ -234,9 +242,7 @@ function QrDetail({ id }: { id: string }) {
         </IconBubble>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[18px] font-bold">
-            {entity
-              ? entity.title || `${entity.vehicle.make} ${entity.vehicle.model}`
-              : qr.code}
+            {entity ? entityLabel(entity, qr.code) : qr.code}
           </h1>
           {vehicleDesc && (
             <p className="mt-0.5 truncate text-[13px] text-muted">
@@ -320,10 +326,19 @@ function QrDetail({ id }: { id: string }) {
                   maxLength={40}
                 />
                 <Input
+                  label={t("detail.fields.year")}
+                  value={form.year}
+                  onChange={(e) =>
+                    updateForm({ year: e.target.value.replace(/\D/g, "") })
+                  }
+                  inputMode="numeric"
+                  maxLength={4}
+                />
+                <Input
                   label={t("detail.fields.plate")}
                   value={form.plate}
                   onChange={(e) => updateForm({ plate: e.target.value })}
-                  maxLength={12}
+                  maxLength={20}
                 />
               </div>
               {saveError && (

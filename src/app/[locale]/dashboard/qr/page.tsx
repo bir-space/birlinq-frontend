@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { entitiesApi, qrApi } from "@/lib/api/endpoints";
+import { entitiesApi, entityLabel, qrApi } from "@/lib/api/endpoints";
 import type { Entity, QrCode, QrStatus } from "@/lib/api/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -53,7 +53,7 @@ function QrList() {
         // Entities are optional context (titles); don't fail the page on them.
         const [qrRes, entRes] = await Promise.allSettled([
           qrApi.list(),
-          entitiesApi.list(),
+          entitiesApi.listAll(),
         ]);
         if (cancelled) return;
         if (qrRes.status === "rejected") {
@@ -64,9 +64,7 @@ function QrList() {
         setCursor(qrRes.value.meta.next_cursor);
         setHasMore(qrRes.value.meta.has_more);
         if (entRes.status === "fulfilled") {
-          setEntities(
-            Object.fromEntries(entRes.value.data.map((e) => [e.id, e]))
-          );
+          setEntities(Object.fromEntries(entRes.value.map((e) => [e.id, e])));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -82,7 +80,7 @@ function QrList() {
     setLoadingMore(true);
     setActionError(null);
     try {
-      const res = await qrApi.list({ cursor });
+      const res = await qrApi.list(cursor);
       setItems((cur) => [...cur, ...res.data]);
       setCursor(res.meta.next_cursor);
       setHasMore(res.meta.has_more);
@@ -196,8 +194,7 @@ function QrList() {
                           <p className="mt-0.5 flex items-center gap-1.5 truncate text-[13px] text-muted">
                             <IconCar className="size-4 shrink-0" />
                             <span className="truncate">
-                              {entity.title ||
-                                `${entity.vehicle.make} ${entity.vehicle.model}`}
+                              {entityLabel(entity)}
                             </span>
                           </p>
                         )}

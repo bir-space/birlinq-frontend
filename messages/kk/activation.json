@@ -85,7 +85,7 @@
     "recommended": "ұсынамыз",
     "presetSafe": "Қауіпсіз",
     "presetSafeLine1": "Көрінеді: маркасы, моделі, түсі",
-    "presetSafeLine2": "Жасырын: аты, телефоны, мемнөмірі",
+    "presetSafeLine2": "Жасырын: аты, телефоны, мемнөмірі, email",
     "presetSafeLine3": "Байланыс: тек birlinq формасы арқылы",
     "presetOpen": "Ашық",
     "presetOpenLine1": "Барлығы көрінеді, аты мен WhatsApp қоса",
@@ -95,12 +95,13 @@
     "presetMaxLine2": "Байланыс: тек форма арқылы",
     "fineTuning": "Дәл баптау",
     "toggles": {
-      "show_owner_name": "Иесінің атын көрсету",
+      "show_display_name": "Иесінің атын көрсету",
       "show_phone": "Телефонды көрсету",
       "show_whatsapp": "WhatsApp тікелей",
       "show_telegram": "Telegram тікелей",
-      "show_plate_number": "Мемнөмірді көрсету",
-      "show_vehicle_details": "Көлік мәліметтерін көрсету"
+      "show_email": "Email көрсету",
+      "show_license_plate": "Мемнөмірді көрсету",
+      "show_year": "Шығарылған жылын көрсету"
     }
   },
   "activationErrors": {

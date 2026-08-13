@@ -1,8 +1,42 @@
-import type { ApiError, AuthTokenPair } from "./types";
+import type { ApiError } from "./types";
+import { normalizeAuthResponse } from "./auth-normalize";
 import { tokenStore } from "../auth/token-store";
+
+export {
+  MalformedAuthResponseError,
+  isUsableToken,
+  normalizeAuthResponse,
+} from "./auth-normalize";
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
+/**
+ * Error codes emitted by the backend (bootstrap/app.php + the QR controller).
+ * NB: validation failures are `VALIDATION_ERROR` — not `VALIDATION_FAILED`.
+ */
+export const ErrorCode = {
+  ValidationError: "VALIDATION_ERROR",
+  Unauthenticated: "UNAUTHENTICATED",
+  InvalidCredentials: "INVALID_CREDENTIALS",
+  TokenExpired: "TOKEN_EXPIRED",
+  TokenInvalid: "TOKEN_INVALID",
+  TokenAbsent: "TOKEN_ABSENT",
+  InvalidRefreshToken: "INVALID_REFRESH_TOKEN",
+  RefreshTokenExpired: "REFRESH_TOKEN_EXPIRED",
+  RefreshTokenStolen: "REFRESH_TOKEN_STOLEN",
+  NotFound: "NOT_FOUND",
+  QrNotFound: "QR_NOT_FOUND",
+  QrAlreadyActivated: "QR_ALREADY_ACTIVATED",
+  QrNotActivated: "QR_NOT_ACTIVATED",
+  QrNotPaused: "QR_NOT_PAUSED",
+  EntityAlreadyHasQr: "ENTITY_ALREADY_HAS_QR",
+  Forbidden: "FORBIDDEN",
+  IdempotencyKeyMissing: "IDEMPOTENCY_KEY_MISSING",
+  IdempotencyKeyInvalid: "IDEMPOTENCY_KEY_INVALID",
+  IdempotencyKeyMisuse: "IDEMPOTENCY_KEY_MISUSE",
+  ServerError: "SERVER_ERROR",
+} as const;
 
 export class ApiRequestError extends Error {
   readonly status: number;
@@ -18,6 +52,28 @@ export class ApiRequestError extends Error {
     this.requestId = body?.request_id;
     this.details = body?.details;
   }
+}
+
+/**
+ * 422 with a `details` map of field → messages. Deliberately not a type
+ * predicate: narrowing here would collapse the `else` branch of an
+ * `err instanceof ApiRequestError` check to `never`.
+ */
+export function isValidationError(err: unknown): boolean {
+  return (
+    err instanceof ApiRequestError &&
+    (err.code === ErrorCode.ValidationError || err.status === 422)
+  );
+}
+
+/**
+ * The route does not exist on this backend build. Laravel answers unknown
+ * `/api/*` routes with 404 NOT_FOUND, so a missing endpoint is indistinguishable
+ * from a missing record — callers that use this must be sure the path itself is
+ * unimplemented (see the NOT IMPLEMENTED block in endpoints.ts).
+ */
+export function isMissingEndpoint(err: unknown): boolean {
+  return err instanceof ApiRequestError && (err.status === 404 || err.status === 501);
 }
 
 export interface RequestOptions {
@@ -53,21 +109,36 @@ async function refreshTokens(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       const refreshToken = tokenStore.getRefreshToken();
-      if (!refreshToken) return false;
+      // getRefreshToken already rejects unusable values, so a null here means
+      // there is nothing to rotate — don't send a doomed request.
+      if (!refreshToken) {
+        tokenStore.clear();
+        return false;
+      }
       try {
         const res = await fetch(`${API_URL}/auth/refresh`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
           body: JSON.stringify({ refresh_token: refreshToken }),
         });
+        // 4xx means this token will never work again (invalid, expired,
+        // rotated, or theft-revoked) — drop the session instead of looping.
         if (!res.ok) {
           tokenStore.clear();
           return false;
         }
-        const pair = (await parseBody(res)) as AuthTokenPair;
-        tokenStore.setPair(pair);
+        const auth = normalizeAuthResponse(await parseBody(res));
+        if (!auth) {
+          tokenStore.clear();
+          return false;
+        }
+        tokenStore.setSession(auth);
         return true;
       } catch {
+        // Network blip — keep the session so the next attempt can retry.
         return false;
       } finally {
         // allow next refresh cycle

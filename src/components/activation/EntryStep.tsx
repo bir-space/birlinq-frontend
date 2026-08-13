@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { qrApi } from "@/lib/api/endpoints";
-import { ApiRequestError } from "@/lib/api/client";
+import { ApiRequestError, ErrorCode, isValidationError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
 
 type View = "form" | "notFound" | "already";
@@ -107,11 +107,14 @@ export function EntryStep({
       }
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "QR_NOT_FOUND" || err.status === 404) {
+        if (err.code === ErrorCode.QrNotFound || err.status === 404) {
           setView("notFound");
-        } else if (err.code === "QR_ALREADY_ACTIVATED" || err.status === 409) {
+        } else if (
+          err.code === ErrorCode.QrAlreadyActivated ||
+          err.status === 409
+        ) {
           setView("already");
-        } else if (err.code === "VALIDATION_FAILED") {
+        } else if (isValidationError(err)) {
           setFormError(t("genericError"));
           setManual(true);
         } else {

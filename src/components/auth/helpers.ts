@@ -44,7 +44,7 @@ export function identifierPayload(
 export type FieldErrors = Record<string, string>;
 
 /**
- * Flatten `VALIDATION_FAILED` details (`{ field: "msg" | ["msg", ...] }`)
+ * Flatten `VALIDATION_ERROR` details (`{ field: ["msg", ...] }` from Laravel)
  * into a `{ field: message }` map for inline display.
  */
 export function detailsToFieldErrors(

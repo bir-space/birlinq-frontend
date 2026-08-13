@@ -18,7 +18,7 @@ import {
   type AuthMethod,
 } from "@/components/auth/helpers";
 import { authApi } from "@/lib/api/endpoints";
-import { ApiRequestError } from "@/lib/api/client";
+import { ApiRequestError, isValidationError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
 
 interface FormState {
@@ -59,7 +59,7 @@ function LoginForm() {
       router.replace(next ?? "/dashboard");
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "VALIDATION_FAILED") {
+        if (isValidationError(err)) {
           const fe = detailsToFieldErrors(err.details);
           const idMsg = fe[method] ?? fe.email ?? fe.phone;
           setErrors({

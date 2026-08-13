@@ -85,7 +85,7 @@
     "recommended": "recommended",
     "presetSafe": "Safe",
     "presetSafeLine1": "Visible: make, model, color",
-    "presetSafeLine2": "Hidden: name, phone, plate number",
+    "presetSafeLine2": "Hidden: name, phone, plate number, email",
     "presetSafeLine3": "Contact: only via the birlinq form",
     "presetOpen": "Open",
     "presetOpenLine1": "Everything visible, including name and WhatsApp",
@@ -95,12 +95,13 @@
     "presetMaxLine2": "Contact: only via the form",
     "fineTuning": "Fine tuning",
     "toggles": {
-      "show_owner_name": "Show owner name",
+      "show_display_name": "Show owner name",
       "show_phone": "Show phone",
       "show_whatsapp": "WhatsApp directly",
       "show_telegram": "Telegram directly",
-      "show_plate_number": "Show plate number",
-      "show_vehicle_details": "Show vehicle details"
+      "show_email": "Show email",
+      "show_license_plate": "Show plate number",
+      "show_year": "Show model year"
     }
   },
   "activationErrors": {

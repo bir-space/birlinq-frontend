@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Spinner, PageSpinner } from "@/components/ui/Spinner";
 import { AuthShell } from "@/components/auth/AuthShell";
-import { authApi } from "@/lib/api/endpoints";
+import { unimplementedAuthApi } from "@/lib/api/endpoints";
 
 type VerifyState = "pending" | "ok" | "error";
 
@@ -21,7 +21,7 @@ function VerifyEmailInner() {
   useEffect(() => {
     if (!token || started.current) return;
     started.current = true;
-    authApi
+    unimplementedAuthApi
       .verifyEmail(token)
       .then(() => setState("ok"))
       .catch(() => setState("error"));

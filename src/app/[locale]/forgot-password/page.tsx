@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/Input";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { EMAIL_RE, detailsToFieldErrors } from "@/components/auth/helpers";
-import { authApi } from "@/lib/api/endpoints";
-import { ApiRequestError } from "@/lib/api/client";
+import { unimplementedAuthApi } from "@/lib/api/endpoints";
+import { ApiRequestError, isValidationError } from "@/lib/api/client";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("auth");
@@ -36,11 +36,11 @@ export default function ForgotPasswordPage() {
 
     setSubmitting(true);
     try {
-      await authApi.forgotPassword(value);
+      await unimplementedAuthApi.forgotPassword(value);
       setSent(true);
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "VALIDATION_FAILED") {
+        if (isValidationError(err)) {
           const fe = detailsToFieldErrors(err.details);
           setFieldError(fe.email ?? t("errors.invalidEmail"));
         } else if (err.status === 429) {

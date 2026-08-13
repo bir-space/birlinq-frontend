@@ -62,9 +62,9 @@ export function EntityView({
             <p className="mt-0.5 text-sm text-muted">{subtitle}</p>
           )}
           <div className="mt-2.5 flex flex-wrap items-center gap-2">
-            {vehicle?.plate_number && (
+            {vehicle?.license_plate && (
               <span className="inline-flex items-center rounded-lg border border-line bg-ink-soft px-2 py-0.5 font-mono text-[12px] font-semibold tracking-wider text-white">
-                {vehicle.plate_number}
+                {vehicle.license_plate}
               </span>
             )}
             {payload.meta.privacy_badge !== false && (

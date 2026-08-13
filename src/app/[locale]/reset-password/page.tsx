@@ -10,8 +10,8 @@ import { PageSpinner } from "@/components/ui/Spinner";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { PASSWORD_MIN, detailsToFieldErrors } from "@/components/auth/helpers";
-import { authApi } from "@/lib/api/endpoints";
-import { ApiRequestError } from "@/lib/api/client";
+import { unimplementedAuthApi } from "@/lib/api/endpoints";
+import { ApiRequestError, isValidationError } from "@/lib/api/client";
 
 interface FormState {
   password?: string;
@@ -82,11 +82,11 @@ function ResetPasswordForm() {
 
     setSubmitting(true);
     try {
-      await authApi.resetPassword(token as string, password);
+      await unimplementedAuthApi.resetPassword(token as string, password);
       setDone(true);
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "VALIDATION_FAILED") {
+        if (isValidationError(err)) {
           const fe = detailsToFieldErrors(err.details);
           setErrors({
             password: fe.password,

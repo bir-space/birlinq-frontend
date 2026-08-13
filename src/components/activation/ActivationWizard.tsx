@@ -8,7 +8,7 @@ import { Logo } from "@/components/ui/Logo";
 import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { entitiesApi, qrApi } from "@/lib/api/endpoints";
-import { ApiRequestError } from "@/lib/api/client";
+import { ApiRequestError, ErrorCode } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
 import type { Entity } from "@/lib/api/types";
 import { StepProgress } from "./StepProgress";
@@ -45,7 +45,6 @@ export function ActivationWizard() {
   const [code, setCode] = useState(initialCode);
   const [token, setToken] = useState(initialToken);
   const [entity, setEntity] = useState<Entity | null>(null);
-  const [entityIsExisting, setEntityIsExisting] = useState(false);
   const [activating, setActivating] = useState(false);
   const [activationError, setActivationError] =
     useState<ActivationErrorKey | null>(null);
@@ -76,7 +75,13 @@ export function ActivationWizard() {
     setActivating(true);
     setActivationError(null);
     try {
-      await entitiesApi.updatePrivacy(entity.id, flags);
+      // PATCH privacy returns the updated entity — keep it so a retry after a
+      // failed activation starts from the flags the server actually stored.
+      const { entity: updated } = await entitiesApi.updatePrivacy(
+        entity.id,
+        flags
+      );
+      setEntity(updated);
       await qrApi.activate({
         code,
         activation_token: token,
@@ -85,9 +90,12 @@ export function ActivationWizard() {
       setStep("success");
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "QR_ALREADY_ACTIVATED") {
+        if (err.code === ErrorCode.QrAlreadyActivated) {
           setActivationError("alreadyActivated");
-        } else if (err.code === "ENTITY_ALREADY_HAS_QR" || err.status === 409) {
+        } else if (
+          err.code === ErrorCode.EntityAlreadyHasQr ||
+          err.status === 409
+        ) {
           setActivationError("entityHasQr");
         } else {
           setActivationError("generic");
@@ -189,8 +197,7 @@ export function ActivationWizard() {
 
         {step === "vehicle" && (
           <VehicleStep
-            onDone={(selected, existing) => {
-              setEntityIsExisting(existing);
+            onDone={(selected) => {
               setEntity(selected);
               setActivationError(null);
               setStep("privacy");
@@ -202,7 +209,6 @@ export function ActivationWizard() {
         {step === "privacy" && entity && (
           <PrivacyStep
             entity={entity}
-            loadExisting={entityIsExisting}
             submitting={activating}
             errorKey={activationError}
             onSubmit={handlePrivacySubmit}

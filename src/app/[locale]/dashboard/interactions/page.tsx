@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ownerApi } from "@/lib/api/endpoints";
+import { isMissingEndpoint } from "@/lib/api/client";
 import type { Interaction } from "@/lib/api/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -63,8 +64,10 @@ function InteractionsList() {
         setItems(res.data);
         setCursor(res.meta.next_cursor);
         setHasMore(res.meta.has_more);
-      } catch {
-        if (!cancelled) setError(true);
+      } catch (err) {
+        // /owner/interactions is not implemented on the backend yet — show the
+        // "no messages" state rather than an error the user can't act on.
+        if (!cancelled && !isMissingEndpoint(err)) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }

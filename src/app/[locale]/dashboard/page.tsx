@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { ownerApi } from "@/lib/api/endpoints";
+import { ownerApi, qrApi } from "@/lib/api/endpoints";
 import type { Interaction, OwnerDashboard } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/use-auth";
 import { Badge } from "@/components/ui/Badge";
@@ -39,6 +39,13 @@ function Overview() {
   const locale = useLocale();
   const { user } = useAuth();
 
+  /** Counts we can always derive from GET /qr. */
+  const [qrStats, setQrStats] = useState<{
+    total: number;
+    active: number;
+    scans: number;
+  } | null>(null);
+  /** Analytics from /owner/dashboard — not implemented on the backend yet. */
   const [stats, setStats] = useState<OwnerDashboard | null>(null);
   const [latest, setLatest] = useState<Interaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,18 +58,29 @@ function Overview() {
     setError(false);
     (async () => {
       try {
-        const [dash, inter] = await Promise.all([
-          ownerApi.dashboard(),
-          ownerApi.interactions({ limit: 5 }),
-        ]);
+        const codes = await qrApi.listAll();
         if (cancelled) return;
-        setStats(dash);
-        setLatest(inter.data);
+        setQrStats({
+          total: codes.length,
+          active: codes.filter((q) => q.status === "activated").length,
+          scans: codes.reduce((sum, q) => sum + q.scan_count, 0),
+        });
       } catch {
         if (!cancelled) setError(true);
+        return;
       } finally {
         if (!cancelled) setLoading(false);
       }
+
+      // Analytics and interactions are optional: the endpoints answer 404
+      // until the backend ships them, and the page must still render.
+      const [dash, inter] = await Promise.allSettled([
+        ownerApi.dashboard(),
+        ownerApi.interactions({ limit: 5 }),
+      ]);
+      if (cancelled) return;
+      if (dash.status === "fulfilled") setStats(dash.value);
+      if (inter.status === "fulfilled") setLatest(inter.value.data);
     })();
     return () => {
       cancelled = true;
@@ -80,7 +98,7 @@ function Overview() {
 
       {loading ? (
         <PageSpinner />
-      ) : error || !stats ? (
+      ) : error || !qrStats ? (
         <ErrorCard
           message={tc("error")}
           retryLabel={tc("retry")}
@@ -92,24 +110,37 @@ function Overview() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard
               label={t("overview.stats.activeQr")}
-              value={stats.active_qrs}
-              sub={t("overview.stats.ofTotal", { total: stats.total_qrs })}
+              value={stats?.active_qrs ?? qrStats.active}
+              sub={t("overview.stats.ofTotal", {
+                total: stats?.total_qrs ?? qrStats.total,
+              })}
               tone="accent"
             />
-            <StatCard
-              label={t("overview.stats.scans7d")}
-              value={stats.scans_7d}
-              sub={t("overview.stats.scans30d", { count: stats.scans_30d })}
-            />
-            <StatCard
-              label={t("overview.stats.submissions7d")}
-              value={stats.submissions_7d}
-            />
-            <StatCard
-              label={t("overview.stats.unresolved")}
-              value={stats.unresolved_interactions}
-              dot={stats.unresolved_interactions > 0}
-            />
+            {stats ? (
+              <StatCard
+                label={t("overview.stats.scans7d")}
+                value={stats.scans_7d}
+                sub={t("overview.stats.scans30d", { count: stats.scans_30d })}
+              />
+            ) : (
+              <StatCard
+                label={t("overview.stats.totalScans")}
+                value={qrStats.scans}
+              />
+            )}
+            {stats && (
+              <>
+                <StatCard
+                  label={t("overview.stats.submissions7d")}
+                  value={stats.submissions_7d}
+                />
+                <StatCard
+                  label={t("overview.stats.unresolved")}
+                  value={stats.unresolved_interactions}
+                  dot={stats.unresolved_interactions > 0}
+                />
+              </>
+            )}
           </div>
 
           {/* Latest interactions */}

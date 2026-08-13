@@ -46,7 +46,8 @@
       "scans7d": "Scans, 7 days",
       "scans30d": "30 days — {count}",
       "submissions7d": "Messages, 7 days",
-      "unresolved": "Unresolved"
+      "unresolved": "Unresolved",
+      "totalScans": "Total scans"
     },
     "latest": {
       "title": "Latest messages",
@@ -107,19 +108,21 @@
       "make": "Make",
       "model": "Model",
       "color": "Color",
-      "plate": "Plate number"
+      "plate": "Plate number",
+      "year": "Model year"
     },
     "saved": "Saved",
     "saveError": "Couldn't save. Please try again.",
     "sectionPrivacy": "Privacy",
     "privacyHint": "What people see when they scan your QR",
     "privacy": {
-      "show_owner_name": "Show my name",
+      "show_display_name": "Show my name",
       "show_phone": "Show phone number",
       "show_whatsapp": "WhatsApp button",
       "show_telegram": "Telegram button",
-      "show_plate_number": "Show plate number",
-      "show_vehicle_details": "Show make and color"
+      "show_email": "Show email",
+      "show_license_plate": "Show plate number",
+      "show_year": "Show model year"
     },
     "privacyError": "Couldn't update the setting. Please try again.",
     "sectionDanger": "Danger zone",

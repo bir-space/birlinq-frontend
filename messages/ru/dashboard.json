@@ -46,7 +46,8 @@
       "scans7d": "Сканов за 7 дней",
       "scans30d": "за 30 дней — {count}",
       "submissions7d": "Обращений за 7 дней",
-      "unresolved": "Без ответа"
+      "unresolved": "Без ответа",
+      "totalScans": "Всего сканов"
     },
     "latest": {
       "title": "Последние обращения",
@@ -107,19 +108,21 @@
       "make": "Марка",
       "model": "Модель",
       "color": "Цвет",
-      "plate": "Госномер"
+      "plate": "Госномер",
+      "year": "Год выпуска"
     },
     "saved": "Сохранено",
     "saveError": "Не удалось сохранить. Попробуйте ещё раз.",
     "sectionPrivacy": "Приватность",
     "privacyHint": "Что видят те, кто сканирует ваш QR",
     "privacy": {
-      "show_owner_name": "Показывать имя",
+      "show_display_name": "Показывать имя",
       "show_phone": "Показывать телефон",
       "show_whatsapp": "Кнопка WhatsApp",
       "show_telegram": "Кнопка Telegram",
-      "show_plate_number": "Показывать госномер",
-      "show_vehicle_details": "Показывать марку и цвет"
+      "show_email": "Показывать email",
+      "show_license_plate": "Показывать госномер",
+      "show_year": "Показывать год выпуска"
     },
     "privacyError": "Не удалось обновить настройку. Попробуйте ещё раз.",
     "sectionDanger": "Опасная зона",

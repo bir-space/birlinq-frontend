@@ -46,7 +46,8 @@
       "scans7d": "7 күндегі сканерлеу",
       "scans30d": "30 күнде — {count}",
       "submissions7d": "7 күндегі хабарлама",
-      "unresolved": "Жауапсыз"
+      "unresolved": "Жауапсыз",
+      "totalScans": "Барлық сканерлеу"
     },
     "latest": {
       "title": "Соңғы хабарламалар",
@@ -107,19 +108,21 @@
       "make": "Маркасы",
       "model": "Моделі",
       "color": "Түсі",
-      "plate": "Мемлекеттік нөмірі"
+      "plate": "Мемлекеттік нөмірі",
+      "year": "Шығарылған жылы"
     },
     "saved": "Сақталды",
     "saveError": "Сақтау мүмкін болмады. Қайталап көріңіз.",
     "sectionPrivacy": "Құпиялылық",
     "privacyHint": "QR кодыңызды сканерлегендерге не көрінеді",
     "privacy": {
-      "show_owner_name": "Атын көрсету",
+      "show_display_name": "Атын көрсету",
       "show_phone": "Телефонды көрсету",
       "show_whatsapp": "WhatsApp түймесі",
       "show_telegram": "Telegram түймесі",
-      "show_plate_number": "Мемлекеттік нөмірді көрсету",
-      "show_vehicle_details": "Марка мен түсін көрсету"
+      "show_email": "Email көрсету",
+      "show_license_plate": "Мемлекеттік нөмірді көрсету",
+      "show_year": "Шығарылған жылын көрсету"
     },
     "privacyError": "Баптауды жаңарту мүмкін болмады. Қайталап көріңіз.",
     "sectionDanger": "Қауіпті аймақ",

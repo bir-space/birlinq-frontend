@@ -15,7 +15,7 @@ import {
   type AuthMethod,
 } from "@/components/auth/helpers";
 import { authApi, toApiLocale } from "@/lib/api/endpoints";
-import { ApiRequestError } from "@/lib/api/client";
+import { ApiRequestError, isValidationError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
 
 type Tab = "register" | "login";
@@ -92,12 +92,17 @@ export function AuthStep({
       onDone();
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "VALIDATION_FAILED") {
+        if (isValidationError(err)) {
           const fe = detailsToFieldErrors(err.details);
           const idMsg = fe[method] ?? fe.email ?? fe.phone;
           setErrors({
             name: fe.name,
-            identifier: idMsg,
+            // On register a server-side identifier error means "already taken".
+            identifier: idMsg
+              ? isRegister
+                ? t("errors.accountExists")
+                : idMsg
+              : undefined,
             password: fe.password,
             form:
               !fe.name && !idMsg && !fe.password
@@ -106,8 +111,6 @@ export function AuthStep({
           });
         } else if (err.status === 401) {
           setErrors({ form: t("errors.invalidCredentials") });
-        } else if (err.status === 409) {
-          setErrors({ form: t("errors.accountExists") });
         } else if (err.status === 429) {
           setErrors({ form: t("errors.rateLimited") });
         } else {

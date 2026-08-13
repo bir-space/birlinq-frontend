@@ -19,7 +19,7 @@ import {
   type AuthMethod,
 } from "@/components/auth/helpers";
 import { authApi, toApiLocale } from "@/lib/api/endpoints";
-import { ApiRequestError } from "@/lib/api/client";
+import { ApiRequestError, isValidationError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
 
 interface FormState {
@@ -70,20 +70,20 @@ function RegisterForm() {
       router.replace(next ?? "/dashboard");
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "VALIDATION_FAILED") {
+        if (isValidationError(err)) {
           const fe = detailsToFieldErrors(err.details);
+          // The identifier passed client-side validation, so a server-side
+          // complaint about it is the `unique` rule — show the localized copy.
           const idMsg = fe[method] ?? fe.email ?? fe.phone;
           setErrors({
             name: fe.name,
-            identifier: idMsg,
+            identifier: idMsg ? t("errors.accountExists") : undefined,
             password: fe.password,
             form:
               !fe.name && !idMsg && !fe.password
                 ? t("errors.generic")
                 : undefined,
           });
-        } else if (err.status === 409) {
-          setErrors({ form: t("errors.accountExists") });
         } else if (err.status === 429) {
           setErrors({ form: t("errors.rateLimited") });
         } else {

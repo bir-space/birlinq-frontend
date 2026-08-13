@@ -1,6 +1,12 @@
 /**
- * API types — hand-written from docs/api/openapi.yaml of birlinq-backend.
- * Keep in sync with the backend contract.
+ * API types — written against the CURRENTLY IMPLEMENTED birlinq-backend
+ * (routes/api.php + App\Http\Resources\Api\V1\*).
+ *
+ * NB: docs/api/openapi.yaml in the backend repo is ahead of the code — it
+ * documents endpoints and field names that do not exist yet (owner/*,
+ * public/*, password reset, `vehicle` nested on entity create, ...).
+ * This file follows the code, not the spec. Anything spec-only is marked
+ * with `NOT IMPLEMENTED` in endpoints.ts.
  */
 
 // ---------- Shared ----------
@@ -12,14 +18,21 @@ export interface ApiError {
   details?: Record<string, unknown>;
 }
 
-export interface CursorMeta {
+/** `GET /qr` — cursor meta. */
+export interface QrCursorMeta {
   next_cursor: string | null;
   has_more: boolean;
 }
 
-export interface CursorPaginated<T> {
+/** `GET /entities` — cursor meta (backend returns per_page, not has_more). */
+export interface EntityCursorMeta {
+  next_cursor: string | null;
+  per_page: number;
+}
+
+export interface CursorPaginated<T, M> {
   data: T[];
-  meta: CursorMeta;
+  meta: M;
 }
 
 /** Backend locale codes. NB: backend uses "kz", web routing uses ISO "kk". */
@@ -27,14 +40,13 @@ export type ApiLocale = "ru" | "kz" | "en";
 
 // ---------- Auth ----------
 
+/** Shape of App\Http\Resources\Api\V1\UserResource. */
 export interface User {
   id: string;
-  email: string | null;
-  phone?: string | null;
   name: string;
+  email: string | null;
+  phone: string | null;
   locale: string;
-  email_verified_at: string | null;
-  created_at: string;
 }
 
 export interface AuthTokenPair {
@@ -42,18 +54,39 @@ export interface AuthTokenPair {
   refresh_token: string;
   token_type: "Bearer";
   expires_in: number;
-  user?: User;
 }
+
+/**
+ * Body of register / login / refresh.
+ *
+ * The deployed backend nests the tokens:
+ *   { user: {...}, tokens: { access_token, refresh_token, ... } }
+ * An older build of AuthController spreads them flat alongside `user`.
+ * `normalizeAuthResponse` in client.ts accepts both.
+ */
+export interface AuthResponse {
+  user: User;
+  tokens: AuthTokenPair;
+}
+
+/** Wire shape before normalization — either nesting is accepted. */
+export type RawAuthResponse = Partial<AuthTokenPair> & {
+  user?: User;
+  tokens?: Partial<AuthTokenPair>;
+};
 
 export interface RegisterRequest {
   name: string;
+  /** Exactly one of email / phone — sending both is rejected (`prohibited`). */
   email?: string;
   phone?: string; // ^77\d{9}$
-  password: string;
+  password: string; // min 8
   locale?: ApiLocale;
+  device_name?: string;
 }
 
 export interface LoginRequest {
+  /** Exactly one of email / phone. */
   email?: string;
   phone?: string;
   password: string;
@@ -62,60 +95,126 @@ export interface LoginRequest {
 
 // ---------- Entities ----------
 
-export type EntityType = "vehicle";
-export type EntityStatus = "active" | "paused" | "deleted";
+/** App\Enums\EntityType — "vehicle" does NOT exist. */
+export type EntityType = "car" | "personal";
 
+/** App\Enums\EntityStatus. */
+export type EntityStatus = "active" | "deactivated";
+
+/** App\Http\Resources\Api\V1\VehicleProfileResource. */
 export interface VehicleProfile {
   make: string;
   model: string;
+  year: number | null;
   color: string;
-  plate_number: string | null;
-  photo_url?: string | null;
+  license_plate: string | null;
+  photo_url: string | null;
 }
 
+/** App\Http\Resources\Api\V1\ContactProfileResource. */
+export interface ContactProfile {
+  display_name: string | null;
+  phone: string | null;
+  phone2: string | null;
+  email: string | null;
+  whatsapp: string | null;
+  telegram: string | null;
+  company: string | null;
+  title: string | null;
+  bio: string | null;
+  photo_url: string | null;
+}
+
+/**
+ * App\Domain\Entity\Data\PrivacySettingsData — the exact key set the backend
+ * accepts on PATCH /entities/{id}/privacy and returns in `privacy_settings`.
+ */
+export interface PrivacySettings {
+  show_year: boolean;
+  show_license_plate: boolean;
+  show_display_name: boolean;
+  show_phone: boolean;
+  show_phone2: boolean;
+  show_email: boolean;
+  show_whatsapp: boolean;
+  show_telegram: boolean;
+  show_company: boolean;
+  show_bio: boolean;
+}
+
+export const PRIVACY_KEYS = [
+  "show_year",
+  "show_license_plate",
+  "show_display_name",
+  "show_phone",
+  "show_phone2",
+  "show_email",
+  "show_whatsapp",
+  "show_telegram",
+  "show_company",
+  "show_bio",
+] as const satisfies readonly (keyof PrivacySettings)[];
+
+/** Defaults applied by Entity::booted() on create. */
+export const DEFAULT_PRIVACY: PrivacySettings = {
+  show_year: true,
+  show_license_plate: false,
+  show_display_name: false,
+  show_phone: false,
+  show_phone2: false,
+  show_email: false,
+  show_whatsapp: false,
+  show_telegram: false,
+  show_company: false,
+  show_bio: false,
+};
+
+/**
+ * App\Http\Resources\Api\V1\EntityResource.
+ * `vehicle_profile` / `contact_profile` are `whenLoaded` — present (possibly
+ * null) on every endpoint the SPA uses, absent nowhere today, but treat them
+ * as optional to stay honest about the resource contract.
+ */
 export interface Entity {
   id: string;
   type: EntityType;
-  title: string;
+  title: string | null;
   status: EntityStatus;
-  vehicle: VehicleProfile;
+  privacy_settings: PrivacySettings | null;
+  vehicle_profile?: VehicleProfile | null;
+  contact_profile?: ContactProfile | null;
   created_at: string;
   updated_at: string;
 }
 
+/** POST /entities — the backend validates ONLY these two fields. */
 export interface CreateEntityRequest {
   type: EntityType;
-  title?: string;
-  vehicle: {
-    make: string;
-    model: string;
-    color: string;
-    plate_number?: string;
-  };
+  title?: string | null;
 }
 
+/** PATCH /entities/{id}. */
 export interface UpdateEntityRequest {
-  title?: string;
-  vehicle?: Partial<CreateEntityRequest["vehicle"]>;
+  title?: string | null;
+  status?: EntityStatus;
 }
 
-export type NotificationChannel = "email" | "whatsapp" | "telegram";
-
-export interface PrivacySettings {
-  show_owner_name: boolean;
-  show_phone: boolean;
-  show_whatsapp: boolean;
-  show_telegram: boolean;
-  show_plate_number: boolean;
-  show_vehicle_details: boolean;
-  channel_preferences?: {
-    primary: NotificationChannel;
-    fallback: NotificationChannel[];
-  };
+/** PUT /entities/{id}/vehicle — make/model/color are required. */
+export interface UpsertVehicleRequest {
+  make: string;
+  model: string;
+  color: string;
+  year?: number | null;
+  license_plate?: string | null;
+  photo_url?: string | null;
 }
+
+/** PUT /entities/{id}/contact — every field optional. */
+export type UpsertContactRequest = Partial<ContactProfile>;
 
 // ---------- QR ----------
 
+/** App\Enums\QrCodeStatus. */
 export type QrStatus =
   | "created"
   | "printed"
@@ -137,15 +236,15 @@ export interface QrCode {
 }
 
 export interface QrLookupRequest {
-  code: string;
-  activation_token: string;
+  code: string; // 6..24 chars
+  activation_token: string; // <=128 chars
 }
 
 export interface QrActivateRequest extends QrLookupRequest {
-  entity_id: string;
+  entity_id: string; // uuid
 }
 
-// ---------- Public scan ----------
+// ---------- Public scan (NOT IMPLEMENTED on the backend yet) ----------
 
 export interface PublicScenario {
   id: string;
@@ -198,7 +297,7 @@ export interface AbuseRequest {
   note?: string;
 }
 
-// ---------- Owner ----------
+// ---------- Owner analytics (NOT IMPLEMENTED on the backend yet) ----------
 
 export interface OwnerDashboard {
   total_qrs: number;
