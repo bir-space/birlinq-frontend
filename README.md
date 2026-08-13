@@ -30,6 +30,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 | Регистрация / вход (email или телефон 77XXXXXXXXX) | `/register`, `/login` | `POST /auth/*` |
 | Восстановление пароля, верификация email | `/forgot-password`, `/reset-password`, `/verify-email` | `POST /auth/password/*`, `/auth/verify-email` |
 | Активация QR (мастер A1–A5) | `/activate?code=&token=` | `/qr/lookup`, `/entities`, `/entities/{id}/privacy`, `/qr/activate` |
+| Инструкция: активация и наклейка на стекло | `/guide` | статика |
 | Кабинет: обзор | `/dashboard` | `GET /owner/dashboard` |
 | Кабинет: сообщения | `/dashboard/interactions` | `GET /owner/interactions`, `POST .../resolve` |
 | Кабинет: мои QR (pause/resume) | `/dashboard/qr`, `/dashboard/qr/[id]` | `GET /qr`, `POST /qr/{id}/pause|resume` |

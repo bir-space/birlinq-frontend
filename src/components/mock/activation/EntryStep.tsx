@@ -6,9 +6,9 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/auth/FormAlert";
-import { qrApi } from "@/lib/api/endpoints";
-import { ApiRequestError, ErrorCode, isValidationError } from "@/lib/api/client";
-import { useAuth } from "@/lib/auth/use-auth";
+import { mockQrApi as qrApi } from "@/lib/mock/mock-endpoints";
+import { ApiRequestError } from "@/lib/api/client";
+import { useAuth } from "@/lib/mock/mock-auth";
 
 type View = "form" | "notFound" | "already";
 
@@ -107,14 +107,11 @@ export function EntryStep({
       }
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === ErrorCode.QrNotFound || err.status === 404) {
+        if (err.code === "QR_NOT_FOUND" || err.status === 404) {
           setView("notFound");
-        } else if (
-          err.code === ErrorCode.QrAlreadyActivated ||
-          err.status === 409
-        ) {
+        } else if (err.code === "QR_ALREADY_ACTIVATED" || err.status === 409) {
           setView("already");
-        } else if (isValidationError(err)) {
+        } else if (err.code === "VALIDATION_FAILED") {
           setFormError(t("genericError"));
           setManual(true);
         } else {
@@ -180,7 +177,7 @@ export function EntryStep({
         </p>
         {isAuthenticated ? (
           <Link
-            href="/dashboard"
+            href="/mock/dashboard"
             className="mt-8 inline-flex h-[50px] w-full items-center justify-center rounded-(--radius-btn) bg-white px-6 text-[15px] font-semibold text-ink-900 transition-colors hover:bg-slate-100"
           >
             {tAlready("dashboard")}
@@ -263,12 +260,6 @@ export function EntryStep({
         className="mt-8 text-[13px] text-muted underline-offset-4 hover:text-white hover:underline"
       >
         {t("whatIs")}
-      </Link>
-      <Link
-        href="/guide"
-        className="mt-2 text-[13px] text-muted underline-offset-4 hover:text-white hover:underline"
-      >
-        {t("guideLink")}
       </Link>
 
       <div className="mt-10 flex w-full items-start gap-3 rounded-(--radius-card) border border-card-border bg-card p-4">

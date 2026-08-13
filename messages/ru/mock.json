@@ -1,0 +1,27 @@
+{
+  "banner": "Тестовая страница · моковые данные, бэкенд не используется",
+  "bannerBack": "Все тестовые страницы",
+  "index": {
+    "title": "Тестовые страницы",
+    "subtitle": "Превью экранов на моковых данных — можно открыть без запущенного бэкенда.",
+    "sections": {
+      "dashboard": "Личный кабинет",
+      "activation": "Активация QR",
+      "public": "Публичный сценарий",
+      "auth": "Авторизация"
+    },
+    "links": {
+      "dashboardOverview": "Обзор",
+      "dashboardQr": "Список QR-кодов",
+      "dashboardQrDetail": "Детали QR-кода",
+      "dashboardInteractions": "Обращения",
+      "activate": "Мастер активации",
+      "publicScan": "Сканирование QR-стикера",
+      "login": "Вход",
+      "register": "Регистрация",
+      "forgotPassword": "Забыли пароль",
+      "resetPassword": "Сброс пароля",
+      "verifyEmail": "Подтверждение почты"
+    }
+  }
+}

@@ -10,6 +10,8 @@ const NAMESPACES = [
   "auth",
   "activation",
   "dashboard",
+  "guide",
+  "mock",
 ] as const;
 
 export default getRequestConfig(async ({ requestLocale }) => {

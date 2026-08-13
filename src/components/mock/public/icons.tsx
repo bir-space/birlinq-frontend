@@ -154,32 +154,6 @@ export function IconInfo(props: IconProps) {
   );
 }
 
-export function IconMapPin(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </Svg>
-  );
-}
-
-export function IconDroplet(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <path d="M12 3s6 6.4 6 10.5a6 6 0 0 1-12 0C6 9.4 12 3 12 3Z" />
-    </Svg>
-  );
-}
-
-export function IconClock(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3.5 2" />
-    </Svg>
-  );
-}
-
 export function IconFlag(props: IconProps) {
   return (
     <Svg {...props}>

@@ -1,0 +1,27 @@
+{
+  "banner": "Тест беті · мок деректер, бэкенд қолданылмайды",
+  "bannerBack": "Барлық тест беттері",
+  "index": {
+    "title": "Тест беттері",
+    "subtitle": "Мок деректердегі экрандар превью — бэкендсіз ашуға болады.",
+    "sections": {
+      "dashboard": "Жеке кабинет",
+      "activation": "QR активациясы",
+      "public": "Жария сценарий",
+      "auth": "Авторизация"
+    },
+    "links": {
+      "dashboardOverview": "Шолу",
+      "dashboardQr": "QR-кодтар тізімі",
+      "dashboardQrDetail": "QR-код мәліметтері",
+      "dashboardInteractions": "Өтінімдер",
+      "activate": "Активация шебері",
+      "publicScan": "QR-стикерді сканерлеу",
+      "login": "Кіру",
+      "register": "Тіркелу",
+      "forgotPassword": "Құпия сөзді ұмыттым",
+      "resetPassword": "Құпия сөзді қалпына келтіру",
+      "verifyEmail": "Поштаны растау"
+    }
+  }
+}

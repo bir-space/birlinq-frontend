@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "title": "How to activate and stick your birlinq QR",
+    "description": "Step-by-step guide: how to activate a birlinq Move sticker and place it correctly on your windshield."
+  },
+  "hero": {
+    "eyebrow": "Guide",
+    "title": "Activate and install your birlinq Move sticker",
+    "lead": "Five minutes, and the sticker on your windshield starts working: whoever scans it sees a contact form, not your phone number."
+  },
+  "activate": {
+    "heading": "How to activate",
+    "lead": "If the sticker isn't linked to your car yet, start here.",
+    "s1Title": "Scan the QR or enter the code",
+    "s1Text": "With your phone's camera — the link opens activation automatically. Or enter the sticker code and activation code from the back of the sticker manually.",
+    "s2Title": "Log in or create an account",
+    "s2Text": "A phone number or email is the only way to get notified when someone scans your QR.",
+    "s3Title": "Tell us about your car",
+    "s3Text": "Make, model, color. License plate is optional and hidden from strangers by default.",
+    "s4Title": "Set your privacy",
+    "s4Text": "Choose what a scanner sees — from \"vehicle type only\" to an open profile with WhatsApp.",
+    "s5Title": "Activate",
+    "s5Text": "Done — the QR starts working right away."
+  },
+  "place": {
+    "heading": "Where and how to place it",
+    "lead": "This determines whether someone who wants to reach you can actually see the sticker.",
+    "whereTitle": "Where to stick it",
+    "whereText": "Bottom-left corner of the windshield, outside or inside — as long as the QR is visible from the street.",
+    "prepTitle": "Prep the surface",
+    "prepText": "Wipe the glass dry, peel the protective film off the sticker, and press for 20–30 seconds without air bubbles.",
+    "waitTitle": "Let it set",
+    "waitText": "Avoid washing the car or touching the sticker for the first 24 hours."
+  },
+  "check": {
+    "heading": "Check that it works",
+    "text": "Scan your own sticker with another phone's camera and go through one scenario — make sure the notification arrives."
+  },
+  "faq": {
+    "heading": "Frequently asked questions",
+    "q1": "The QR won't scan, or the code isn't found",
+    "a1": "Double-check the code for typos — 0/O and 1/I are easy to mix up. If the sticker is new, try scanning the QR again instead of entering it manually.",
+    "q2": "It says the sticker is already activated",
+    "a2": "If it's your sticker, log in to your dashboard — it's already linked to your account.",
+    "q3": "I want to change what a scanner can see",
+    "a3": "You can do that any time, in your dashboard's QR privacy settings.",
+    "q4": "The sticker came off or got damaged",
+    "a4": "You can activate a new sticker the same way as the first one. Pause the old one in \"My QR codes\"."
+  },
+  "cta": {
+    "activate": "Activate a sticker",
+    "login": "I already have an account"
+  }
+}

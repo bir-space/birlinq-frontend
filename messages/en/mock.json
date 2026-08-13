@@ -1,0 +1,27 @@
+{
+  "banner": "Test page · mock data, no backend used",
+  "bannerBack": "All test pages",
+  "index": {
+    "title": "Test pages",
+    "subtitle": "Preview of screens with mock data — works without a running backend.",
+    "sections": {
+      "dashboard": "Dashboard",
+      "activation": "QR activation",
+      "public": "Public scan flow",
+      "auth": "Auth"
+    },
+    "links": {
+      "dashboardOverview": "Overview",
+      "dashboardQr": "QR code list",
+      "dashboardQrDetail": "QR code detail",
+      "dashboardInteractions": "Interactions",
+      "activate": "Activation wizard",
+      "publicScan": "Scan a QR sticker",
+      "login": "Log in",
+      "register": "Register",
+      "forgotPassword": "Forgot password",
+      "resetPassword": "Reset password",
+      "verifyEmail": "Verify email"
+    }
+  }
+}
