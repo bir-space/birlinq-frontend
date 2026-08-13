@@ -10,6 +10,7 @@
  * privacy updates returning the whole entity.
  */
 import { ApiRequestError } from "@/lib/api/client";
+import type { AppApi } from "@/lib/app-env";
 import type {
   AbuseRequest,
   AuthResponse,
@@ -379,4 +380,18 @@ export const mockOwnerApi = {
     }
     return delay({ interaction });
   },
+};
+
+/**
+ * The mock tree's `AppApi` value. Shape-checked against the real one by the
+ * `AppApi` annotation — if an endpoint's signature changes in
+ * `src/lib/api/endpoints.ts`, this fails to compile instead of silently
+ * drifting, which is the whole point of routing both trees through one type.
+ */
+export const mockApi: AppApi = {
+  auth: mockAuthApi,
+  entities: mockEntitiesApi,
+  qr: mockQrApi,
+  public: mockPublicApi,
+  owner: mockOwnerApi,
 };

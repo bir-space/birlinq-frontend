@@ -7,7 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { PageSpinner } from "@/components/ui/Spinner";
-import { entitiesApi, qrApi } from "@/lib/api/endpoints";
+import { useApi, useHref } from "@/lib/app-env";
 import { ApiRequestError, ErrorCode } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
 import type { Entity } from "@/lib/api/types";
@@ -37,6 +37,8 @@ export function ActivationWizard() {
   const tc = useTranslations("common");
   const searchParams = useSearchParams();
   const { loading: authLoading, isAuthenticated } = useAuth();
+  const api = useApi();
+  const href = useHref();
 
   const initialCode = (searchParams.get("code") ?? "").trim();
   const initialToken = (searchParams.get("token") ?? "").trim();
@@ -57,9 +59,13 @@ export function ActivationWizard() {
   }, [step, authLoading, isAuthenticated]);
 
   const activateHref = code
-    ? `/activate?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`
-    : "/activate";
-  const loginNextHref = `/login?next=${encodeURIComponent(activateHref)}`;
+    ? href(
+        `/activate?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`
+      )
+    : href("/activate");
+  const loginNextHref = href(
+    `/login?next=${encodeURIComponent(activateHref)}`
+  );
 
   function handleBack() {
     if (step === "auth") setStep("entry");
@@ -77,12 +83,12 @@ export function ActivationWizard() {
     try {
       // PATCH privacy returns the updated entity — keep it so a retry after a
       // failed activation starts from the flags the server actually stored.
-      const { entity: updated } = await entitiesApi.updatePrivacy(
+      const { entity: updated } = await api.entities.updatePrivacy(
         entity.id,
         flags
       );
       setEntity(updated);
-      await qrApi.activate({
+      await api.qr.activate({
         code,
         activation_token: token,
         entity_id: entity.id,
@@ -153,7 +159,7 @@ export function ActivationWizard() {
             {step === "entry" &&
               (isAuthenticated ? (
                 <Link
-                  href="/dashboard"
+                  href={href("/dashboard")}
                   className="text-[13px] font-semibold text-muted hover:text-white"
                 >
                   {tc("dashboard")}

@@ -1,32 +1,23 @@
 "use client";
 
 /**
- * Drop-in mock replacement for src/lib/auth/use-auth.tsx. Same context shape
- * so duplicated components (mock activation wizard, mock auth pages) can
- * import { useAuth } from here instead of the real hook without any other
- * change. Session state lives only in React state — no tokenStore, no fetch.
+ * Mock session provider. Publishes to the SAME AuthContext as the real
+ * `AuthProvider`, so every shared component's `useAuth()` works unchanged —
+ * session state lives only in React state, no tokenStore and no fetch.
  */
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import type { User } from "@/lib/api/types";
+import {
+  AuthContext,
+  type AuthContextValue,
+} from "@/lib/auth/auth-context";
 import { mockAuthApi } from "./mock-endpoints";
-
-interface MockAuthContextValue {
-  user: User | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  refresh: () => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const MockAuthContext = createContext<MockAuthContextValue | null>(null);
 
 export function MockAuthProvider({
   children,
@@ -63,7 +54,7 @@ export function MockAuthProvider({
     setUser(null);
   }, []);
 
-  const value = useMemo<MockAuthContextValue>(
+  const value = useMemo<AuthContextValue>(
     () => ({
       user,
       loading: !hydrated,
@@ -74,17 +65,5 @@ export function MockAuthProvider({
     [user, hydrated, refresh, logout]
   );
 
-  return (
-    <MockAuthContext.Provider value={value}>
-      {children}
-    </MockAuthContext.Provider>
-  );
-}
-
-export function useAuth(): MockAuthContextValue {
-  const ctx = useContext(MockAuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within <MockAuthProvider>");
-  }
-  return ctx;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

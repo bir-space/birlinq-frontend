@@ -1,11 +1,25 @@
+"use client";
+
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { LangSwitcher } from "@/components/ui/LangSwitcher";
+import { useAuth } from "@/lib/auth/use-auth";
 
+/**
+ * Landing top bar. The anchor nav is the same for everyone; the right-hand slot
+ * is session-aware — a guest gets the "Войти" button, a signed-in owner gets
+ * their name, which links into the cabinet. Sign-out lives in the cabinet only.
+ *
+ * The session lives in the browser only (see `tokenStore`), so this has to be a
+ * client component: the server render is always the guest shape. While
+ * `loading` is true we render a spacer instead of the guest CTA, otherwise a
+ * signed-in user sees "Войти" flash before hydration settles.
+ */
 export function LandingHeader() {
   const t = useTranslations("landing.nav");
   const tc = useTranslations("common");
+  const { user, loading, isAuthenticated } = useAuth();
 
   const anchors: Array<[string, string]> = [
     ["#move", t("move")],
@@ -35,18 +49,25 @@ export function LandingHeader() {
 
         <div className="ml-auto flex items-center gap-3">
           <LangSwitcher className="hidden sm:inline-flex" />
-          <Link
-            href="/dashboard"
-            className="hidden text-[14px] font-medium text-muted transition-colors hover:text-white md:block"
-          >
-            {tc("dashboard")}
-          </Link>
-          <Link
-            href="/login"
-            className="inline-flex h-10 items-center rounded-(--radius-btn) bg-white px-5 text-[14px] font-semibold text-ink-900 transition-colors hover:bg-slate-100"
-          >
-            {tc("login")}
-          </Link>
+
+          {loading ? (
+            <div className="h-10 w-20" aria-hidden />
+          ) : isAuthenticated ? (
+            <Link
+              href="/dashboard"
+              title={user?.name}
+              className="max-w-40 truncate text-[14px] font-semibold text-white transition-colors hover:text-muted"
+            >
+              {user?.name}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex h-10 items-center rounded-(--radius-btn) bg-white px-5 text-[14px] font-semibold text-ink-900 transition-colors hover:bg-slate-100"
+            >
+              {tc("login")}
+            </Link>
+          )}
         </div>
       </div>
     </header>

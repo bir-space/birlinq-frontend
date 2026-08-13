@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { publicApi } from "@/lib/api/endpoints";
+import { useApi } from "@/lib/app-env";
 import { ApiRequestError } from "@/lib/api/client";
 import type { AbuseReason } from "@/lib/api/types";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +14,7 @@ const REASONS: AbuseReason[] = ["spam", "harassment", "impersonation", "other"];
 
 /**
  * Abuse report modal: reason radio group + optional note →
- * publicApi.reportAbuse. Closes on backdrop click / Escape.
+ * api.public.reportAbuse. Closes on backdrop click / Escape.
  */
 export function AbuseModal({
   code,
@@ -24,6 +24,7 @@ export function AbuseModal({
   onClose: () => void;
 }) {
   const t = useTranslations("public");
+  const api = useApi();
   const [reason, setReason] = useState<AbuseReason>("spam");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,7 +44,7 @@ export function AbuseModal({
     setSubmitting(true);
     setError(null);
     try {
-      await publicApi.reportAbuse(code, {
+      await api.public.reportAbuse(code, {
         reason,
         ...(note.trim() ? { note: note.trim() } : {}),
       });

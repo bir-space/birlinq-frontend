@@ -89,6 +89,11 @@ export const authApi = {
  * NOT IMPLEMENTED on the backend (documented in docs/api/openapi.yaml
  * but absent from routes/api.php). Calling these returns 404 NOT_FOUND.
  * Kept so the UI wires up the moment the backend ships them.
+ *
+ * TODO(backend): implement POST /auth/verify-email, /auth/password/forgot,
+ * /auth/password/reset. Until then RegisterView cannot confirm an address and
+ * ForgotPasswordView / ResetPasswordView are dead ends — they render, submit,
+ * and get a 404 back.
  * ------------------------------------------------------------------ */
 
 export const unimplementedAuthApi = {
@@ -292,6 +297,19 @@ export const qrApi = {
 /* ------------------------------------------------------------------ *
  * NOT IMPLEMENTED on the backend — public scan flow and owner analytics.
  * See the note above `unimplementedAuthApi`.
+ *
+ * TODO(backend): implement the public scan flow — GET /public/q/{code},
+ * POST /public/q/{code}/scenarios/{id}, /lead, /abuse. PublicScanPage falls
+ * back to a static screen without them, so scanning a QR does nothing.
+ *
+ * TODO(backend): implement GET /owner/dashboard, GET /owner/interactions,
+ * POST /owner/interactions/{id}/resolve. OverviewView and InteractionsView
+ * swallow the 404 via `isMissingEndpoint` and show empty states.
+ *
+ * TODO(backend): no endpoint exists for the landing lead form at all — it is
+ * not in openapi.yaml either. `leads` table + Filament LeadResource are ready;
+ * a public POST /leads (throttled, no auth) is still to be decided. Until then
+ * LeadForm submits nowhere — see components/landing/LeadForm.tsx.
  * ------------------------------------------------------------------ */
 
 export const publicApi = {

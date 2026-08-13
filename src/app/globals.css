@@ -66,6 +66,13 @@ body {
   min-height: 100%;
 }
 
+/* Reserve the scrollbar gutter on every page so centered layouts don't shift
+   horizontally when navigating between a scrolling page (landing) and a
+   short one (dashboard, auth, loading spinners). */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--color-ink);
   color: #fff;

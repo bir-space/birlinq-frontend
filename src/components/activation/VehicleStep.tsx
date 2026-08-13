@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { detailsToFieldErrors } from "@/components/auth/helpers";
-import { entitiesApi, qrApi } from "@/lib/api/endpoints";
+import { useApi } from "@/lib/app-env";
 import { ApiRequestError, isValidationError } from "@/lib/api/client";
 import type { Entity } from "@/lib/api/types";
 
@@ -50,6 +50,7 @@ export function VehicleStep({
 }) {
   const t = useTranslations("activation.vehicle");
   const tc = useTranslations("common");
+  const api = useApi();
 
   // null = loading
   const [available, setAvailable] = useState<Entity[] | null>(null);
@@ -71,8 +72,8 @@ export function VehicleStep({
         // Both endpoints are cursor-paginated with a fixed server-side page
         // size of 20, so walk every page before deciding what is free.
         const [entities, qrs] = await Promise.all([
-          entitiesApi.listAll(),
-          qrApi.listAll(),
+          api.entities.listAll(),
+          api.qr.listAll(),
         ]);
         if (cancelled) return;
         const taken = new Set(
@@ -131,7 +132,7 @@ export function VehicleStep({
     try {
       // POST /entities only accepts { type, title } — the vehicle profile is
       // attached through PUT /entities/{id}/vehicle (both done by createVehicle).
-      const entity = await entitiesApi.createVehicle({
+      const entity = await api.entities.createVehicle({
         make: make.trim(),
         model: model.trim(),
         color: resolvedColor,

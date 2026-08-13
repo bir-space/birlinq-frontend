@@ -1,30 +1,22 @@
 "use client";
 
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import type { User } from "../api/types";
-import { authApi } from "../api/endpoints";
+import { useApi } from "../app-env";
 import { tokenStore } from "./token-store";
+import { AuthContext, type AuthContextValue } from "./auth-context";
 
-interface AuthContextValue {
-  user: User | null;
-  /** true while we're trying to restore a session on first mount */
-  loading: boolean;
-  isAuthenticated: boolean;
-  refresh: () => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+export { useAuth } from "./auth-context";
+export type { AuthContextValue } from "./auth-context";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const api = useApi();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,13 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const { user: fresh } = await authApi.me();
+      const { user: fresh } = await api.auth.me();
       tokenStore.setUser(fresh);
       setUser(fresh);
     } catch {
       setUser(tokenStore.hasSession() ? tokenStore.getUser() : null);
     }
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       if (tokenStore.hasSession()) {
         try {
-          const { user: fresh } = await authApi.me();
+          const { user: fresh } = await api.auth.me();
           if (cancelled) return;
           tokenStore.setUser(fresh);
           setUser(fresh);
@@ -84,12 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       unsubscribe();
     };
-  }, []);
+  }, [api]);
 
   const logout = useCallback(async () => {
-    await authApi.logout();
+    await api.auth.logout();
     setUser(null);
-  }, []);
+  }, [api]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -103,10 +95,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
-  return ctx;
 }

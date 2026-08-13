@@ -2,17 +2,17 @@
 
 import { Suspense } from "react";
 import { PageSpinner } from "@/components/ui/Spinner";
-import { MockAuthProvider } from "@/lib/mock/mock-auth";
+import { MockShell } from "@/components/mock/MockShell";
 import { MockBanner } from "@/components/mock/MockBanner";
-import { ActivationWizard } from "@/components/mock/activation/ActivationWizard";
+import { ActivationWizard } from "@/components/activation/ActivationWizard";
 
-export default function MockActivatePage() {
+export default function Page() {
   return (
-    <MockAuthProvider>
+    <MockShell>
       <MockBanner />
       <Suspense fallback={<PageSpinner />}>
         <ActivationWizard />
       </Suspense>
-    </MockAuthProvider>
+    </MockShell>
   );
 }

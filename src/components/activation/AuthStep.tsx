@@ -14,7 +14,8 @@ import {
   validateIdentifier,
   type AuthMethod,
 } from "@/components/auth/helpers";
-import { authApi, toApiLocale } from "@/lib/api/endpoints";
+import { toApiLocale } from "@/lib/api/endpoints";
+import { useApi } from "@/lib/app-env";
 import { ApiRequestError, isValidationError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
 
@@ -41,6 +42,7 @@ export function AuthStep({
   const ta = useTranslations("activation.auth");
   const locale = useLocale();
   const { refresh } = useAuth();
+  const api = useApi();
 
   const [tab, setTab] = useState<Tab>("register");
   const [name, setName] = useState("");
@@ -76,14 +78,14 @@ export function AuthStep({
     setSubmitting(true);
     try {
       if (isRegister) {
-        await authApi.register({
+        await api.auth.register({
           name: name.trim(),
           ...identifierPayload(method, identifier),
           password,
           locale: toApiLocale(locale),
         });
       } else {
-        await authApi.login({
+        await api.auth.login({
           ...identifierPayload(method, identifier),
           password,
         });

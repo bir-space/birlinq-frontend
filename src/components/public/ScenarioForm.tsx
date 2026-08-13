@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { publicApi, toApiLocale } from "@/lib/api/endpoints";
+import { toApiLocale } from "@/lib/api/endpoints";
+import { useApi } from "@/lib/app-env";
 import { ApiRequestError } from "@/lib/api/client";
 import type { PublicScenario } from "@/lib/api/types";
 import { Button } from "@/components/ui/Button";
@@ -13,7 +14,7 @@ const MESSAGE_LIMIT = 500;
 
 /**
  * P2 — scenario message form. Textarea prefilled from the scenario, 500 char
- * limit, submits via publicApi.submitScenario. 429 shows an inline friendly
+ * limit, submits via api.public.submitScenario. 429 shows an inline friendly
  * error, 410/404 bubble up as fatal page states.
  */
 export function ScenarioForm({
@@ -32,6 +33,7 @@ export function ScenarioForm({
   onFatal: (kind: "not_found" | "unavailable") => void;
 }) {
   const t = useTranslations("public");
+  const api = useApi();
   const tCommon = useTranslations("common");
   const locale = useLocale();
 
@@ -51,7 +53,7 @@ export function ScenarioForm({
     setSubmitting(true);
     setError(null);
     try {
-      const result = await publicApi.submitScenario(code, scenario.id, {
+      const result = await api.public.submitScenario(code, scenario.id, {
         message: text,
         visitor_locale: toApiLocale(locale),
       });

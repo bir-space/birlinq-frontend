@@ -1,8 +1,10 @@
 import { setRequestLocale } from "next-intl/server";
-import { PublicScanPage } from "@/components/mock/public/PublicScanPage";
+import { MockShell } from "@/components/mock/MockShell";
+import { MockBanner } from "@/components/mock/MockBanner";
+import { PublicScanPage } from "@/components/public/PublicScanPage";
 
 /** Mock counterpart of the public QR scan page — served from fixture data. */
-export default async function MockPublicQrPage({
+export default async function Page({
   params,
 }: {
   params: Promise<{ locale: string; code: string }>;
@@ -10,5 +12,10 @@ export default async function MockPublicQrPage({
   const { locale, code } = await params;
   setRequestLocale(locale);
 
-  return <PublicScanPage code={code} />;
+  return (
+    <MockShell>
+      <MockBanner />
+      <PublicScanPage code={code} />
+    </MockShell>
+  );
 }

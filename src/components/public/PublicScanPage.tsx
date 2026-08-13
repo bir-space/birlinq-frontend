@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { publicApi } from "@/lib/api/endpoints";
+import { useApi } from "@/lib/app-env";
 import { ApiRequestError } from "@/lib/api/client";
 import type { PublicEntityPayload, PublicScenario } from "@/lib/api/types";
 import { Button } from "@/components/ui/Button";
@@ -37,12 +37,13 @@ function mapError(err: unknown): ErrorKind {
 }
 
 /**
- * Orchestrator for the public QR scan flow: fetches publicApi.scan(code) on
+ * Orchestrator for the public QR scan flow: fetches api.public.scan(code) on
  * mount and switches between loading / error / entity / scenario / thank-you
  * screens. Content is a mobile-first max-w-md column centered on desktop.
  */
 export function PublicScanPage({ code }: { code: string }) {
   const t = useTranslations("public");
+  const api = useApi();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [screen, setScreen] = useState<Screen>({ name: "entity" });
   const [abuseOpen, setAbuseOpen] = useState(false);
@@ -51,12 +52,12 @@ export function PublicScanPage({ code }: { code: string }) {
     setState({ status: "loading" });
     setScreen({ name: "entity" });
     try {
-      const payload = await publicApi.scan(code);
+      const payload = await api.public.scan(code);
       setState({ status: "ready", payload });
     } catch (err) {
       setState({ status: "error", kind: mapError(err) });
     }
-  }, [code]);
+  }, [api, code]);
 
   useEffect(() => {
     void load();

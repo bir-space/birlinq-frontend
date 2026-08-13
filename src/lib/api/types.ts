@@ -245,6 +245,9 @@ export interface QrActivateRequest extends QrLookupRequest {
 }
 
 // ---------- Public scan (NOT IMPLEMENTED on the backend yet) ----------
+// TODO(backend): these shapes come from openapi.yaml, not from a live response —
+// re-check them against the real payload once /public/q/* ships.
+// See the TODO block above `publicApi` in endpoints.ts.
 
 export interface PublicScenario {
   id: string;
@@ -298,6 +301,8 @@ export interface AbuseRequest {
 }
 
 // ---------- Owner analytics (NOT IMPLEMENTED on the backend yet) ----------
+// TODO(backend): spec-only shapes — verify against the real /owner/* responses
+// once they ship. See the TODO block above `ownerApi` in endpoints.ts.
 
 export interface OwnerDashboard {
   total_qrs: number;

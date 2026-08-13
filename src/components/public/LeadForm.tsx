@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { publicApi } from "@/lib/api/endpoints";
+import { useApi } from "@/lib/app-env";
 import { ApiRequestError } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -10,10 +10,11 @@ import { IconCheck } from "./icons";
 
 /**
  * "I want such a sticker" lead form — name + contact required, city optional.
- * Renders its own success state after publicApi.submitLead resolves.
+ * Renders its own success state after api.public.submitLead resolves.
  */
 export function LeadForm({ code }: { code: string }) {
   const t = useTranslations("public");
+  const api = useApi();
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [city, setCity] = useState("");
@@ -36,7 +37,7 @@ export function LeadForm({ code }: { code: string }) {
     setSubmitting(true);
     setError(null);
     try {
-      await publicApi.submitLead(code, {
+      await api.public.submitLead(code, {
         name: name.trim(),
         contact: contact.trim(),
         ...(city.trim() ? { city: city.trim() } : {}),

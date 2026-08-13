@@ -3,10 +3,12 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card } from "@/components/ui/Card";
+import { useHref } from "@/lib/app-env";
 
 /** A5 — activation success screen. */
 export function SuccessStep() {
   const t = useTranslations("activation.success");
+  const href = useHref();
 
   return (
     <div className="flex flex-col items-center pt-6 text-center">
@@ -79,13 +81,13 @@ export function SuccessStep() {
       </Card>
 
       <Link
-        href="/dashboard"
+        href={href("/dashboard")}
         className="mt-8 inline-flex h-[50px] w-full items-center justify-center rounded-(--radius-btn) bg-white px-6 text-[15px] font-semibold text-ink-900 transition-colors hover:bg-slate-100"
       >
         {t("dashboard")}
       </Link>
       <Link
-        href="/"
+        href={href("/")}
         className="mt-4 text-sm text-muted underline-offset-4 hover:text-white hover:underline"
       >
         {t("skip")}
