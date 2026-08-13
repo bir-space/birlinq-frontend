@@ -11,7 +11,7 @@ import {
   mockEntitiesApi as entitiesApi,
   mockQrApi as qrApi,
 } from "@/lib/mock/mock-endpoints";
-import { ApiRequestError } from "@/lib/api/client";
+import { ApiRequestError, isValidationError } from "@/lib/api/client";
 import type { Entity } from "@/lib/api/types";
 
 const COLOR_KEYS = [
@@ -48,8 +48,7 @@ export function VehicleStep({
   onDone,
   onBack,
 }: {
-  /** `existing` is true when the user picked an already saved vehicle. */
-  onDone: (entity: Entity, existing: boolean) => void;
+  onDone: (entity: Entity) => void;
   onBack: () => void;
 }) {
   const t = useTranslations("activation.vehicle");
@@ -72,13 +71,15 @@ export function VehicleStep({
     let cancelled = false;
     (async () => {
       try {
+        // Both endpoints are cursor-paginated with a fixed server-side page
+        // size of 20, so walk every page before deciding what is free.
         const [entities, qrs] = await Promise.all([
-          entitiesApi.list(),
-          qrApi.list({ limit: 100 }),
+          entitiesApi.listAll(),
+          qrApi.listAll(),
         ]);
         if (cancelled) return;
         const taken = new Set(
-          qrs.data
+          qrs
             .filter(
               (q) =>
                 q.entity_id !== null &&
@@ -86,8 +87,9 @@ export function VehicleStep({
             )
             .map((q) => q.entity_id)
         );
-        const free = entities.data.filter(
-          (e) => e.status === "active" && !taken.has(e.id)
+        const free = entities.filter(
+          (e) =>
+            e.type === "car" && e.status === "active" && !taken.has(e.id)
         );
         setAvailable(free);
         if (free.length > 0) {
@@ -117,7 +119,7 @@ export function VehicleStep({
 
     if (mode === "pick") {
       const entity = available?.find((en) => en.id === selectedId);
-      if (entity) onDone(entity, true);
+      if (entity) onDone(entity);
       return;
     }
 
@@ -130,27 +132,26 @@ export function VehicleStep({
 
     setSubmitting(true);
     try {
-      const { entity } = await entitiesApi.create({
-        type: "vehicle",
-        vehicle: {
-          make: make.trim(),
-          model: model.trim(),
-          color: resolvedColor,
-          ...(plate.trim() ? { plate_number: plate.trim() } : {}),
-        },
+      // POST /entities only accepts { type, title } — the vehicle profile is
+      // attached through PUT /entities/{id}/vehicle (both done by createVehicle).
+      const entity = await entitiesApi.createVehicle({
+        make: make.trim(),
+        model: model.trim(),
+        color: resolvedColor,
+        ...(plate.trim() ? { license_plate: plate.trim() } : {}),
       });
-      onDone(entity, false);
+      onDone(entity);
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "VALIDATION_FAILED") {
+        if (isValidationError(err)) {
           const fe = detailsToFieldErrors(err.details);
           setErrors({
             make: fe.make,
             model: fe.model,
             color: fe.color,
-            plate: fe.plate_number,
+            plate: fe.license_plate,
             form:
-              !fe.make && !fe.model && !fe.color && !fe.plate_number
+              !fe.make && !fe.model && !fe.color && !fe.license_plate
                 ? t("createError")
                 : undefined,
           });
@@ -177,7 +178,7 @@ export function VehicleStep({
           <div className="mt-6 flex flex-col gap-3" role="radiogroup">
             {available.map((entity) => {
               const selected = entity.id === selectedId;
-              const v = entity.vehicle;
+              const v = entity.vehicle_profile;
               return (
                 <button
                   key={entity.id}
@@ -194,12 +195,14 @@ export function VehicleStep({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold">
-                        {entity.title || `${v.make} ${v.model}`}
+                        {entity.title ?? (v ? `${v.make} ${v.model}` : "—")}
                       </p>
-                      <p className="mt-0.5 text-[13px] text-muted">
-                        {v.make} {v.model} · {v.color}
-                        {v.plate_number ? ` · ${v.plate_number}` : ""}
-                      </p>
+                      {v && (
+                        <p className="mt-0.5 text-[13px] text-muted">
+                          {v.make} {v.model} · {v.color}
+                          {v.license_plate ? ` · ${v.license_plate}` : ""}
+                        </p>
+                      )}
                     </div>
                     <span
                       aria-hidden

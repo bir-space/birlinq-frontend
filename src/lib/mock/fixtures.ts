@@ -2,6 +2,10 @@
  * Static fixture data for the /mock preview pages. Shapes must stay in sync
  * with src/lib/api/types.ts — this is what the mock API layer (mock-endpoints.ts)
  * serves instead of a live backend response.
+ *
+ * These mirror the REAL backend contract (car/personal entity types,
+ * vehicle_profile, license_plate, the 10 privacy flags) so the mock pages stay
+ * a faithful preview rather than drifting into a shape the API never returns.
  */
 import type {
   Entity,
@@ -15,40 +19,86 @@ import type {
 
 export const MOCK_USER: User = {
   id: "user-mock-1",
+  name: "Айгерим Сатпаева",
   email: "aigerim@example.com",
   phone: "77011234567",
-  name: "Айгерим Сатпаева",
   locale: "ru",
-  email_verified_at: "2026-01-10T08:00:00Z",
-  created_at: "2025-11-02T10:15:00Z",
+};
+
+export const MOCK_PRIVACY_ENTITY_1: PrivacySettings = {
+  show_year: true,
+  show_license_plate: false,
+  show_display_name: false,
+  show_phone: false,
+  show_phone2: false,
+  show_email: false,
+  show_whatsapp: true,
+  show_telegram: true,
+  show_company: false,
+  show_bio: false,
+};
+
+export const MOCK_PRIVACY_ENTITY_2: PrivacySettings = {
+  show_year: true,
+  show_license_plate: true,
+  show_display_name: true,
+  show_phone: true,
+  show_phone2: false,
+  show_email: false,
+  show_whatsapp: true,
+  show_telegram: true,
+  show_company: false,
+  show_bio: false,
+};
+
+/** Matches Entity::booted() on the backend. */
+export const DEFAULT_MOCK_PRIVACY: PrivacySettings = {
+  show_year: true,
+  show_license_plate: false,
+  show_display_name: false,
+  show_phone: false,
+  show_phone2: false,
+  show_email: false,
+  show_whatsapp: false,
+  show_telegram: false,
+  show_company: false,
+  show_bio: false,
 };
 
 export const MOCK_ENTITIES: Entity[] = [
   {
     id: "entity-1",
-    type: "vehicle",
+    type: "car",
     title: "Мой Camry",
     status: "active",
-    vehicle: {
+    privacy_settings: MOCK_PRIVACY_ENTITY_1,
+    vehicle_profile: {
       make: "Toyota",
       model: "Camry",
+      year: 2019,
       color: "Белый",
-      plate_number: "123ABC02",
+      license_plate: "123ABC02",
+      photo_url: null,
     },
+    contact_profile: null,
     created_at: "2025-11-05T09:00:00Z",
     updated_at: "2026-06-01T12:00:00Z",
   },
   {
     id: "entity-2",
-    type: "vehicle",
-    title: "",
+    type: "car",
+    title: null,
     status: "active",
-    vehicle: {
+    privacy_settings: MOCK_PRIVACY_ENTITY_2,
+    vehicle_profile: {
       make: "Hyundai",
       model: "Tucson",
+      year: null,
       color: "Серый",
-      plate_number: null,
+      license_plate: null,
+      photo_url: null,
     },
+    contact_profile: null,
     created_at: "2026-02-18T14:20:00Z",
     updated_at: "2026-02-18T14:20:00Z",
   },
@@ -83,34 +133,6 @@ export const MOCK_QR_CODES: QrCode[] = [
     scan_count: 0,
   },
 ];
-
-export const DEFAULT_MOCK_PRIVACY: PrivacySettings = {
-  show_owner_name: false,
-  show_phone: false,
-  show_whatsapp: false,
-  show_telegram: false,
-  show_plate_number: false,
-  show_vehicle_details: true,
-};
-
-export const MOCK_PRIVACY: Record<string, PrivacySettings> = {
-  "entity-1": {
-    show_owner_name: false,
-    show_phone: false,
-    show_whatsapp: true,
-    show_telegram: true,
-    show_plate_number: false,
-    show_vehicle_details: true,
-  },
-  "entity-2": {
-    show_owner_name: true,
-    show_phone: true,
-    show_whatsapp: true,
-    show_telegram: true,
-    show_plate_number: true,
-    show_vehicle_details: true,
-  },
-};
 
 export const MOCK_INTERACTIONS: Interaction[] = [
   {
@@ -166,13 +188,13 @@ export const MOCK_DASHBOARD: OwnerDashboard = {
 
 export const MOCK_PUBLIC_PAYLOAD: PublicEntityPayload = {
   entity: {
-    type: "vehicle",
-    title: "",
+    type: "car",
     vehicle: {
       make: "Toyota",
       model: "Camry",
+      year: 2019,
       color: "Белый",
-      plate_number: "123ABC02",
+      license_plate: "123ABC02",
     },
   },
   scenarios: [

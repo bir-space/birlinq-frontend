@@ -4,14 +4,19 @@
  * real backend. Used exclusively by the /mock preview pages and their
  * duplicated components under src/components/mock — never imported from a
  * real page.
+ *
+ * Signatures track the real module, including the split between
+ * `POST /entities` ({type, title} only) and `PUT /entities/{id}/vehicle`, and
+ * privacy updates returning the whole entity.
  */
 import { ApiRequestError } from "@/lib/api/client";
 import type {
   AbuseRequest,
-  AuthTokenPair,
+  AuthResponse,
   CreateEntityRequest,
   CursorPaginated,
   Entity,
+  EntityCursorMeta,
   Interaction,
   LeadRequest,
   LoginRequest,
@@ -20,11 +25,14 @@ import type {
   PublicEntityPayload,
   QrActivateRequest,
   QrCode,
+  QrCursorMeta,
   QrLookupRequest,
   RegisterRequest,
   ScenarioSubmitRequest,
   SubmissionResult,
   UpdateEntityRequest,
+  UpsertContactRequest,
+  UpsertVehicleRequest,
   User,
 } from "@/lib/api/types";
 import {
@@ -32,7 +40,6 @@ import {
   MOCK_DASHBOARD,
   MOCK_ENTITIES,
   MOCK_INTERACTIONS,
-  MOCK_PRIVACY,
   MOCK_PUBLIC_PAYLOAD,
   MOCK_QR_CODES,
   MOCK_USER,
@@ -51,32 +58,56 @@ function genId(prefix: string): string {
 
 // In-memory copies so edits made while clicking through a mock page persist
 // for the rest of that browser session but never touch the fixtures module.
-let entities: Entity[] = MOCK_ENTITIES.map((e) => ({ ...e, vehicle: { ...e.vehicle } }));
+let entities: Entity[] = MOCK_ENTITIES.map((e) => ({
+  ...e,
+  privacy_settings: e.privacy_settings ? { ...e.privacy_settings } : null,
+  vehicle_profile: e.vehicle_profile ? { ...e.vehicle_profile } : null,
+}));
 let qrCodes: QrCode[] = MOCK_QR_CODES.map((q) => ({ ...q }));
 let interactions: Interaction[] = MOCK_INTERACTIONS.map((i) => ({ ...i }));
-let privacy: Record<string, PrivacySettings> = Object.fromEntries(
-  Object.entries(MOCK_PRIVACY).map(([id, p]) => [id, { ...p }])
-);
+
+/** Long enough to satisfy the real token guard, in case it ever gets wired up. */
+const MOCK_ACCESS_TOKEN = "mock-access-token-".padEnd(64, "0");
+const MOCK_REFRESH_TOKEN = "mock-refresh-token-".padEnd(64, "0");
+
+function mockAuthResponse(): AuthResponse {
+  return {
+    user: MOCK_USER,
+    tokens: {
+      access_token: MOCK_ACCESS_TOKEN,
+      refresh_token: MOCK_REFRESH_TOKEN,
+      token_type: "Bearer",
+      expires_in: 900,
+    },
+  };
+}
+
+function findEntity(id: string): Entity {
+  const entity = entities.find((e) => e.id === id);
+  if (!entity) {
+    throw new ApiRequestError(404, {
+      code: "NOT_FOUND",
+      message: "Entity not found",
+    });
+  }
+  return entity;
+}
+
+function replaceEntity(id: string, patch: (e: Entity) => Entity): Entity {
+  findEntity(id);
+  entities = entities.map((e) =>
+    e.id === id ? { ...patch(e), updated_at: new Date().toISOString() } : e
+  );
+  return entities.find((e) => e.id === id)!;
+}
 
 export const mockAuthApi = {
-  async register(_body: RegisterRequest): Promise<AuthTokenPair> {
-    return delay({
-      access_token: "mock-access-token",
-      refresh_token: "mock-refresh-token",
-      token_type: "Bearer",
-      expires_in: 3600,
-      user: MOCK_USER,
-    });
+  async register(_body: RegisterRequest): Promise<AuthResponse> {
+    return delay(mockAuthResponse());
   },
 
-  async login(_body: LoginRequest): Promise<AuthTokenPair> {
-    return delay({
-      access_token: "mock-access-token",
-      refresh_token: "mock-refresh-token",
-      token_type: "Bearer",
-      expires_in: 3600,
-      user: MOCK_USER,
-    });
+  async login(_body: LoginRequest): Promise<AuthResponse> {
+    return delay(mockAuthResponse());
   },
 
   async logout(): Promise<void> {
@@ -101,59 +132,46 @@ export const mockAuthApi = {
 };
 
 export const mockEntitiesApi = {
-  async list(): Promise<CursorPaginated<Entity>> {
-    return delay({ data: entities, meta: { next_cursor: null, has_more: false } });
+  async list(
+    _cursor?: string
+  ): Promise<CursorPaginated<Entity, EntityCursorMeta>> {
+    return delay({ data: entities, meta: { next_cursor: null, per_page: 20 } });
+  },
+
+  async listAll(): Promise<Entity[]> {
+    return delay(entities);
   },
 
   async create(body: CreateEntityRequest): Promise<{ entity: Entity }> {
+    const now = new Date().toISOString();
     const entity: Entity = {
       id: genId("entity"),
       type: body.type,
-      title: body.title ?? "",
+      title: body.title ?? null,
       status: "active",
-      vehicle: {
-        make: body.vehicle.make,
-        model: body.vehicle.model,
-        color: body.vehicle.color,
-        plate_number: body.vehicle.plate_number ?? null,
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      privacy_settings: { ...DEFAULT_MOCK_PRIVACY },
+      vehicle_profile: null,
+      contact_profile: null,
+      created_at: now,
+      updated_at: now,
     };
     entities = [entity, ...entities];
-    privacy[entity.id] = { ...DEFAULT_MOCK_PRIVACY };
     return delay({ entity });
   },
 
   async get(id: string): Promise<{ entity: Entity }> {
-    const entity = entities.find((e) => e.id === id);
-    if (!entity) {
-      throw new ApiRequestError(404, {
-        code: "NOT_FOUND",
-        message: "Entity not found",
-      });
-    }
-    return delay({ entity });
+    return delay({ entity: findEntity(id) });
   },
 
-  async update(id: string, body: UpdateEntityRequest): Promise<{ entity: Entity }> {
-    entities = entities.map((e) =>
-      e.id === id
-        ? {
-            ...e,
-            title: body.title ?? e.title,
-            vehicle: { ...e.vehicle, ...body.vehicle },
-            updated_at: new Date().toISOString(),
-          }
-        : e
-    );
-    const entity = entities.find((e) => e.id === id);
-    if (!entity) {
-      throw new ApiRequestError(404, {
-        code: "NOT_FOUND",
-        message: "Entity not found",
-      });
-    }
+  async update(
+    id: string,
+    body: UpdateEntityRequest
+  ): Promise<{ entity: Entity }> {
+    const entity = replaceEntity(id, (e) => ({
+      ...e,
+      title: body.title !== undefined ? body.title : e.title,
+      status: body.status ?? e.status,
+    }));
     return delay({ entity });
   },
 
@@ -161,16 +179,76 @@ export const mockEntitiesApi = {
     return delay(undefined);
   },
 
-  async getPrivacy(id: string): Promise<{ privacy: PrivacySettings }> {
-    return delay({ privacy: privacy[id] ?? DEFAULT_MOCK_PRIVACY });
+  async upsertVehicle(
+    id: string,
+    body: UpsertVehicleRequest
+  ): Promise<{ entity: Entity }> {
+    const entity = replaceEntity(id, (e) => ({
+      ...e,
+      vehicle_profile: {
+        make: body.make,
+        model: body.model,
+        color: body.color,
+        year: body.year ?? null,
+        license_plate: body.license_plate ?? null,
+        photo_url: body.photo_url ?? e.vehicle_profile?.photo_url ?? null,
+      },
+    }));
+    return delay({ entity });
   },
 
+  async upsertContact(
+    id: string,
+    body: UpsertContactRequest
+  ): Promise<{ entity: Entity }> {
+    const entity = replaceEntity(id, (e) => ({
+      ...e,
+      contact_profile: {
+        display_name: null,
+        phone: null,
+        phone2: null,
+        email: null,
+        whatsapp: null,
+        telegram: null,
+        company: null,
+        title: null,
+        bio: null,
+        photo_url: null,
+        ...e.contact_profile,
+        ...body,
+      },
+    }));
+    return delay({ entity });
+  },
+
+  /** Merge semantics, returns the entity — same as PATCH /entities/{id}/privacy. */
   async updatePrivacy(
     id: string,
     body: Partial<PrivacySettings>
-  ): Promise<{ privacy: PrivacySettings }> {
-    privacy[id] = { ...(privacy[id] ?? DEFAULT_MOCK_PRIVACY), ...body };
-    return delay({ privacy: privacy[id] });
+  ): Promise<{ entity: Entity }> {
+    const entity = replaceEntity(id, (e) => ({
+      ...e,
+      privacy_settings: {
+        ...(e.privacy_settings ?? DEFAULT_MOCK_PRIVACY),
+        ...body,
+      },
+    }));
+    return delay({ entity });
+  },
+
+  async createVehicle(
+    vehicle: UpsertVehicleRequest,
+    title?: string | null
+  ): Promise<Entity> {
+    const { entity } = await mockEntitiesApi.create({
+      type: "car",
+      ...(title ? { title } : {}),
+    });
+    const { entity: withProfile } = await mockEntitiesApi.upsertVehicle(
+      entity.id,
+      vehicle
+    );
+    return withProfile;
   },
 };
 
@@ -204,10 +282,15 @@ export const mockQrApi = {
     });
   },
 
-  async list(_params?: { cursor?: string; limit?: number }): Promise<
-    CursorPaginated<QrCode>
-  > {
-    return delay({ data: qrCodes, meta: { next_cursor: null, has_more: false } });
+  async list(_cursor?: string): Promise<CursorPaginated<QrCode, QrCursorMeta>> {
+    return delay({
+      data: qrCodes,
+      meta: { next_cursor: null, has_more: false },
+    });
+  },
+
+  async listAll(): Promise<QrCode[]> {
+    return delay(qrCodes);
   },
 
   async get(id: string): Promise<{ qr_code: QrCode }> {
@@ -275,7 +358,7 @@ export const mockOwnerApi = {
     limit?: number;
     qr_code_id?: string;
     since?: string;
-  }): Promise<CursorPaginated<Interaction>> {
+  }): Promise<CursorPaginated<Interaction, QrCursorMeta>> {
     const limit = params?.limit ?? 20;
     return delay({
       data: interactions.slice(0, limit),

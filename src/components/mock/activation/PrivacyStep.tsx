@@ -1,60 +1,64 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FormAlert } from "@/components/auth/FormAlert";
-import { mockEntitiesApi as entitiesApi } from "@/lib/mock/mock-endpoints";
-import type { Entity, PrivacySettings } from "@/lib/api/types";
+import { DEFAULT_PRIVACY, type Entity, type PrivacySettings } from "@/lib/api/types";
 
-export type PrivacyFlags = Pick<
-  PrivacySettings,
-  | "show_owner_name"
-  | "show_phone"
-  | "show_whatsapp"
-  | "show_telegram"
-  | "show_plate_number"
-  | "show_vehicle_details"
->;
-
+/**
+ * The car-relevant slice of the backend privacy flags
+ * (App\Domain\Entity\Data\PrivacySettingsData). The remaining flags —
+ * show_phone2 / show_company / show_bio — belong to the `personal` entity
+ * type and are left untouched by this step.
+ */
 const FLAG_KEYS = [
-  "show_owner_name",
+  "show_display_name",
   "show_phone",
   "show_whatsapp",
   "show_telegram",
-  "show_plate_number",
-  "show_vehicle_details",
+  "show_email",
+  "show_license_plate",
+  "show_year",
 ] as const;
+
+export type PrivacyFlags = Pick<PrivacySettings, (typeof FLAG_KEYS)[number]>;
 
 type PresetId = "safe" | "open" | "max";
 
+const ALL_OFF: PrivacyFlags = {
+  show_display_name: false,
+  show_phone: false,
+  show_whatsapp: false,
+  show_telegram: false,
+  show_email: false,
+  show_license_plate: false,
+  show_year: false,
+};
+
 const PRESETS: Record<PresetId, PrivacyFlags> = {
-  safe: {
-    show_owner_name: false,
-    show_phone: false,
-    show_whatsapp: false,
-    show_telegram: false,
-    show_plate_number: false,
-    show_vehicle_details: true,
-  },
+  // Make/model/colour are always shown; the preset only governs the extras.
+  safe: { ...ALL_OFF, show_year: true },
   open: {
-    show_owner_name: true,
+    show_display_name: true,
     show_phone: true,
     show_whatsapp: true,
     show_telegram: true,
-    show_plate_number: true,
-    show_vehicle_details: true,
+    show_email: true,
+    show_license_plate: true,
+    show_year: true,
   },
-  max: {
-    show_owner_name: false,
-    show_phone: false,
-    show_whatsapp: false,
-    show_telegram: false,
-    show_plate_number: false,
-    show_vehicle_details: false,
-  },
+  max: { ...ALL_OFF },
 };
+
+/** Pick the car-relevant flags out of a full settings object. */
+function toFlags(settings: PrivacySettings | null): PrivacyFlags {
+  const source = settings ?? DEFAULT_PRIVACY;
+  return Object.fromEntries(
+    FLAG_KEYS.map((k) => [k, source[k]])
+  ) as PrivacyFlags;
+}
 
 function matchesPreset(flags: PrivacyFlags, preset: PrivacyFlags): boolean {
   return FLAG_KEYS.every((k) => flags[k] === preset[k]);
@@ -92,7 +96,6 @@ function Switch({
 /** A4 — privacy presets + fine-tuning toggles, then privacy save + QR activation. */
 export function PrivacyStep({
   entity,
-  loadExisting,
   submitting,
   errorKey,
   onSubmit,
@@ -100,8 +103,6 @@ export function PrivacyStep({
   onChooseAnother,
 }: {
   entity: Entity;
-  /** load current privacy from the API (when an existing entity was picked) */
-  loadExisting: boolean;
   submitting: boolean;
   /** activation error key within `activation.activationErrors`, or null */
   errorKey: "entityHasQr" | "alreadyActivated" | "generic" | null;
@@ -113,35 +114,11 @@ export function PrivacyStep({
   const te = useTranslations("activation.activationErrors");
   const tc = useTranslations("common");
 
-  const [flags, setFlags] = useState<PrivacyFlags>(PRESETS.safe);
-  const [loading, setLoading] = useState(loadExisting);
-
-  useEffect(() => {
-    if (!loadExisting) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const { privacy } = await entitiesApi.getPrivacy(entity.id);
-        if (!cancelled) {
-          setFlags({
-            show_owner_name: privacy.show_owner_name,
-            show_phone: privacy.show_phone,
-            show_whatsapp: privacy.show_whatsapp,
-            show_telegram: privacy.show_telegram,
-            show_plate_number: privacy.show_plate_number,
-            show_vehicle_details: privacy.show_vehicle_details,
-          });
-        }
-      } catch {
-        // fall back to the safe preset
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [entity.id, loadExisting]);
+  // The entity payload already carries privacy_settings — there is no
+  // GET /entities/{id}/privacy endpoint to call.
+  const [flags, setFlags] = useState<PrivacyFlags>(() =>
+    toFlags(entity.privacy_settings)
+  );
 
   const activePreset = useMemo<PresetId | null>(() => {
     for (const id of ["safe", "open", "max"] as PresetId[]) {
@@ -193,7 +170,7 @@ export function PrivacyStep({
               type="button"
               role="radio"
               aria-checked={selected}
-              disabled={loading}
+              disabled={submitting}
               onClick={() => setFlags({ ...PRESETS[preset.id] })}
               className={`w-full cursor-pointer rounded-(--radius-card) border p-4 text-left transition-colors disabled:opacity-50 ${
                 selected
@@ -279,7 +256,6 @@ export function PrivacyStep({
         <Button
           type="submit"
           loading={submitting}
-          disabled={loading}
           className="flex-[1.5]"
         >
           {tc("next")}

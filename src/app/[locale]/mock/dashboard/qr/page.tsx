@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { mockEntitiesApi, mockQrApi } from "@/lib/mock/mock-endpoints";
+import { entityLabel } from "@/lib/api/endpoints";
+import {
+  mockEntitiesApi as entitiesApi,
+  mockQrApi as qrApi,
+} from "@/lib/mock/mock-endpoints";
 import type { Entity, QrCode, QrStatus } from "@/lib/api/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -35,7 +39,10 @@ function QrList() {
 
   const [items, setItems] = useState<QrCode[]>([]);
   const [entities, setEntities] = useState<Record<string, Entity>>({});
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -47,9 +54,10 @@ function QrList() {
     setError(false);
     (async () => {
       try {
+        // Entities are optional context (titles); don't fail the page on them.
         const [qrRes, entRes] = await Promise.allSettled([
-          mockQrApi.list(),
-          mockEntitiesApi.list(),
+          qrApi.list(),
+          entitiesApi.listAll(),
         ]);
         if (cancelled) return;
         if (qrRes.status === "rejected") {
@@ -57,10 +65,10 @@ function QrList() {
           return;
         }
         setItems(qrRes.value.data);
+        setCursor(qrRes.value.meta.next_cursor);
+        setHasMore(qrRes.value.meta.has_more);
         if (entRes.status === "fulfilled") {
-          setEntities(
-            Object.fromEntries(entRes.value.data.map((e) => [e.id, e]))
-          );
+          setEntities(Object.fromEntries(entRes.value.map((e) => [e.id, e])));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -71,12 +79,29 @@ function QrList() {
     };
   }, [attempt]);
 
+  const loadMore = async () => {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    setActionError(null);
+    try {
+      const res = await qrApi.list(cursor);
+      setItems((cur) => [...cur, ...res.data]);
+      setCursor(res.meta.next_cursor);
+      setHasMore(res.meta.has_more);
+    } catch {
+      setActionError(tc("error"));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const togglePause = async (qr: QrCode) => {
     if (busyId) return;
     const pausing = qr.status === "activated";
     const prevStatus: QrStatus = qr.status;
     setBusyId(qr.id);
     setActionError(null);
+    // Optimistic status flip.
     setItems((cur) =>
       cur.map((i) =>
         i.id === qr.id
@@ -86,8 +111,8 @@ function QrList() {
     );
     try {
       const { qr_code } = pausing
-        ? await mockQrApi.pause(qr.id)
-        : await mockQrApi.resume(qr.id);
+        ? await qrApi.pause(qr.id)
+        : await qrApi.resume(qr.id);
       setItems((cur) => cur.map((i) => (i.id === qr.id ? qr_code : i)));
     } catch {
       setItems((cur) =>
@@ -173,8 +198,7 @@ function QrList() {
                           <p className="mt-0.5 flex items-center gap-1.5 truncate text-[13px] text-muted">
                             <IconCar className="size-4 shrink-0" />
                             <span className="truncate">
-                              {entity.title ||
-                                `${entity.vehicle.make} ${entity.vehicle.model}`}
+                              {entityLabel(entity)}
                             </span>
                           </p>
                         )}
@@ -212,6 +236,17 @@ function QrList() {
               );
             })}
           </ul>
+
+          {hasMore && (
+            <Button
+              variant="secondary"
+              onClick={loadMore}
+              loading={loadingMore}
+              className="w-full"
+            >
+              {t("qrList.loadMore")}
+            </Button>
+          )}
         </>
       )}
     </div>
