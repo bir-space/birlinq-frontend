@@ -19,6 +19,7 @@ import {
 } from "@/components/auth/helpers";
 import { useApi, useHref } from "@/lib/app-env";
 import { ApiRequestError, isValidationError } from "@/lib/api/client";
+import { LIMITS } from "@/lib/api/limits";
 import { useAuth } from "@/lib/auth/use-auth";
 
 interface FormState {
@@ -114,6 +115,7 @@ function LoginForm() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             error={errors.identifier}
+            maxLength={LIMITS.email}
           />
         ) : (
           <Input
@@ -137,6 +139,7 @@ function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           error={errors.password}
+          maxLength={LIMITS.password}
         />
 
         {errors.form && <FormAlert>{errors.form}</FormAlert>}

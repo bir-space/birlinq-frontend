@@ -7,7 +7,17 @@
     "whatHappened": "What happened?",
     "choose": "Pick a situation — the owner will get a notification",
     "privacyTitle": "The owner's data is protected",
-    "privacyText": "The phone number stays hidden unless the owner allows it"
+    "privacyText": "The phone number stays hidden unless the owner allows it",
+    "personalFallback": "Personal page",
+    "contactTitle": "Get in touch",
+    "channels": {
+      "phone": "Phone",
+      "phone2": "Second phone",
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "company": "Company"
+    }
   },
   "scenario": {
     "banner": "Your message goes to the owner",
@@ -27,7 +37,9 @@
     "privacyTitle": "Your number was not stored",
     "privacyText": "Only the vehicle owner will see the message",
     "leadDivider": "want one for yourself?",
-    "close": "Close"
+    "close": "Close",
+    "duplicateTitle": "Already sent",
+    "duplicateSubtitle": "You sent the same message a moment ago — the owner knows, so we are not pinging them twice"
   },
   "lead": {
     "cta": "I want a sticker like this",
@@ -43,7 +55,8 @@
     "submit": "Get a sticker",
     "required": "Required field",
     "successTitle": "Request sent",
-    "successText": "We will contact you shortly"
+    "successText": "We will contact you shortly",
+    "rateLimited": "Your request is already in. Please try again later."
   },
   "abuse": {
     "link": "Report abuse",

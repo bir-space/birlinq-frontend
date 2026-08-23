@@ -20,7 +20,8 @@
     "tow": "Car is being towed",
     "accident": "Damage / accident",
     "free_message": "Free message",
-    "other": "Other"
+    "other": "Other",
+    "unknown": "Message"
   },
   "interactionStatus": {
     "new": "new",
@@ -79,7 +80,8 @@
     "empty": "No messages yet",
     "emptyHint": "When someone scans your QR and writes to you, the message will show up here.",
     "emptyCta": "My QRs",
-    "newFilterEmpty": "No new messages"
+    "newFilterEmpty": "No new messages",
+    "noMessage": "No text"
   },
   "qrList": {
     "title": "My QRs",

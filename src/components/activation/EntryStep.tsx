@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { useApi, useHref } from "@/lib/app-env";
+import { LIMITS } from "@/lib/api/limits";
 import { ApiRequestError, ErrorCode, isValidationError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
 
@@ -91,10 +92,18 @@ export function EntryStep({
     e.preventDefault();
     const trimmedCode = code.trim().toUpperCase();
     const trimmedToken = token.trim();
-    setCodeError(!trimmedCode ? t("codeRequired") : null);
+    // The backend rejects anything under 6 characters with a 422, and
+    // /qr/lookup is throttled to 30/min per IP - catching it here keeps a
+    // half-typed code from spending one of those attempts.
+    const codeProblem = !trimmedCode
+      ? t("codeRequired")
+      : trimmedCode.length < LIMITS.qrCodeMin
+        ? t("codeTooShort", { min: LIMITS.qrCodeMin })
+        : null;
+    setCodeError(codeProblem);
     setTokenError(!trimmedToken ? t("tokenRequired") : null);
     setFormError(null);
-    if (!trimmedCode || !trimmedToken) return;
+    if (codeProblem || !trimmedToken) return;
 
     setChecking(true);
     try {
@@ -230,6 +239,7 @@ export function EntryStep({
               error={codeError}
               autoCapitalize="characters"
               autoComplete="off"
+              maxLength={LIMITS.qrCodeMax}
               className="text-center font-bold uppercase tracking-[0.3em]"
             />
             <Input
@@ -240,6 +250,7 @@ export function EntryStep({
               onChange={(e) => setToken(e.target.value)}
               error={tokenError}
               autoComplete="off"
+              maxLength={LIMITS.activationToken}
             />
           </div>
         )}

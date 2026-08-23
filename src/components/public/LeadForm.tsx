@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { toApiLocale } from "@/lib/api/endpoints";
 import { useApi } from "@/lib/app-env";
-import { ApiRequestError } from "@/lib/api/client";
+import { isRateLimited } from "@/lib/api/client";
+import { LIMITS } from "@/lib/api/limits";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { IconCheck } from "./icons";
@@ -15,6 +17,7 @@ import { IconCheck } from "./icons";
 export function LeadForm({ code }: { code: string }) {
   const t = useTranslations("public");
   const api = useApi();
+  const locale = useLocale();
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [city, setCity] = useState("");
@@ -37,21 +40,23 @@ export function LeadForm({ code }: { code: string }) {
     setSubmitting(true);
     setError(null);
     try {
-      await api.public.submitLead(code, {
-        name: name.trim(),
-        contact: contact.trim(),
-        ...(city.trim() ? { city: city.trim() } : {}),
-      });
+      await api.public.submitLead(
+        code,
+        {
+          name: name.trim(),
+          contact: contact.trim(),
+          ...(city.trim() ? { city: city.trim() } : {}),
+        },
+        toApiLocale(locale)
+      );
       setDone(true);
     } catch (err) {
-      if (
-        err instanceof ApiRequestError &&
-        (err.status === 429 || err.code === "RATE_LIMITED")
-      ) {
-        setError(t("scenario.rateLimited"));
-      } else {
-        setError(t("errors.genericText"));
-      }
+      // This endpoint is throttled hard — 1 per 10 minutes per visitor IP by
+      // default — so 429 is the expected answer to an impatient second try,
+      // not an outage.
+      setError(
+        isRateLimited(err) ? t("lead.rateLimited") : t("errors.genericText")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -85,6 +90,7 @@ export function LeadForm({ code }: { code: string }) {
         error={fieldErrors.name ?? null}
         autoComplete="name"
         name="name"
+        maxLength={LIMITS.leadName}
       />
       <Input
         label={t("lead.contactLabel")}
@@ -95,6 +101,7 @@ export function LeadForm({ code }: { code: string }) {
         autoComplete="tel"
         name="contact"
         inputMode="tel"
+        maxLength={LIMITS.leadContact}
       />
       <Input
         label={t("lead.cityLabel")}
@@ -103,6 +110,7 @@ export function LeadForm({ code }: { code: string }) {
         onChange={(e) => setCity(e.target.value)}
         autoComplete="address-level2"
         name="city"
+        maxLength={LIMITS.leadCity}
       />
       {error && <p className="text-[12px] text-danger">{error}</p>}
       <Button

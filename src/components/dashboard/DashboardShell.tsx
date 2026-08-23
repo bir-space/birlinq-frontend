@@ -36,7 +36,7 @@ export function DashboardShell({
 }) {
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
-  const { user, loading, isAuthenticated, logout } = useAuth();
+  const { user, loading, isAuthenticated, logout, logoutAll } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const href = useHref();
@@ -58,10 +58,16 @@ export function DashboardShell({
     );
   }
 
-  const handleLogout = async () => {
+  /**
+   * `everywhere` maps to POST /auth/logout-all, which revokes every refresh
+   * token of the user. Plain logout now ends this session only — the backend
+   * carries a per-session claim in the access token — so the two are genuinely
+   * different actions and both need to be reachable.
+   */
+  const handleLogout = async (everywhere = false) => {
     setLoggingOut(true);
     try {
-      await logout();
+      await (everywhere ? logoutAll() : logout());
     } finally {
       router.replace(href(isMock ? "/" : "/login"));
     }
@@ -90,12 +96,21 @@ export function DashboardShell({
             </span>
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={() => handleLogout(false)}
               disabled={loggingOut}
               className="inline-flex h-[34px] cursor-pointer items-center gap-1.5 rounded-full border border-line px-3 text-[12px] font-semibold text-muted transition-colors hover:border-card-border hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               <IconLogout className="size-4" />
               <span className="hidden sm:inline">{tc("logout")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLogout(true)}
+              disabled={loggingOut}
+              title={tc("logoutAllHint")}
+              className="hidden h-[34px] cursor-pointer items-center rounded-full px-2 text-[12px] font-semibold text-muted-2 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
+            >
+              {tc("logoutAll")}
             </button>
           </div>
 

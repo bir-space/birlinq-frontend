@@ -23,7 +23,8 @@
     "bannerText": "with a safe digital page",
     "codeRequired": "Enter the sticker code",
     "tokenRequired": "Enter the activation code",
-    "genericError": "Could not check the code. Please try again."
+    "genericError": "Could not check the code. Please try again.",
+    "codeTooShort": "The sticker code is at least {min} characters"
   },
   "notFound": {
     "title": "Sticker not found",

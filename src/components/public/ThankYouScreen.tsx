@@ -14,10 +14,17 @@ import { IconCar, IconCheck, IconShieldCheck } from "./icons";
 export function ThankYouScreen({
   code,
   ownerMessage,
+  duplicate = false,
   onClose,
 }: {
   code: string;
   ownerMessage: string | null;
+  /**
+   * The backend recognised this as a repeat of a submission it already has
+   * from this visitor: the message stands, the owner just was not pinged
+   * again. Say so plainly instead of implying a second notification went out.
+   */
+  duplicate?: boolean;
   onClose: () => void;
 }) {
   const t = useTranslations("public");
@@ -31,9 +38,11 @@ export function ThankYouScreen({
             <IconCheck className="size-8" strokeWidth={2.4} />
           </div>
         </div>
-        <h1 className="mt-6 text-2xl font-bold">{t("thanks.title")}</h1>
+        <h1 className="mt-6 text-2xl font-bold">
+          {duplicate ? t("thanks.duplicateTitle") : t("thanks.title")}
+        </h1>
         <p className="mt-2 max-w-xs text-sm text-muted">
-          {t("thanks.subtitle")}
+          {duplicate ? t("thanks.duplicateSubtitle") : t("thanks.subtitle")}
         </p>
       </div>
 

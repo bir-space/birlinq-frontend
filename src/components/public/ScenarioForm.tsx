@@ -4,13 +4,19 @@ import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toApiLocale } from "@/lib/api/endpoints";
 import { useApi } from "@/lib/app-env";
-import { ApiRequestError } from "@/lib/api/client";
+import {
+  ApiRequestError,
+  isQrNotScannable,
+  isRateLimited,
+} from "@/lib/api/client";
+import { LIMITS } from "@/lib/api/limits";
 import type { PublicScenario } from "@/lib/api/types";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { IconArrowLeft, IconClose, IconInfo, ScenarioIcon } from "./icons";
 
-const MESSAGE_LIMIT = 500;
+/** SubmitScenarioRequest caps the message at 500. */
+const MESSAGE_LIMIT = LIMITS.scenarioMessage;
 
 /**
  * P2 — scenario message form. Textarea prefilled from the scenario, 500 char
@@ -29,7 +35,10 @@ export function ScenarioForm({
   scenario: PublicScenario;
   entityLabel: string;
   onBack: () => void;
-  onSubmitted: (ownerMessage: string | null) => void;
+  onSubmitted: (result: {
+    ownerMessage: string | null;
+    duplicate: boolean;
+  }) => void;
   onFatal: (kind: "not_found" | "unavailable") => void;
 }) {
   const t = useTranslations("public");
@@ -59,19 +68,22 @@ export function ScenarioForm({
       });
       const action = result.actions?.find((a) => a.type === "show_message");
       const raw = action?.payload?.message;
-      onSubmitted(typeof raw === "string" ? raw : null);
+      // "duplicate" is still a success for the visitor — their first message
+      // did reach the owner. It only means the owner was not notified twice.
+      onSubmitted({
+        ownerMessage: typeof raw === "string" ? raw : null,
+        duplicate: result.status === "duplicate",
+      });
     } catch (err) {
       setSubmitting(false);
-      if (err instanceof ApiRequestError) {
-        if (err.status === 429 || err.code === "RATE_LIMITED") {
-          setError(t("scenario.rateLimited"));
-        } else if (err.status === 410) {
-          onFatal("unavailable");
-        } else if (err.status === 404) {
-          onFatal("not_found");
-        } else {
-          setError(t("errors.genericText"));
-        }
+      if (isRateLimited(err)) {
+        setError(t("scenario.rateLimited"));
+      } else if (isQrNotScannable(err)) {
+        // The owner paused or an admin blocked the code between load and send.
+        onFatal("unavailable");
+      } else if (err instanceof ApiRequestError && err.status === 404) {
+        // Unknown code, or the scenario was disabled while this form was open.
+        onFatal("not_found");
       } else {
         setError(t("errors.genericText"));
       }

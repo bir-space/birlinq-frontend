@@ -2,11 +2,15 @@
  * Small shared helpers for auth forms (login/register pages + inline wizard forms).
  */
 
+import { LIMITS } from "@/lib/api/limits";
+
 /** Kazakhstan mobile format required by the backend. */
 export const PHONE_RE = /^77\d{9}$/;
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const PASSWORD_MIN = 8;
+/** Register and reset agree on 8..100 — see `LIMITS`. */
+export const PASSWORD_MIN = LIMITS.passwordMin;
+export const PASSWORD_MAX = LIMITS.password;
 
 export type AuthMethod = "email" | "phone";
 

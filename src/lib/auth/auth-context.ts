@@ -14,7 +14,10 @@ export interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   refresh: () => Promise<void>;
+  /** Ends this session only — other devices stay signed in. */
   logout: () => Promise<void>;
+  /** Ends every session of this user (POST /auth/logout-all). */
+  logoutAll: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

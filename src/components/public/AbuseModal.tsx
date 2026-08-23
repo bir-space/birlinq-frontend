@@ -3,7 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useApi } from "@/lib/app-env";
-import { ApiRequestError } from "@/lib/api/client";
+import { isRateLimited } from "@/lib/api/client";
+import { LIMITS } from "@/lib/api/limits";
 import type { AbuseReason } from "@/lib/api/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -50,14 +51,12 @@ export function AbuseModal({
       });
       setDone(true);
     } catch (err) {
-      if (
-        err instanceof ApiRequestError &&
-        (err.status === 429 || err.code === "RATE_LIMITED")
-      ) {
-        setError(t("scenario.rateLimited"));
-      } else {
-        setError(t("errors.genericText"));
-      }
+      // No 410 branch on purpose: unlike the other public endpoints this one
+      // accepts reports on a paused or blocked code, because abuse is often
+      // exactly why it got paused.
+      setError(
+        isRateLimited(err) ? t("scenario.rateLimited") : t("errors.genericText")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -142,8 +141,10 @@ export function AbuseModal({
                   label={t("abuse.noteLabel")}
                   placeholder={t("abuse.notePlaceholder")}
                   value={note}
-                  onChange={(e) => setNote(e.target.value.slice(0, 500))}
-                  maxLength={500}
+                  onChange={(e) =>
+                    setNote(e.target.value.slice(0, LIMITS.abuseNote))
+                  }
+                  maxLength={LIMITS.abuseNote}
                   className="min-h-24"
                   error={error}
                 />

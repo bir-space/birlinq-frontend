@@ -12,13 +12,16 @@
 import { ApiRequestError } from "@/lib/api/client";
 import type { AppApi } from "@/lib/app-env";
 import type {
+  AbuseAccepted,
   AbuseRequest,
+  ApiLocale,
   AuthResponse,
   CreateEntityRequest,
   CursorPaginated,
   Entity,
   EntityCursorMeta,
   Interaction,
+  LeadAccepted,
   LeadRequest,
   LoginRequest,
   OwnerDashboard,
@@ -112,6 +115,10 @@ export const mockAuthApi = {
   },
 
   async logout(): Promise<void> {
+    return delay(undefined);
+  },
+
+  async logoutAll(): Promise<void> {
     return delay(undefined);
   },
 
@@ -319,7 +326,10 @@ export const mockQrApi = {
 };
 
 export const mockPublicApi = {
-  async scan(_code: string): Promise<PublicEntityPayload> {
+  async scan(
+    _code: string,
+    _locale?: ApiLocale
+  ): Promise<PublicEntityPayload> {
     return delay(MOCK_PUBLIC_PAYLOAD);
   },
 
@@ -340,12 +350,19 @@ export const mockPublicApi = {
     });
   },
 
-  async submitLead(_code: string, _body: LeadRequest): Promise<void> {
-    return delay(undefined);
+  async submitLead(
+    _code: string,
+    _body: LeadRequest,
+    _locale?: ApiLocale
+  ): Promise<LeadAccepted> {
+    return delay({ status: "accepted", lead_id: genId("lead") });
   },
 
-  async reportAbuse(_code: string, _body: AbuseRequest): Promise<void> {
-    return delay(undefined);
+  async reportAbuse(
+    _code: string,
+    _body: AbuseRequest
+  ): Promise<AbuseAccepted> {
+    return delay({ status: "accepted", report_id: genId("abuse") });
   },
 };
 
@@ -367,18 +384,18 @@ export const mockOwnerApi = {
     });
   },
 
-  async resolveInteraction(id: string): Promise<{ interaction: Interaction }> {
-    interactions = interactions.map((i) =>
-      i.id === id ? { ...i, status: "resolved" } : i
-    );
-    const interaction = interactions.find((i) => i.id === id);
-    if (!interaction) {
+  /** 204 with no body, like the real endpoint — the caller updates its copy. */
+  async resolveInteraction(id: string): Promise<void> {
+    if (!interactions.some((i) => i.id === id)) {
       throw new ApiRequestError(404, {
-        code: "NOT_FOUND",
+        code: "INTERACTION_NOT_FOUND",
         message: "Interaction not found",
       });
     }
-    return delay({ interaction });
+    interactions = interactions.map((i) =>
+      i.id === id ? { ...i, status: "resolved" } : i
+    );
+    return delay(undefined);
   },
 };
 

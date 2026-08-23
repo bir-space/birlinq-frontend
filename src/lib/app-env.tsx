@@ -7,7 +7,6 @@ import {
   ownerApi,
   publicApi,
   qrApi,
-  unimplementedAuthApi,
 } from "./api/endpoints";
 
 /**
@@ -21,7 +20,7 @@ import {
  */
 
 export interface AppApi {
-  auth: typeof authApi & typeof unimplementedAuthApi;
+  auth: typeof authApi;
   entities: typeof entitiesApi;
   qr: typeof qrApi;
   public: typeof publicApi;
@@ -29,7 +28,7 @@ export interface AppApi {
 }
 
 export const realApi: AppApi = {
-  auth: { ...authApi, ...unimplementedAuthApi },
+  auth: authApi,
   entities: entitiesApi,
   qr: qrApi,
   public: publicApi,

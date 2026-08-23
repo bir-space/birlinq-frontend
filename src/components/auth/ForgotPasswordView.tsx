@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { EMAIL_RE, detailsToFieldErrors } from "@/components/auth/helpers";
+import { LIMITS } from "@/lib/api/limits";
 import { useApi, useHref } from "@/lib/app-env";
 import { ApiRequestError, isValidationError } from "@/lib/api/client";
 
@@ -77,9 +78,18 @@ export function ForgotPasswordView() {
           <p className="mt-2 text-sm leading-relaxed text-muted">
             {t("forgot.successText", { email })}
           </p>
+          {/* The mail carries a code, not a link, so the next step has to be
+              offered here — otherwise the user has a token and nowhere to put
+              it. Wording stays neutral about whether the account exists. */}
+          <Link
+            href={href("/reset-password")}
+            className="mt-8 inline-flex h-[50px] w-full items-center justify-center rounded-(--radius-btn) bg-white px-6 text-[15px] font-semibold text-ink-900 transition-colors hover:bg-slate-100"
+          >
+            {t("forgot.enterCode")}
+          </Link>
           <Link
             href={href("/login")}
-            className="mt-8 inline-flex h-[50px] w-full items-center justify-center rounded-(--radius-btn) bg-white px-6 text-[15px] font-semibold text-ink-900 transition-colors hover:bg-slate-100"
+            className="mt-4 text-sm text-muted underline-offset-4 hover:text-white hover:underline"
           >
             {t("forgot.backToLogin")}
           </Link>
@@ -102,6 +112,7 @@ export function ForgotPasswordView() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               error={fieldError}
+              maxLength={LIMITS.email}
             />
 
             {formError && <FormAlert>{formError}</FormAlert>}

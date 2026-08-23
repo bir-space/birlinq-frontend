@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { toApiLocale } from "@/lib/api/endpoints";
 import { useApi } from "@/lib/app-env";
 import { ApiRequestError } from "@/lib/api/client";
 import type { PublicEntityPayload, PublicScenario } from "@/lib/api/types";
@@ -24,7 +25,7 @@ type LoadState =
 type Screen =
   | { name: "entity" }
   | { name: "scenario"; scenario: PublicScenario }
-  | { name: "thanks"; ownerMessage: string | null };
+  | { name: "thanks"; ownerMessage: string | null; duplicate: boolean };
 
 function mapError(err: unknown): ErrorKind {
   if (err instanceof ApiRequestError) {
@@ -44,6 +45,7 @@ function mapError(err: unknown): ErrorKind {
 export function PublicScanPage({ code }: { code: string }) {
   const t = useTranslations("public");
   const api = useApi();
+  const locale = useLocale();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [screen, setScreen] = useState<Screen>({ name: "entity" });
   const [abuseOpen, setAbuseOpen] = useState(false);
@@ -52,12 +54,14 @@ export function PublicScanPage({ code }: { code: string }) {
     setState({ status: "loading" });
     setScreen({ name: "entity" });
     try {
-      const payload = await api.public.scan(code);
+      // Without the locale the scan event is logged against whatever the
+      // browser happens to advertise, not the language the page is showing.
+      const payload = await api.public.scan(code, toApiLocale(locale));
       setState({ status: "ready", payload });
     } catch (err) {
       setState({ status: "error", kind: mapError(err) });
     }
-  }, [api, code]);
+  }, [api, code, locale]);
 
   useEffect(() => {
     void load();
@@ -110,11 +114,15 @@ export function PublicScanPage({ code }: { code: string }) {
             scenario={screen.scenario}
             entityLabel={entityTitle(
               state.payload,
-              t("entity.vehicleFallback")
+              t(
+                state.payload.entity.type === "personal"
+                  ? "entity.personalFallback"
+                  : "entity.vehicleFallback"
+              )
             )}
             onBack={() => setScreen({ name: "entity" })}
-            onSubmitted={(ownerMessage) =>
-              setScreen({ name: "thanks", ownerMessage })
+            onSubmitted={({ ownerMessage, duplicate }) =>
+              setScreen({ name: "thanks", ownerMessage, duplicate })
             }
             onFatal={(kind) => setState({ status: "error", kind })}
           />
@@ -124,6 +132,7 @@ export function PublicScanPage({ code }: { code: string }) {
           <ThankYouScreen
             code={code}
             ownerMessage={screen.ownerMessage}
+            duplicate={screen.duplicate}
             onClose={() => setScreen({ name: "entity" })}
           />
         )}

@@ -1,12 +1,12 @@
 /**
- * API types — written against the CURRENTLY IMPLEMENTED birlinq-backend
- * (routes/api.php + App\Http\Resources\Api\V1\*).
+ * API types — written against birlinq-backend `main`
+ * (routes/api.php + App\Http\Resources\Api\V1\* + App\Domain\*).
  *
- * NB: docs/api/openapi.yaml in the backend repo is ahead of the code — it
- * documents endpoints and field names that do not exist yet (owner/*,
- * public/*, password reset, `vehicle` nested on entity create, ...).
- * This file follows the code, not the spec. Anything spec-only is marked
- * with `NOT IMPLEMENTED` in endpoints.ts.
+ * The contract is now closed: all 27 paths in docs/api/openapi.yaml are
+ * implemented. Where the spec's `components.schemas` block still carries older
+ * field names (`plate_number`, `show_owner_name`, `type: [vehicle]`), the
+ * shapes below follow the API Resources and the PrivacyFilter — that is what
+ * actually goes over the wire.
  */
 
 // ---------- Shared ----------
@@ -18,13 +18,13 @@ export interface ApiError {
   details?: Record<string, unknown>;
 }
 
-/** `GET /qr` — cursor meta. */
+/** `GET /qr`, `GET /owner/interactions` — cursor meta. */
 export interface QrCursorMeta {
   next_cursor: string | null;
   has_more: boolean;
 }
 
-/** `GET /entities` — cursor meta (backend returns per_page, not has_more). */
+/** `GET /entities` — cursor meta (this one returns per_page, not has_more). */
 export interface EntityCursorMeta {
   next_cursor: string | null;
   per_page: number;
@@ -59,9 +59,8 @@ export interface AuthTokenPair {
 /**
  * Body of register / login / refresh.
  *
- * The deployed backend nests the tokens:
- *   { user: {...}, tokens: { access_token, refresh_token, ... } }
- * An older build of AuthController spreads them flat alongside `user`.
+ * Current backend: { user: {...}, tokens: { access_token, refresh_token, ... } }
+ * An older AuthController spread them flat alongside `user`;
  * `normalizeAuthResponse` in client.ts accepts both.
  */
 export interface AuthResponse {
@@ -244,25 +243,53 @@ export interface QrActivateRequest extends QrLookupRequest {
   entity_id: string; // uuid
 }
 
-// ---------- Public scan (NOT IMPLEMENTED on the backend yet) ----------
-// TODO(backend): these shapes come from openapi.yaml, not from a live response —
-// re-check them against the real payload once /public/q/* ships.
-// See the TODO block above `publicApi` in endpoints.ts.
+// ---------- Public scan ----------
+// Shapes come from App\Domain\Scenarios\GetPublicPayloadAction + PrivacyFilter.
 
 export interface PublicScenario {
   id: string;
   code: string; // e.g. "car_blocking"
   title: string;
-  description?: string;
-  icon?: string;
-  prefilled_message?: string;
+  description?: string | null;
+  icon?: string | null;
+  prefilled_message?: string | null;
+}
+
+/**
+ * Vehicle block of the public payload. make/model/color are always present;
+ * everything else is opt-in and — critically — *omitted, not nulled*, when the
+ * owner keeps it private (PrivacyFilter). A missing key therefore says nothing
+ * about whether the owner filled that field in.
+ */
+export interface PublicVehicle {
+  make?: string;
+  model?: string;
+  color?: string;
+  year?: number;
+  license_plate?: string;
+  photo_url?: string;
+}
+
+/** Contact block for `personal` entities. Every channel is opt-in. */
+export interface PublicContact {
+  display_name?: string;
+  phone?: string;
+  phone2?: string;
+  email?: string;
+  whatsapp?: string;
+  telegram?: string;
+  company?: string;
+  bio?: string;
 }
 
 export interface PublicEntityPayload {
   entity: {
-    type: string;
-    title?: string;
-    vehicle?: Partial<VehicleProfile>;
+    type: EntityType;
+    title?: string | null;
+    /** Present for `car` entities. */
+    vehicle?: PublicVehicle;
+    /** Present for `personal` entities. */
+    contact?: PublicContact;
   };
   scenarios: PublicScenario[];
   meta: {
@@ -273,16 +300,24 @@ export interface PublicEntityPayload {
 
 export interface ScenarioSubmitRequest {
   message: string;
-  visitor_locale?: string;
+  visitor_locale?: ApiLocale;
 }
 
 export interface SubmissionAction {
-  type: string; // e.g. "show_message"
+  type: string; // e.g. "show_message", "send_notification"
   payload: Record<string, unknown>;
 }
 
+/**
+ * "duplicate" — an identical submission from this visitor arrived inside the
+ * dedup window (DEDUP_SCENARIO_WINDOW_MINUTES, 10 by default): the owner was
+ * NOT notified again and `interaction_id` points at the original event. The
+ * visitor still gets a success screen; from their side the message did land.
+ */
+export type SubmissionStatus = "accepted" | "duplicate";
+
 export interface SubmissionResult {
-  status: "accepted";
+  status: SubmissionStatus;
   interaction_id: string;
   actions: SubmissionAction[];
 }
@@ -293,6 +328,12 @@ export interface LeadRequest {
   city?: string;
 }
 
+/** 202 from POST /public/q/{code}/lead. */
+export interface LeadAccepted {
+  status: "accepted";
+  lead_id: string;
+}
+
 export type AbuseReason = "spam" | "harassment" | "impersonation" | "other";
 
 export interface AbuseRequest {
@@ -300,9 +341,13 @@ export interface AbuseRequest {
   note?: string;
 }
 
-// ---------- Owner analytics (NOT IMPLEMENTED on the backend yet) ----------
-// TODO(backend): spec-only shapes — verify against the real /owner/* responses
-// once they ship. See the TODO block above `ownerApi` in endpoints.ts.
+/** 202 from POST /public/q/{code}/abuse. */
+export interface AbuseAccepted {
+  status: "accepted";
+  report_id: string;
+}
+
+// ---------- Owner cabinet ----------
 
 export interface OwnerDashboard {
   total_qrs: number;
@@ -315,11 +360,16 @@ export interface OwnerDashboard {
 
 export type InteractionStatus = "new" | "resolved" | "spam";
 
+/**
+ * App\Http\Resources\Api\V1\InteractionResource. `scenario_code` and `message`
+ * are read through an optional relation and the event payload respectively, so
+ * either can come back null for an event that carries neither.
+ */
 export interface Interaction {
   id: string;
   qr_code_id: string;
-  scenario_code: string;
-  message: string;
+  scenario_code: string | null;
+  message: string | null;
   status: InteractionStatus;
   created_at: string;
 }

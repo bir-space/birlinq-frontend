@@ -5,13 +5,16 @@ import {
   normalizeAuthResponse,
 } from "./client";
 import type {
+  AbuseAccepted,
   AbuseRequest,
+  ApiLocale,
   AuthResponse,
   CreateEntityRequest,
   CursorPaginated,
   Entity,
   EntityCursorMeta,
   Interaction,
+  LeadAccepted,
   LeadRequest,
   LoginRequest,
   OwnerDashboard,
@@ -50,30 +53,56 @@ async function startSession(
 }
 
 export const authApi = {
-  /** POST /auth/register → 201 { user, tokens } */
+  /**
+   * POST /auth/register → 201 { user, tokens }.
+   * Throttled to RATELIMIT_REGISTER_PER_HOUR (5/hour) per source address, so
+   * 429 is a normal outcome to surface, not a bug.
+   * Accounts created with an email are mailed a verification *code* (a 64-hex
+   * token, no link — see `verifyEmail`); phone-only accounts never get one and
+   * have nothing to confirm.
+   */
   register(body: RegisterRequest): Promise<AuthResponse> {
     return startSession("/auth/register", body);
   },
 
-  /** POST /auth/login → 200 { user, tokens } */
+  /**
+   * POST /auth/login → 200 { user, tokens }.
+   * Throttled on IP *and* identifier together (10 per 5 min): one account
+   * guessed from one source gets blocked without locking the real owner out.
+   */
   login(body: LoginRequest): Promise<AuthResponse> {
     return startSession("/auth/login", body);
   },
 
   /**
-   * POST /auth/logout — JWT-guarded, takes no body: the backend revokes every
-   * refresh token of the user and invalidates the presented access token.
+   * POST /auth/logout → 204. Revokes the refresh token of *this* session only
+   * (identified by a claim inside the access token) and invalidates the
+   * presented access token. Other devices stay signed in — use `logoutAll` to
+   * end every session.
    */
   async logout(): Promise<void> {
     try {
       if (tokenStore.hasSession()) {
-        await apiFetch<{ status: "logged_out" }>("/auth/logout", {
-          method: "POST",
-          auth: true,
-        });
+        await apiFetch<void>("/auth/logout", { method: "POST", auth: true });
       }
     } catch {
       // Local sign-out must succeed even if the call fails.
+    } finally {
+      tokenStore.clear();
+    }
+  },
+
+  /**
+   * POST /auth/logout-all → 204. Revokes every refresh token of the user.
+   * The button for "sign out everywhere" after a suspected compromise.
+   */
+  async logoutAll(): Promise<void> {
+    try {
+      if (tokenStore.hasSession()) {
+        await apiFetch<void>("/auth/logout-all", { method: "POST", auth: true });
+      }
+    } catch {
+      // Same as logout: never trap the user in a session locally.
     } finally {
       tokenStore.clear();
     }
@@ -83,20 +112,15 @@ export const authApi = {
   me(): Promise<{ user: User }> {
     return apiFetch<{ user: User }>("/auth/me", { auth: true });
   },
-};
 
-/* ------------------------------------------------------------------ *
- * NOT IMPLEMENTED on the backend (documented in docs/api/openapi.yaml
- * but absent from routes/api.php). Calling these returns 404 NOT_FOUND.
- * Kept so the UI wires up the moment the backend ships them.
- *
- * TODO(backend): implement POST /auth/verify-email, /auth/password/forgot,
- * /auth/password/reset. Until then RegisterView cannot confirm an address and
- * ForgotPasswordView / ResetPasswordView are dead ends — they render, submit,
- * and get a 404 back.
- * ------------------------------------------------------------------ */
-
-export const unimplementedAuthApi = {
+  /**
+   * POST /auth/verify-email → 204. Single use, 24 h TTL.
+   * The token is 64 hex characters and arrives in the email as a code to
+   * paste — there is no link, so the UI has to offer a field for it.
+   * Unknown, already-used and expired tokens all answer the same
+   * 400 INVALID_VERIFICATION_TOKEN, so the UI cannot (and must not try to)
+   * tell the visitor which one it was.
+   */
   verifyEmail(token: string): Promise<void> {
     return apiFetch<void>("/auth/verify-email", {
       method: "POST",
@@ -104,6 +128,12 @@ export const unimplementedAuthApi = {
     });
   },
 
+  /**
+   * POST /auth/password/forgot → 204, *always* — including for an address with
+   * no account. Anything else would turn this into an account-enumeration
+   * oracle, so the UI must show the same "check your mail" screen either way.
+   * Throttled to 3/hour per IP.
+   */
   forgotPassword(email: string): Promise<void> {
     return apiFetch<void>("/auth/password/forgot", {
       method: "POST",
@@ -111,6 +141,14 @@ export const unimplementedAuthApi = {
     });
   },
 
+  /**
+   * POST /auth/password/reset → 204. Min password length 8, same as register.
+   * Like the verification token, this one is mailed as a 64-hex code with no
+   * link, and it expires after 60 minutes.
+   * A bad or expired token answers 400 INVALID_RESET_TOKEN. On success every
+   * refresh token for the account is revoked — a reset usually follows a
+   * suspected compromise — so the user has to sign in again afterwards.
+   */
   resetPassword(token: string, password: string): Promise<void> {
     return apiFetch<void>("/auth/password/reset", {
       method: "POST",
@@ -294,31 +332,34 @@ export const qrApi = {
   },
 };
 
-/* ------------------------------------------------------------------ *
- * NOT IMPLEMENTED on the backend — public scan flow and owner analytics.
- * See the note above `unimplementedAuthApi`.
- *
- * TODO(backend): implement the public scan flow — GET /public/q/{code},
- * POST /public/q/{code}/scenarios/{id}, /lead, /abuse. PublicScanPage falls
- * back to a static screen without them, so scanning a QR does nothing.
- *
- * TODO(backend): implement GET /owner/dashboard, GET /owner/interactions,
- * POST /owner/interactions/{id}/resolve. OverviewView and InteractionsView
- * swallow the 404 via `isMissingEndpoint` and show empty states.
- *
- * TODO(backend): no endpoint exists for the landing lead form at all — it is
- * not in openapi.yaml either. `leads` table + Filament LeadResource are ready;
- * a public POST /leads (throttled, no auth) is still to be decided. Until then
- * LeadForm submits nowhere — see components/landing/LeadForm.tsx.
- * ------------------------------------------------------------------ */
+// ---------- Public scan flow (no auth) ----------
+//
+// Every endpoint here answers 404 QR_NOT_FOUND for an unknown code and
+// 410 QR_NOT_SCANNABLE when the code is real but paused / blocked / never
+// activated — different screens for the visitor, so don't collapse the two.
+// The one exception is `reportAbuse`, which deliberately accepts reports on a
+// paused or blocked code, because abuse is often *why* it was paused.
 
 export const publicApi = {
-  scan(code: string): Promise<PublicEntityPayload> {
+  /**
+   * GET /public/q/{code}. Records the scan as an append-only event; the
+   * visitor IP is stored only as an HMAC salted per QR code. Throttled to
+   * 30/min per visitor IP.
+   */
+  scan(code: string, locale?: ApiLocale): Promise<PublicEntityPayload> {
     return apiFetch<PublicEntityPayload>(
-      `/public/q/${encodeURIComponent(code)}`
+      `/public/q/${encodeURIComponent(code)}`,
+      { locale }
     );
   },
 
+  /**
+   * POST /public/q/{code}/scenarios/{id} → 202.
+   * 202, not 200: notifying the owner happens after the response, so a success
+   * means the submission was accepted, not that mail has landed.
+   * `status: "duplicate"` means the same visitor already sent this scenario
+   * inside the dedup window and the owner was not woken a second time.
+   */
   submitScenario(
     code: string,
     scenarioId: string,
@@ -330,26 +371,40 @@ export const publicApi = {
     );
   },
 
-  submitLead(code: string, body: LeadRequest): Promise<void> {
-    return apiFetch<void>(`/public/q/${encodeURIComponent(code)}/lead`, {
-      method: "POST",
-      body,
-    });
+  /**
+   * POST /public/q/{code}/lead → 202 { status, lead_id }.
+   * Contact details land in the `leads` table, never in the append-only
+   * interaction log. Throttled hard (1 per 10 min per IP by default).
+   */
+  submitLead(
+    code: string,
+    body: LeadRequest,
+    locale?: ApiLocale
+  ): Promise<LeadAccepted> {
+    return apiFetch<LeadAccepted>(
+      `/public/q/${encodeURIComponent(code)}/lead`,
+      { method: "POST", body, locale }
+    );
   },
 
-  reportAbuse(code: string, body: AbuseRequest): Promise<void> {
-    return apiFetch<void>(`/public/q/${encodeURIComponent(code)}/abuse`, {
-      method: "POST",
-      body,
-    });
+  /** POST /public/q/{code}/abuse → 202 { status, report_id }. */
+  reportAbuse(code: string, body: AbuseRequest): Promise<AbuseAccepted> {
+    return apiFetch<AbuseAccepted>(
+      `/public/q/${encodeURIComponent(code)}/abuse`,
+      { method: "POST", body }
+    );
   },
 };
 
+// ---------- Owner cabinet ----------
+
 export const ownerApi = {
+  /** GET /owner/dashboard — every figure scoped to the caller's own entities. */
   dashboard(): Promise<OwnerDashboard> {
     return apiFetch<OwnerDashboard>("/owner/dashboard", { auth: true });
   },
 
+  /** GET /owner/interactions — scenario submissions on the caller's QR codes. */
   interactions(params?: {
     cursor?: string;
     limit?: number;
@@ -368,16 +423,24 @@ export const ownerApi = {
     );
   },
 
-  resolveInteraction(id: string): Promise<{ interaction: Interaction }> {
-    return apiFetch<{ interaction: Interaction }>(
-      `/owner/interactions/${id}/resolve`,
-      { method: "POST", auth: true, idempotencyKey: newIdempotencyKey() }
-    );
+  /**
+   * POST /owner/interactions/{id}/resolve → 204, no body.
+   * Idempotent: resolving twice succeeds and changes nothing. Only `status`
+   * moves — per D-033 every field describing what the visitor did is immutable,
+   * so the caller updates its own copy rather than reading back a new one.
+   * Someone else's interaction answers 404 (not 403) by design.
+   */
+  resolveInteraction(id: string): Promise<void> {
+    return apiFetch<void>(`/owner/interactions/${id}/resolve`, {
+      method: "POST",
+      auth: true,
+      idempotencyKey: newIdempotencyKey(),
+    });
   },
 };
 
 /** Map web locale (ISO "kk") to backend locale code ("kz"). */
-export function toApiLocale(webLocale: string): "ru" | "kz" | "en" {
+export function toApiLocale(webLocale: string): ApiLocale {
   if (webLocale === "kk") return "kz";
   if (webLocale === "en") return "en";
   return "ru";

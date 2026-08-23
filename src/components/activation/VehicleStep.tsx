@@ -9,6 +9,7 @@ import { FormAlert } from "@/components/auth/FormAlert";
 import { detailsToFieldErrors } from "@/components/auth/helpers";
 import { useApi } from "@/lib/app-env";
 import { ApiRequestError, isValidationError } from "@/lib/api/client";
+import { LIMITS } from "@/lib/api/limits";
 import type { Entity } from "@/lib/api/types";
 
 const COLOR_KEYS = [
@@ -251,6 +252,7 @@ export function VehicleStep({
               onChange={(e) => setMake(e.target.value)}
               error={errors.make}
               autoComplete="off"
+              maxLength={LIMITS.vehicleMake}
             />
             <Input
               label={t("model")}
@@ -259,6 +261,7 @@ export function VehicleStep({
               onChange={(e) => setModel(e.target.value)}
               error={errors.model}
               autoComplete="off"
+              maxLength={LIMITS.vehicleModel}
             />
 
             <div className="flex flex-col gap-1.5">
@@ -305,6 +308,7 @@ export function VehicleStep({
                     value={customColor}
                     onChange={(e) => setCustomColor(e.target.value)}
                     autoComplete="off"
+                    maxLength={LIMITS.vehicleColor}
                   />
                 </div>
               )}
@@ -328,6 +332,7 @@ export function VehicleStep({
                 onChange={(e) => setPlate(e.target.value)}
                 error={errors.plate}
                 autoComplete="off"
+                maxLength={LIMITS.licensePlate}
               />
             </div>
 

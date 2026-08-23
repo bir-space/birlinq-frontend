@@ -19,6 +19,7 @@ import {
   type AuthMethod,
 } from "@/components/auth/helpers";
 import { toApiLocale } from "@/lib/api/endpoints";
+import { LIMITS } from "@/lib/api/limits";
 import { useApi, useHref } from "@/lib/app-env";
 import { ApiRequestError, isValidationError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/use-auth";
@@ -117,6 +118,7 @@ function RegisterForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           error={errors.name}
+          maxLength={LIMITS.name}
         />
 
         <MethodToggle
@@ -138,6 +140,7 @@ function RegisterForm() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             error={errors.identifier}
+            maxLength={LIMITS.email}
           />
         ) : (
           <Input
@@ -162,6 +165,7 @@ function RegisterForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           error={errors.password}
+          maxLength={LIMITS.password}
         />
 
         <div className="flex flex-col gap-1.5">

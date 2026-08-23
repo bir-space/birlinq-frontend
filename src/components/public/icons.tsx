@@ -210,3 +210,55 @@ export function ScenarioIcon({
   if (/(light|head)/.test(h)) return <IconCar className={className} />;
   return <IconChat className={className} />;
 }
+
+export function IconUser(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c0-3.6 3.4-6 7.5-6s7.5 2.4 7.5 6" />
+    </Svg>
+  );
+}
+
+export function IconPhone(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6.5 3h3l1.5 4-2 1.5a12 12 0 0 0 6.5 6.5L17 13l4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4 5.2 2 2 0 0 1 6 3Z" />
+    </Svg>
+  );
+}
+
+export function IconMail(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3.5 7 8.5 6 8.5-6" />
+    </Svg>
+  );
+}
+
+export function IconWhatsapp(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 20.5l1.7-5.1A8.5 8.5 0 1 1 21 11.5Z" />
+      <path d="M8.8 9c.3 1.5 2.7 3.9 4.2 4.2l1-1 1.8.9-.3 1.4c-2.6.6-6.6-3.4-6-6l1.4-.3.9 1.8Z" />
+    </Svg>
+  );
+}
+
+export function IconTelegram(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M21 4.5 2.8 11.4l4.9 1.6L19 6.6l-9 8v4l3-3.3 4.3 3.2Z" />
+    </Svg>
+  );
+}
+
+export function IconBriefcase(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="7.5" width="18" height="12" rx="2" />
+      <path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3 12h18" />
+    </Svg>
+  );
+}

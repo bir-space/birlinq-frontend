@@ -23,8 +23,12 @@ export function LeadForm() {
       return;
     }
     setError(null);
-    // TODO: there is no landing-leads endpoint in the backend yet.
-    // When one exists, POST { name, contact, city } here before showing success.
+    // TODO(backend): still nowhere to send this. The backend has exactly one
+    // lead endpoint — POST /public/q/{code}/lead — and it is keyed on a scanned
+    // QR code, which a landing visitor does not have. The `leads` table and the
+    // Filament resource behind it are ready; what is missing is an
+    // unauthenticated, throttled POST /leads with no code. Until it exists this
+    // form only shows its success state.
     setSubmitted(true);
   }
 

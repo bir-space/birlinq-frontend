@@ -4,7 +4,6 @@ import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useApi, useHref } from "@/lib/app-env";
-import { isMissingEndpoint } from "@/lib/api/client";
 import type { Interaction } from "@/lib/api/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -66,10 +65,8 @@ function InteractionsList() {
         setItems(res.data);
         setCursor(res.meta.next_cursor);
         setHasMore(res.meta.has_more);
-      } catch (err) {
-        // /owner/interactions is not implemented on the backend yet — show the
-        // "no messages" state rather than an error the user can't act on.
-        if (!cancelled && !isMissingEndpoint(err)) setError(true);
+      } catch {
+        if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -102,13 +99,14 @@ function InteractionsList() {
     if (resolving.has(id)) return;
     setResolving((prev) => new Set(prev).add(id));
     setActionError(null);
-    // Optimistic: flip to resolved right away.
+    // Optimistic, and it stays that way: the endpoint answers 204 with no
+    // body. Per D-033 `status` is the only field resolving can change, so the
+    // local flip below is the whole truth — there is nothing to read back.
     setItems((cur) =>
       cur.map((i) => (i.id === id ? { ...i, status: "resolved" as const } : i))
     );
     try {
-      const { interaction } = await api.owner.resolveInteraction(id);
-      setItems((cur) => cur.map((i) => (i.id === id ? interaction : i)));
+      await api.owner.resolveInteraction(id);
     } catch {
       // Revert on failure.
       setItems((cur) =>
@@ -293,7 +291,7 @@ function InteractionCard({
           {/* Cap the measure: on the full-width track an uncapped line would
               run past a comfortable reading length. */}
           <p className="mt-1.5 max-w-[70ch] text-[13px] leading-relaxed text-muted">
-            «{item.message}»
+            {item.message ? `«${item.message}»` : t("interactions.noMessage")}
           </p>
           {isNew && (
             <div className="mt-3">

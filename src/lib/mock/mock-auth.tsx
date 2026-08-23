@@ -54,6 +54,11 @@ export function MockAuthProvider({
     setUser(null);
   }, []);
 
+  const logoutAll = useCallback(async () => {
+    await mockAuthApi.logoutAll();
+    setUser(null);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -61,8 +66,9 @@ export function MockAuthProvider({
       isAuthenticated: user !== null,
       refresh,
       logout,
+      logoutAll,
     }),
-    [user, hydrated, refresh, logout]
+    [user, hydrated, refresh, logout, logoutAll]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

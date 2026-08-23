@@ -14,5 +14,7 @@
   "logout": "Шығу",
   "register": "Тіркелу",
   "dashboard": "Жеке кабинет",
-  "language": "Тіл"
+  "language": "Тіл",
+  "logoutAll": "Барлық жерде",
+  "logoutAllHint": "Барлық құрылғыдан шығу"
 }

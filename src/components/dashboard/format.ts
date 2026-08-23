@@ -17,8 +17,14 @@ const KNOWN_SCENARIOS = new Set([
   "other",
 ]);
 
-/** Human label for a scenario code; unknown codes degrade gracefully. */
-export function scenarioLabel(code: string, t: TranslateFn): string {
+/**
+ * Human label for a scenario code; unknown codes degrade gracefully.
+ * The code is null when the event carries no scenario relation — the engine is
+ * config-driven, so a scenario type can be retired while its past events stay
+ * in the append-only log.
+ */
+export function scenarioLabel(code: string | null, t: TranslateFn): string {
+  if (!code) return t("scenarios.unknown");
   if (KNOWN_SCENARIOS.has(code)) return t(`scenarios.${code}`);
   return code.replace(/_/g, " ");
 }
