@@ -10,7 +10,7 @@
  * privacy updates returning the whole entity.
  */
 import { ApiRequestError } from "@birlinq/api";
-import type { AppApi } from "@/lib/app-env";
+import type { AppApi } from "@birlinq/api";
 import type {
   AbuseAccepted,
   AbuseRequest,

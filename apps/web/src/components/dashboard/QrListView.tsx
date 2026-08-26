@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { entityLabel } from "@birlinq/api";
-import { useApi, useHref } from "@/lib/app-env";
+import { useApi, useHref } from "@birlinq/platform";
 import type { Entity, QrCode, QrStatus } from "@birlinq/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";

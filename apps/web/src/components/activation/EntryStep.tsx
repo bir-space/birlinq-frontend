@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormAlert } from "@/components/auth/FormAlert";
-import { useApi, useHref } from "@/lib/app-env";
+import { useApi, useHref } from "@birlinq/platform";
 import { LIMITS } from "@birlinq/api";
 import { ApiRequestError, ErrorCode, isValidationError } from "@birlinq/api";
 import { useAuth } from "@/lib/auth/use-auth";

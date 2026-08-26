@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Spinner, PageSpinner } from "@/components/ui/Spinner";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { LIMITS } from "@birlinq/api";
-import { useApi, useHref } from "@/lib/app-env";
+import { useApi, useHref } from "@birlinq/platform";
 
 /**
  * "form" is the resting state, not an error: the verification email carries a

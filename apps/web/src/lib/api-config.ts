@@ -7,8 +7,8 @@ import { tokenStore } from "./auth/token-store";
  * are platform-specific — `NEXT_PUBLIC_API_URL` and `localStorage` only mean
  * something here.
  *
- * Imported for its side effect from `app-env.tsx`, which every client tree
- * goes through, so this runs before the first request.
+ * Imported for its side effect from `platform.tsx`, which wraps every client
+ * tree, so this runs before the first request.
  */
 configureApi({
   baseUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1",

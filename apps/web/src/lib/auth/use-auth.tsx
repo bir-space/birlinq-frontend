@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { User } from "@birlinq/api";
-import { useApi } from "../app-env";
+import { useApi } from "@birlinq/platform";
 import { tokenStore } from "./token-store";
 import { AuthContext, type AuthContextValue } from "./auth-context";
 

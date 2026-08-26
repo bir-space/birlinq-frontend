@@ -9,7 +9,7 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { EMAIL_RE, detailsToFieldErrors } from "@/components/auth/helpers";
 import { LIMITS } from "@birlinq/api";
-import { useApi, useHref } from "@/lib/app-env";
+import { useApi, useHref } from "@birlinq/platform";
 import { ApiRequestError, isValidationError } from "@birlinq/api";
 
 export function ForgotPasswordView() {

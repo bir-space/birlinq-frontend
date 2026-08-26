@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/lib/auth/use-auth";
-import { useAppEnv, useHref } from "@/lib/app-env";
+import { useHref, usePlatform } from "@birlinq/platform";
 import { Logo } from "@/components/ui/Logo";
 import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { PageSpinner } from "@/components/ui/Spinner";
@@ -24,7 +24,7 @@ const TABS = [
  * top-nav layout on desktop).
  *
  * Serves both trees — the `/mock` preview supplies a mock session provider and
- * a "/mock" base path through AppEnvProvider, plus its warning banner.
+ * a "/mock" base path through PlatformProvider, plus its warning banner.
  */
 export function DashboardShell({
   children,
@@ -40,7 +40,7 @@ export function DashboardShell({
   const router = useRouter();
   const pathname = usePathname();
   const href = useHref();
-  const { isMock } = useAppEnv();
+  const { isMock } = usePlatform();
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {

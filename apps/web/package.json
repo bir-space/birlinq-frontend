@@ -12,6 +12,7 @@
   "dependencies": {
     "@birlinq/api": "*",
     "@birlinq/i18n": "*",
+    "@birlinq/platform": "*",
     "@birlinq/tokens": "*",
     "next": "^15.3.3",
     "next-intl": "^4.13.4",

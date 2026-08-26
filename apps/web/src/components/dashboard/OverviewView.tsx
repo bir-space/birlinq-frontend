@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { useApi, useHref } from "@/lib/app-env";
+import { useApi, useHref } from "@birlinq/platform";
 import type { Interaction, OwnerDashboard } from "@birlinq/api";
 import { useAuth } from "@/lib/auth/use-auth";
 import { Badge } from "@/components/ui/Badge";

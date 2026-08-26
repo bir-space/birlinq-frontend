@@ -52,11 +52,13 @@ packages/                  # shared by every client; no Next.js, no DOM
 │                          # wrapper: JWT refresh-on-401, Idempotency-Key), endpoints.ts,
 │                          # limits.ts, config.ts (configureApi — see below)
 ├── i18n/                  # messages/{ru,kk,en}/*.json, locales, NAMESPACES, loadMessages
-└── tokens/theme.css       # Tailwind @theme block — the design tokens
+├── tokens/theme.css       # Tailwind @theme block — the design tokens
+└── platform/src/          # Platform contract: PlatformProvider, usePlatform,
+                           # useApi, useHref. No implementations live here.
 
 apps/web/src/
 ├── app/[locale]/          # App Router pages, one per route; locale-aware via next-intl
-│   └── layout.tsx         # <html>/<body>, NextIntlClientProvider, AuthProvider
+│   └── layout.tsx         # <html>/<body>, NextIntlClientProvider, WebPlatform, AuthProvider
 ├── components/
 │   ├── ui/                # Shared design system — Button, Card, Input, Badge, Logo,
 │   │                      # LogoMark, Spinner, LangSwitcher. Changes here cascade
@@ -64,7 +66,7 @@ apps/web/src/
 │   └── {landing,public,auth,activation,dashboard}/   # feature-scoped, own their section only
 ├── lib/
 │   ├── api-config.ts      # configureApi({ baseUrl, tokenStore }) — the web binding
-│   ├── app-env.tsx        # AppEnvProvider: which API impl + link prefix (real vs /mock)
+│   ├── platform.tsx       # WebPlatform: the real API, no link prefix (/mock nests its own)
 │   └── auth/              # token-store.ts (access in memory, refresh in localStorage),
 │                          # use-auth.tsx (AuthProvider/useAuth)
 ├── i18n/                  # routing.ts (next-intl binding), request.ts, navigation.ts

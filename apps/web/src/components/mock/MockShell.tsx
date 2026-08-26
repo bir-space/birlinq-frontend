@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { AppEnvProvider } from "@/lib/app-env";
+import { PlatformProvider } from "@birlinq/platform";
 import { MockAuthProvider } from "@/lib/mock/mock-auth";
 import { mockApi } from "@/lib/mock/mock-endpoints";
 
@@ -21,10 +21,10 @@ export function MockShell({
   authenticated?: boolean;
 }) {
   return (
-    <AppEnvProvider api={mockApi} basePath="/mock">
+    <PlatformProvider api={mockApi} basePath="/mock">
       <MockAuthProvider initiallyAuthenticated={authenticated}>
         {children}
       </MockAuthProvider>
-    </AppEnvProvider>
+    </PlatformProvider>
   );
 }

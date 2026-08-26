@@ -7,7 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { PageSpinner } from "@/components/ui/Spinner";
-import { useApi, useHref } from "@/lib/app-env";
+import { useApi, useHref } from "@birlinq/platform";
 import { ApiRequestError, ErrorCode } from "@birlinq/api";
 import { useAuth } from "@/lib/auth/use-auth";
 import type { Entity } from "@birlinq/api";

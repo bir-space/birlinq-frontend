@@ -5,6 +5,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { WebPlatform } from "@/lib/platform";
 import { AuthProvider } from "@/lib/auth/use-auth";
 
 const inter = Inter({
@@ -43,7 +44,9 @@ export default async function LocaleLayout({
     <html lang={locale} className={inter.variable}>
       <body className="font-sans">
         <NextIntlClientProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <WebPlatform>
+            <AuthProvider>{children}</AuthProvider>
+          </WebPlatform>
         </NextIntlClientProvider>
       </body>
     </html>

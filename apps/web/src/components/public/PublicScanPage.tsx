@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toApiLocale } from "@birlinq/api";
-import { useApi } from "@/lib/app-env";
+import { useApi } from "@birlinq/platform";
 import { ApiRequestError } from "@birlinq/api";
 import type { PublicEntityPayload, PublicScenario } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";

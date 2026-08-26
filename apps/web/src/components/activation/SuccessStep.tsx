@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card } from "@/components/ui/Card";
-import { useHref } from "@/lib/app-env";
+import { useHref } from "@birlinq/platform";
 
 /** A5 — activation success screen. */
 export function SuccessStep() {

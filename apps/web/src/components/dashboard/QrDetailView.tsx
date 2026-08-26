@@ -4,7 +4,7 @@ import { use, useEffect, useState, type FormEvent, type ReactNode } from "react"
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { entityLabel } from "@birlinq/api";
-import { useApi, useHref } from "@/lib/app-env";
+import { useApi, useHref } from "@birlinq/platform";
 import { ApiRequestError } from "@birlinq/api";
 import type { Entity, PrivacySettings, QrCode } from "@birlinq/api";
 import { normalizePlate } from "@/lib/plate";

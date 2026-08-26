@@ -59,7 +59,9 @@ packages/                  # общее для всех клиентов; без
 ├── api/src/               # types.ts (по openapi.yaml), client.ts (fetch + JWT refresh +
 │                          # Idempotency-Key), endpoints.ts, limits.ts, config.ts
 ├── i18n/                  # messages/{ru,kk,en}/*.json, locales, NAMESPACES, loadMessages
-└── tokens/theme.css       # дизайн-токены (Tailwind @theme)
+├── tokens/theme.css       # дизайн-токены (Tailwind @theme)
+└── platform/src/          # контракт Platform: PlatformProvider, usePlatform,
+                           # useApi, useHref — без реализаций
 
 apps/web/src/
 ├── app/[locale]/          # App Router, локали ru (default, без префикса) / kk / en
@@ -68,7 +70,7 @@ apps/web/src/
 │   ├── landing|public|auth|activation|dashboard/
 ├── lib/
 │   ├── api-config.ts      # configureApi({ baseUrl, tokenStore }) — привязка пакета к вебу
-│   ├── app-env.tsx        # какая реализация API и префикс ссылок (боевая или /mock)
+│   ├── platform.tsx       # WebPlatform: боевой API без префикса (/mock вкладывает свой)
 │   └── auth/              # token-store (access в памяти, refresh в localStorage), AuthProvider/useAuth
 ├── i18n/                  # next-intl: routing, request, navigation
 ```

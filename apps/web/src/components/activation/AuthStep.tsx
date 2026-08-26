@@ -15,7 +15,7 @@ import {
   type AuthMethod,
 } from "@/components/auth/helpers";
 import { toApiLocale } from "@birlinq/api";
-import { useApi } from "@/lib/app-env";
+import { useApi } from "@birlinq/platform";
 import { ApiRequestError, isValidationError } from "@birlinq/api";
 import { useAuth } from "@/lib/auth/use-auth";
 

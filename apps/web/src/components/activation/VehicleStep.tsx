@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { detailsToFieldErrors } from "@/components/auth/helpers";
-import { useApi } from "@/lib/app-env";
+import { useApi } from "@birlinq/platform";
 import { ApiRequestError, isValidationError } from "@birlinq/api";
 import { LIMITS } from "@birlinq/api";
 import { normalizePlate } from "@/lib/plate";

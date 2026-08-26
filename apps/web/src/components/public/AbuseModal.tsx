@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { useApi } from "@/lib/app-env";
+import { useApi } from "@birlinq/platform";
 import { isRateLimited } from "@birlinq/api";
 import { LIMITS } from "@birlinq/api";
 import type { AbuseReason } from "@birlinq/api";

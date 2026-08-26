@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toApiLocale } from "@birlinq/api";
-import { useApi } from "@/lib/app-env";
+import { useApi } from "@birlinq/platform";
 import {
   ApiRequestError,
   isQrNotScannable,
