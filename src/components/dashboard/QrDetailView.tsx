@@ -7,6 +7,7 @@ import { entityLabel } from "@/lib/api/endpoints";
 import { useApi, useHref } from "@/lib/app-env";
 import { ApiRequestError } from "@/lib/api/client";
 import type { Entity, PrivacySettings, QrCode } from "@/lib/api/types";
+import { normalizePlate } from "@/lib/plate";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -341,7 +342,10 @@ function QrDetail({ id }: { id: string }) {
                 <Input
                   label={t("detail.fields.plate")}
                   value={form.plate}
-                  onChange={(e) => updateForm({ plate: e.target.value })}
+                  onChange={(e) =>
+                    updateForm({ plate: normalizePlate(e.target.value) })
+                  }
+                  autoCapitalize="characters"
                   maxLength={20}
                 />
               </div>

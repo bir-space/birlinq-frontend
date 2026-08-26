@@ -10,6 +10,7 @@ import { detailsToFieldErrors } from "@/components/auth/helpers";
 import { useApi } from "@/lib/app-env";
 import { ApiRequestError, isValidationError } from "@/lib/api/client";
 import { LIMITS } from "@/lib/api/limits";
+import { normalizePlate } from "@/lib/plate";
 import type { Entity } from "@/lib/api/types";
 
 const COLOR_KEYS = [
@@ -329,7 +330,8 @@ export function VehicleStep({
               <Input
                 placeholder={t("platePlaceholder")}
                 value={plate}
-                onChange={(e) => setPlate(e.target.value)}
+                onChange={(e) => setPlate(normalizePlate(e.target.value))}
+                autoCapitalize="characters"
                 error={errors.plate}
                 autoComplete="off"
                 maxLength={LIMITS.licensePlate}

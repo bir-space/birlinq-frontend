@@ -58,7 +58,7 @@
     "colorOtherPlaceholder": "E.g. burgundy",
     "plate": "Plate number",
     "plateOptional": "optional",
-    "platePlaceholder": "A 123 BC 02",
+    "platePlaceholder": "123ABC02",
     "plateBannerTitle": "Plate number is hidden by default",
     "plateBannerText": "It is shown only if you allow it",
     "photoHint": "You can add a photo later in the dashboard",
