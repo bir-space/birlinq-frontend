@@ -431,10 +431,11 @@ export const ownerApi = {
    * Someone else's interaction answers 404 (not 403) by design.
    */
   resolveInteraction(id: string): Promise<void> {
+    // No Idempotency-Key: this route carries no idempotency middleware, and
+    // the action is naturally idempotent — resolving twice changes nothing.
     return apiFetch<void>(`/owner/interactions/${id}/resolve`, {
       method: "POST",
       auth: true,
-      idempotencyKey: newIdempotencyKey(),
     });
   },
 };
