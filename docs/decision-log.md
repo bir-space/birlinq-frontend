@@ -121,6 +121,45 @@ channels, privacy rules — belongs to the backend log. Reference it from here, 
 
 ---
 
+## FE-006 — React and native modules are pinned in the root manifest
+
+- **Status:** Accepted
+- **Date:** 2026-08-27
+- **Owner:** Frontend lead
+- **Context:** Adding `apps/mobile` broke `apps/web`. Expo SDK 57 bundles exact versions
+  (React 19.2.3, React Native 0.86.2), while the transitive Expo tree declares loose peers
+  that npm satisfied with newer releases. The result was two copies of React: `next` at the
+  workspace root resolved 19.2.8 while `apps/web` had a nested 19.2.3, and the web build died
+  prerendering `/404` with `Cannot read properties of null (reading 'useContext')` — the
+  classic two-Reacts symptom. `expo-doctor` independently flagged duplicate `react-native`,
+  `react-native-reanimated` and `react-native-worklets`, which break native builds outright.
+- **Decision:** The **root** `package.json` pins `react`, `react-dom`, `react-native`,
+  `react-native-reanimated` and `react-native-worklets` to the exact versions in
+  `expo/bundledNativeModules.json`, listed in both `dependencies` and `overrides`. Every
+  workspace uses those versions; the web's React version therefore follows the mobile SDK.
+  Raising Expo SDK means updating these pins in the same commit.
+- **Rationale:** npm's `overrides` alone did not work — with an existing tree it declines to
+  re-resolve, and the pins never reached the lockfile. Root `dependencies` do reliably win
+  hoisting, which is what actually produces one copy. Both fields are kept: `dependencies`
+  is the lever that works today, `overrides` states the intent for transitive requests.
+  React's version is the mobile SDK's to choose because a native runtime cannot simply take a
+  newer one, whereas Next.js is comfortable across the 19.x range.
+- **Alternatives considered:** (a) `overrides` only — the correct-looking answer, and it did
+  nothing here. (b) Let each app nest its own copy — works for the JS bundle because Metro
+  resolves per-project, but leaves duplicate *native* modules, which `expo-doctor` rejects
+  and native builds cannot link. (c) Pin only inside `apps/mobile` — does not constrain what
+  npm hoists to the root, which is precisely where `next` looks.
+- **Consequences:**
+  - Root `package.json` carries runtime dependencies despite building nothing itself. That
+    reads oddly and needs the comment it has: it is hoisting control, not a real dependency.
+  - After changing a pin, `npm install` may report "up to date" without re-resolving. Delete
+    the offending `node_modules/<pkg>` directories and the lockfile, then install again.
+  - `npx expo-doctor` from `apps/mobile` is the check that catches regressions here; it
+    should run before any mobile release. All 21 checks pass as of this entry.
+  - Web and mobile can no longer take React upgrades independently.
+
+---
+
 ## Decisions yet to be made
 
 | ID | Question | Owner | Target |

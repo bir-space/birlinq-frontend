@@ -2,9 +2,9 @@
   "name": "@birlinq/tokens",
   "version": "0.1.0",
   "private": true,
-  "main": "./theme.css",
+  "main": "./tokens.js",
   "exports": {
-    "./theme.css": "./theme.css",
-    ".": "./theme.css"
+    ".": "./tokens.js",
+    "./theme.css": "./theme.css"
   }
 }

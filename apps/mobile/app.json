@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "birlinq",
+    "slug": "birlinq",
+    "scheme": "birlinq",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#06070b",
+    "ios": {
+      "bundleIdentifier": "kz.birlinq.app",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "kz.birlinq.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

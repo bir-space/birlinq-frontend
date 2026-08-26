@@ -8,8 +8,8 @@ Decisions this implements: **FE-001** (npm-workspaces monorepo) and **FE-002** (
 the owner. The website is a business card and the first touch — landing, guide, the public
 scan page a stranger opens after scanning a sticker, and (for now) sticker activation.
 
-**Current state:** steps 1–3 are done — the Next.js app lives in `apps/web` and consumes the
-extracted `api`, `i18n`, `tokens` and `platform` packages. Everything below describes the
+**Current state:** steps 1–4 are done — `apps/web` and `apps/mobile` both exist and consume
+the extracted `api`, `i18n`, `tokens` and `platform` packages. Everything below describes the
 target; the migration table at the end says how far along it is.
 
 ---
@@ -22,9 +22,9 @@ birlinq-frontend/
 │  ├─ web/                     Next.js 15, App Router, SSR          ← exists
 │  │  ├─ src/app/[locale]/     landing, guide, /q/[code], auth, activation
 │  │  └─ src/lib/platform.tsx  web implementation of the Platform contract
-│  └─ mobile/                  Expo + Expo Router + NativeWind      ← step 4
-│     ├─ app/                  file-based routes: cabinet, QR, interactions, settings
-│     └─ src/platform.tsx      native implementation of the Platform contract
+│  └─ mobile/                  Expo + Expo Router + NativeWind      ← exists
+│     ├─ app/                  file-based routes; sign-in and a cabinet stub
+│     └─ src/                  platform.tsx, api-config.ts, token-store.ts
 ├─ packages/
 │  ├─ api/                     fetch client, endpoints, types, ErrorCode   ← exists
 │  ├─ i18n/                    messages/{ru,kk,en}/*.json + loader         ← exists
@@ -74,10 +74,11 @@ The table promotes an informal convention into an enforceable boundary; consider
 per-package ESLint `no-restricted-imports` rule once ESLint is set up in this repo at all —
 `next lint` is currently unconfigured, so nothing enforces this yet.
 
-`packages/tokens` is CSS-only today: the `@theme` block that used to sit in `globals.css`,
-imported back by it. That is enough for Tailwind on the web and nothing more. When NativeWind
-arrives in step 4 the values need a TypeScript source both engines can read, so expect this
-package to gain one and the CSS to be generated from it.
+`packages/tokens` serves two Tailwind majors from one file. The web is on v4, where the theme
+is CSS, so it imports `theme.css` directly. NativeWind 4 is Tailwind v3, where the theme is a
+JS object, so `tokens.js` parses the same `theme.css` — resolving `var()` references as it
+goes — into the v3 shape for `apps/mobile/tailwind.config.js`. The CSS stays authoritative,
+nothing is generated, and `CONVENTIONS.md` remains true: a designer edits one file.
 
 Packages ship as **TypeScript source**, not built artefacts. `apps/web` lists them in
 `transpilePackages`; Metro reads them directly. There is no per-package build or watch step —
@@ -116,13 +117,15 @@ omission: `@birlinq/api` is bound to it by `configureApi()` at module load, whic
 any React context exists. Routing storage through a provider would be a lie about when it is
 available.
 
-Which leaves the async question for step 4. Keychain and Keystore have no synchronous API,
-while `tokenStore` exposes synchronous getters that `use-auth.tsx` calls in render paths. The
-fix is known — hydrate once at boot into memory, keep the synchronous getters, make writes
-fire-and-forget — but it is the only change in this migration that touches auth, and it has no
-consumer until a native store exists. It happens in step 4, against a real device, not blind.
-Invariant #3 in `CLAUDE.md` holds throughout: the access token stays in memory only; it is the
-*refresh* token that changes home.
+Which leaves storage, now solved without either app changing shape. Keychain and Keystore have
+no synchronous API, while `TokenStore` is synchronous on purpose — making it async would push a
+promise into every render path that reads a token. So the native store reads its persisted half
+once in `hydrate()`, which `app/_layout.tsx` awaits before mounting the tree, keeps the values
+in memory afterwards, and writes back fire-and-forget. A failed write costs the session on next
+launch, never a crash mid-flight. The web store is untouched.
+
+Invariant #3 in `CLAUDE.md` holds on both: the access token stays in memory only; it is the
+*refresh* token whose home differs — `localStorage` on the web, Keychain/Keystore on device.
 
 ## What belongs in `packages/core`
 
@@ -164,18 +167,27 @@ token values physically live.
 
 ```bash
 npm run dev -w apps/web        # http://localhost:3000
-npm run dev -w apps/mobile     # Expo dev server
+npm start -w apps/mobile       # Expo dev server; press a / i for a device
 npm run typecheck              # all workspaces — the contract check
+
+cd apps/mobile
+npx expo-doctor                # dependency and config health — 21 checks
+npm run bundle:check           # Metro bundle without a device, catches resolution breaks
 ```
 
 An edit in `packages/core` hot-reloads in both apps with no rebuild. An API contract change
 breaks `npm run typecheck` in both apps simultaneously — that property is the return on the
 whole restructuring, and it is not available across two repositories.
 
-> **Metro gotcha.** React Native's bundler does not resolve workspace symlinks by default.
-> `apps/mobile/metro.config.js` needs `watchFolders` pointing at the repo root and
-> `nodeModulesPaths` listing both the app's and the root's `node_modules`. Expect to hit this
-> on the first `apps/mobile` run; it is configuration, not a design problem.
+> **The gotcha is not Metro.** The widely-copied monorepo recipe — `watchFolders`,
+> `nodeModulesPaths`, `disableHierarchicalLookup` — is obsolete: `expo/metro-config`
+> understands workspaces on its own, and `expo-doctor` flags the manual overrides. What does
+> bite is duplicate copies of React and the native modules, because Expo pins exact versions
+> while its transitive tree asks for loose ones. That is why the root manifest pins them; see
+> **FE-006**, which also records how to make npm actually re-resolve after a pin changes.
+>
+> Run `npx expo-doctor` from `apps/mobile` before any mobile release — it is the check that
+> catches this class of problem.
 
 ## Release and update model
 
@@ -205,13 +217,16 @@ Six steps. Each leaves the repository green — there is no big-bang commit.
 | 1 | npm workspaces; `src/` → `apps/web/src` | site behaves as before; `typecheck` + `build` clean | **done** |
 | 2 | extract `packages/{api,i18n,tokens}` | `apps/web` imports them; no behavioural change | **done** |
 | 3 | `packages/platform`; `app-env.tsx` grows into it; `/mock` becomes an implementation | `/mock` still renders the real components | **done** |
-| 4 | `apps/mobile` scaffold: Expo, Expo Router, NativeWind, JWT via `expo-secure-store`; `tokenStore` becomes async here | login works on a device | next |
-| 5 | cabinet in React Native, pulling `packages/core` out of web components as it goes | interactions and QR lists usable on a device | |
+| 4 | `apps/mobile` scaffold: Expo, Expo Router, NativeWind, JWT via `expo-secure-store` | login works on a device | **built, unverified on device** |
+| 5 | cabinet in React Native, pulling `packages/core` out of web components as it goes | interactions and QR lists usable on a device | next |
 | 6 | push: `expo-notifications` in the app, against the backend channel | a scenario submission reaches a phone | blocked on backend |
 
-Steps 1–3 were mechanical and are verified by build. Step 4 is where care is needed — it is the
-one that touches auth, and it wants a real device rather than a green build. Step 5 holds no
-structural surprises, because every boundary is drawn by then.
+Steps 1–3 were mechanical and are verified by build. Step 4 is built and bundles — `expo export`
+produces an Android bundle carrying the shared messages, the design tokens and the Keychain
+key — but *bundling is not running*. Sign-in against a live backend, Keychain persistence
+across a cold start and refresh-on-401 have not been exercised on hardware, and that is the
+gate for calling step 4 done. Step 5 holds no structural surprises, because every boundary is
+drawn by then.
 Step 6 cannot start until the backend has a push channel; that is their decision to make and
 it has not been made.
 

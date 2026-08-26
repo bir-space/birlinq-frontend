@@ -19,6 +19,7 @@ touching anything visual.
 ## Stack (NON-NEGOTIABLE)
 
 - **Next.js 15**, App Router, `apps/web/src/`, TypeScript **strict**
+- **Expo SDK 57** (React Native, Expo Router, NativeWind) in `apps/mobile/`
 - **Tailwind CSS v4** (`@theme` tokens in `packages/tokens/theme.css`, `@utility` for custom classes — NOT a `tailwind.config.js`)
 - **next-intl v3** — RU (default, no URL prefix) / KK / EN
 - **No new runtime dependencies without asking first.** No CSS-in-JS libraries, no icon
@@ -26,6 +27,9 @@ touching anything visual.
   is enough at this size), no CDNs, no image hotlinking (including Figma asset URLs — they
   expire and are not for production use).
 - Package manager: **npm** (there's a `package-lock.json`; don't switch to pnpm/yarn)
+- **React, react-dom and the native modules are pinned in the ROOT `package.json`** to the
+  versions in `expo/bundledNativeModules.json` (FE-006). One copy of each, repo-wide. Don't
+  bump them per app — two copies of React break the web build and native builds outright.
 
 ## Operating Environment
 
@@ -70,6 +74,12 @@ apps/web/src/
 │   └── auth/              # token-store.ts (access in memory, refresh in localStorage),
 │                          # use-auth.tsx (AuthProvider/useAuth)
 ├── i18n/                  # routing.ts (next-intl binding), request.ts, navigation.ts
+
+apps/mobile/               # Expo SDK 57, file-based routing
+├── app/                   # _layout.tsx (hydrate + IntlProvider + platform), index (sign-in),
+│                          # dashboard (stub — the real cabinet is next)
+├── src/                   # platform.tsx, api-config.ts, token-store.ts (Keychain/Keystore)
+└── tailwind.config.js     # NativeWind, theme parsed out of packages/tokens/theme.css
 ```
 
 ### Data flow

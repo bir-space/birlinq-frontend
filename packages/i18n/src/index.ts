@@ -34,19 +34,20 @@ export function isLocale(value: unknown): value is Locale {
 /**
  * Load every namespace for one locale, keyed by namespace name.
  *
- * The dynamic import keeps a static prefix on purpose — bundlers need that to
- * build the context module over `messages/`. Interpolating the whole path
- * would leave them nothing to resolve.
+ * One static specifier per locale rather than one interpolated path: Metro
+ * refuses a template-literal `import()` outright, so the interpolated version
+ * bundles fine for the web and fails the moment a native build touches it. The
+ * web still gets one chunk per locale out of this.
  */
 export async function loadMessages(
   locale: Locale
 ): Promise<Record<Namespace, unknown>> {
-  const entries = await Promise.all(
-    NAMESPACES.map(async (ns) => {
-      const mod = await import(`../messages/${locale}/${ns}.json`);
-      return [ns, mod.default] as const;
-    })
-  );
-
-  return Object.fromEntries(entries) as Record<Namespace, unknown>;
+  switch (locale) {
+    case "kk":
+      return (await import("./messages/kk")).default;
+    case "en":
+      return (await import("./messages/en")).default;
+    case "ru":
+      return (await import("./messages/ru")).default;
+  }
 }

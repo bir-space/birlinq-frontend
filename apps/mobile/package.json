@@ -1,0 +1,37 @@
+{
+  "name": "@birlinq/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@birlinq/api": "*",
+    "@birlinq/i18n": "*",
+    "@birlinq/platform": "*",
+    "@birlinq/tokens": "*",
+    "expo": "^57.0.16",
+    "expo-constants": "~57.0.14",
+    "expo-linking": "~57.0.7",
+    "expo-router": "~57.0.16",
+    "expo-secure-store": "~57.0.1",
+    "expo-status-bar": "~57.0.1",
+    "nativewind": "^4.2.6",
+    "react": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-worklets": "0.10.1",
+    "tailwindcss": "^3.4.19",
+    "use-intl": "^4.13.7"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "bundle:check": "expo export --platform android --output-dir .expo-export-check"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.4"
+  }
+}

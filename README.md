@@ -1,6 +1,6 @@
 # birlinq-frontend
 
-Клиентская часть проекта **Birlinq** (группа BirSpace) — монорепо на npm workspaces. Сейчас в нём веб-приложение `apps/web` (Next.js 15 + TypeScript + Tailwind CSS v4 + next-intl, RU / KK / EN); общие пакеты (`api`, `i18n`, `tokens`) уже вынесены в `packages/`, мобильное приложение на Expo появится в `apps/mobile` (см. `docs/architecture/monorepo.md`). Работает поверх Laravel-бэкенда `birlinq-backend` (`/api/v1`).
+Клиентская часть проекта **Birlinq** (группа BirSpace) — монорепо на npm workspaces: веб-приложение `apps/web` (Next.js 15 + Tailwind CSS v4 + next-intl, RU / KK / EN), мобильное `apps/mobile` (Expo SDK 57 + Expo Router + NativeWind) и общие пакеты `api`, `i18n`, `tokens`, `platform` в `packages/` (см. `docs/architecture/monorepo.md`). Работает поверх Laravel-бэкенда `birlinq-backend` (`/api/v1`).
 
 ## Быстрый старт
 
@@ -16,7 +16,14 @@ npm run dev                  # http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
-Проверки: `npm run typecheck`, `npm run build`.
+Проверки: `npm run typecheck`, `npm run build`. Для мобильного — `npx expo-doctor` и `npm run bundle:check` из `apps/mobile`.
+
+Мобильное приложение:
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env.local
+npm start -w apps/mobile     # Expo dev server, дальше a / i для устройства
+```
 
 ## Документация
 
@@ -73,6 +80,12 @@ apps/web/src/
 │   ├── platform.tsx       # WebPlatform: боевой API без префикса (/mock вкладывает свой)
 │   └── auth/              # token-store (access в памяти, refresh в localStorage), AuthProvider/useAuth
 ├── i18n/                  # next-intl: routing, request, navigation
+
+apps/mobile/               # Expo SDK 57, файловый роутинг
+├── app/                   # _layout.tsx (гидратация + IntlProvider + platform),
+│                          # index (вход), dashboard (заглушка)
+├── src/                   # platform.tsx, api-config.ts, token-store.ts (Keychain/Keystore)
+└── tailwind.config.js     # NativeWind, тема разбирается из packages/tokens/theme.css
 ```
 
 Ключевые решения:
