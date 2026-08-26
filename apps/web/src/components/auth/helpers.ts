@@ -2,7 +2,7 @@
  * Small shared helpers for auth forms (login/register pages + inline wizard forms).
  */
 
-import { LIMITS } from "@/lib/api/limits";
+import { LIMITS } from "@birlinq/api";
 
 /** Kazakhstan mobile format required by the backend. */
 export const PHONE_RE = /^77\d{9}$/;

@@ -14,9 +14,9 @@ import {
   validateIdentifier,
   type AuthMethod,
 } from "@/components/auth/helpers";
-import { toApiLocale } from "@/lib/api/endpoints";
+import { toApiLocale } from "@birlinq/api";
 import { useApi } from "@/lib/app-env";
-import { ApiRequestError, isValidationError } from "@/lib/api/client";
+import { ApiRequestError, isValidationError } from "@birlinq/api";
 import { useAuth } from "@/lib/auth/use-auth";
 
 type Tab = "register" | "login";

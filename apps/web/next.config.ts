@@ -5,6 +5,8 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Workspace packages ship as TypeScript source, so Next compiles them itself.
+  transpilePackages: ["@birlinq/api", "@birlinq/i18n"],
 };
 
 export default withNextIntl(nextConfig);

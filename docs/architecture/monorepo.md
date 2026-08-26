@@ -8,9 +8,9 @@ Decisions this implements: **FE-001** (npm-workspaces monorepo) and **FE-002** (
 the owner. The website is a business card and the first touch — landing, guide, the public
 scan page a stranger opens after scanning a sticker, and (for now) sticker activation.
 
-**Current state:** step 1 of the migration is done — the Next.js app lives in `apps/web` and
-`packages/` is empty. Everything below describes the target; the migration table at the end
-says how far along it is.
+**Current state:** steps 1–2 are done — the Next.js app lives in `apps/web`, and `api`,
+`i18n` and `tokens` are extracted packages it consumes. Everything below describes the
+target; the migration table at the end says how far along it is.
 
 ---
 
@@ -26,11 +26,11 @@ birlinq-frontend/
 │     ├─ app/                  file-based routes: cabinet, QR, interactions, settings
 │     └─ src/platform/         native implementation of the Platform contract
 ├─ packages/
-│  ├─ api/                     fetch client, endpoints, types, ErrorCode
-│  ├─ core/                    headless hooks + domain logic (no markup)
-│  ├─ i18n/                    messages/{ru,kk,en}/*.json + namespace loader
-│  ├─ tokens/                  colours, spacing, typography, radii
-│  └─ platform/                the Platform contract — types + React context only
+│  ├─ api/                     fetch client, endpoints, types, ErrorCode   ← exists
+│  ├─ i18n/                    messages/{ru,kk,en}/*.json + loader         ← exists
+│  ├─ tokens/                  colours, spacing, typography, radii         ← exists
+│  ├─ core/                    headless hooks + domain logic (no markup)   ← step 5
+│  └─ platform/                the Platform contract — types + context     ← step 3
 └─ package.json                workspaces: ["apps/*", "packages/*"]
 ```
 
@@ -52,9 +52,32 @@ into two codebases.
 | `apps/web` | everything | `react-native` |
 | `apps/mobile` | everything | `next/*`, `react-dom` |
 
-`api` is already framework-agnostic — `CLAUDE.md` has required that from the start under
-"Reuse for mobile". This table promotes an informal convention into an enforceable boundary;
-consider a per-package ESLint `no-restricted-imports` rule once the layout lands.
+`api` was almost framework-agnostic already — `CLAUDE.md` has required that from the start
+under "Reuse for mobile" — but it had two ties to the web that had to be cut when it moved
+out, because both are answers only one app can give:
+
+```ts
+// apps/web/src/lib/api-config.ts, imported for its side effect from app-env.tsx
+configureApi({
+  baseUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1",
+  tokenStore,
+});
+```
+
+`NEXT_PUBLIC_API_URL` means nothing under Metro, and `localStorage` means nothing on a
+phone. So `packages/api` declares a `TokenStore` interface and takes both from its host at
+boot instead of reaching for them. `apps/mobile` will call the same function with
+`EXPO_PUBLIC_API_URL` and a Keychain-backed store, and nothing inside the package changes.
+This is the same inversion the Platform contract generalises in step 3.
+
+The table promotes an informal convention into an enforceable boundary; consider a
+per-package ESLint `no-restricted-imports` rule once ESLint is set up in this repo at all —
+`next lint` is currently unconfigured, so nothing enforces this yet.
+
+`packages/tokens` is CSS-only today: the `@theme` block that used to sit in `globals.css`,
+imported back by it. That is enough for Tailwind on the web and nothing more. When NativeWind
+arrives in step 4 the values need a TypeScript source both engines can read, so expect this
+package to gain one and the CSS to be generated from it.
 
 Packages ship as **TypeScript source**, not built artefacts. `apps/web` lists them in
 `transpilePackages`; Metro reads them directly. There is no per-package build or watch step —
@@ -166,8 +189,8 @@ Six steps. Each leaves the repository green — there is no big-bang commit.
 | # | Step | Done when | State |
 |---|---|---|---|
 | 1 | npm workspaces; `src/` → `apps/web/src` | site behaves as before; `typecheck` + `build` clean | **done** |
-| 2 | extract `packages/{api,i18n,tokens}` | `apps/web` imports them; no behavioural change | next |
-| 3 | `packages/platform`; `app-env.tsx` grows into it; `/mock` becomes an implementation | `/mock` still renders the real components | |
+| 2 | extract `packages/{api,i18n,tokens}` | `apps/web` imports them; no behavioural change | **done** |
+| 3 | `packages/platform`; `app-env.tsx` grows into it; `/mock` becomes an implementation | `/mock` still renders the real components | next |
 | 4 | `apps/mobile` scaffold: Expo, Expo Router, NativeWind, JWT via `expo-secure-store` | login works on a device | |
 | 5 | cabinet in React Native, pulling `packages/core` out of web components as it goes | interactions and QR lists usable on a device | |
 | 6 | push: `expo-notifications` in the app, against the backend channel | a scenario submission reaches a phone | blocked on backend |

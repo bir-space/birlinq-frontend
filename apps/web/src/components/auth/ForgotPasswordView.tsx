@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/Input";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { EMAIL_RE, detailsToFieldErrors } from "@/components/auth/helpers";
-import { LIMITS } from "@/lib/api/limits";
+import { LIMITS } from "@birlinq/api";
 import { useApi, useHref } from "@/lib/app-env";
-import { ApiRequestError, isValidationError } from "@/lib/api/client";
+import { ApiRequestError, isValidationError } from "@birlinq/api";
 
 export function ForgotPasswordView() {
   const t = useTranslations("auth");

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FormAlert } from "@/components/auth/FormAlert";
-import { DEFAULT_PRIVACY, type Entity, type PrivacySettings } from "@/lib/api/types";
+import { DEFAULT_PRIVACY, type Entity, type PrivacySettings } from "@birlinq/api";
 
 /**
  * The car-relevant slice of the backend privacy flags

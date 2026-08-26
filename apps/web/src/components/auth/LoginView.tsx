@@ -18,8 +18,8 @@ import {
   type AuthMethod,
 } from "@/components/auth/helpers";
 import { useApi, useHref } from "@/lib/app-env";
-import { ApiRequestError, isValidationError } from "@/lib/api/client";
-import { LIMITS } from "@/lib/api/limits";
+import { ApiRequestError, isValidationError } from "@birlinq/api";
+import { LIMITS } from "@birlinq/api";
 import { useAuth } from "@/lib/auth/use-auth";
 
 interface FormState {

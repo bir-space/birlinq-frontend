@@ -1,6 +1,6 @@
 # birlinq-frontend
 
-Клиентская часть проекта **Birlinq** (группа BirSpace) — монорепо на npm workspaces. Сейчас в нём веб-приложение `apps/web` (Next.js 15 + TypeScript + Tailwind CSS v4 + next-intl, RU / KK / EN); мобильное приложение на Expo и общие пакеты появятся в `apps/mobile` и `packages/` (см. `docs/architecture/monorepo.md`). Работает поверх Laravel-бэкенда `birlinq-backend` (`/api/v1`).
+Клиентская часть проекта **Birlinq** (группа BirSpace) — монорепо на npm workspaces. Сейчас в нём веб-приложение `apps/web` (Next.js 15 + TypeScript + Tailwind CSS v4 + next-intl, RU / KK / EN); общие пакеты (`api`, `i18n`, `tokens`) уже вынесены в `packages/`, мобильное приложение на Expo появится в `apps/mobile` (см. `docs/architecture/monorepo.md`). Работает поверх Laravel-бэкенда `birlinq-backend` (`/api/v1`).
 
 ## Быстрый старт
 
@@ -51,20 +51,26 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 
 ## Архитектура
 
-Репозиторий — монорепо на npm workspaces (FE-001): Next.js-приложение в `apps/web/`,
-общие пакеты появятся в `packages/`. Все команды запускаются из корня.
+Репозиторий — монорепо на npm workspaces (FE-001). Все команды запускаются из корня.
+Границы пакетов и статус миграции — в `docs/architecture/monorepo.md`.
 
 ```
+packages/                  # общее для всех клиентов; без Next.js и без DOM
+├── api/src/               # types.ts (по openapi.yaml), client.ts (fetch + JWT refresh +
+│                          # Idempotency-Key), endpoints.ts, limits.ts, config.ts
+├── i18n/                  # messages/{ru,kk,en}/*.json, locales, NAMESPACES, loadMessages
+└── tokens/theme.css       # дизайн-токены (Tailwind @theme)
+
 apps/web/src/
 ├── app/[locale]/          # App Router, локали ru (default, без префикса) / kk / en
 ├── components/
 │   ├── ui/                # дизайн-система: Button, Card, Input, Badge, Logo…
 │   ├── landing|public|auth|activation|dashboard/
 ├── lib/
-│   ├── api/               # types.ts (по openapi.yaml), client.ts (fetch + JWT refresh + Idempotency-Key), endpoints.ts
+│   ├── api-config.ts      # configureApi({ baseUrl, tokenStore }) — привязка пакета к вебу
+│   ├── app-env.tsx        # какая реализация API и префикс ссылок (боевая или /mock)
 │   └── auth/              # token-store (access в памяти, refresh в localStorage), AuthProvider/useAuth
-├── i18n/                  # next-intl: routing, request (namespace-файлы), navigation
-apps/web/messages/{ru,kk,en}/   # переводы по неймспейсам
+├── i18n/                  # next-intl: routing, request, navigation
 ```
 
 Ключевые решения:
@@ -76,12 +82,12 @@ apps/web/messages/{ru,kk,en}/   # переводы по неймспейсам
 - **Дубликаты сценариев**: повторная отправка того же сценария тем же посетителем в окне дедупликации возвращает `202` со `status: "duplicate"` — экран благодарности показывается, но текстом «владелец уже знает».
 - **Локали**: в URL ISO-код `kk`, бэкенду отправляется `kz` (`toApiLocale`). Публичные эндпоинты берут локаль только из `Accept-Language`, поэтому `scan` и `submitLead` шлют её заголовком — иначе событие скана логируется с локалью браузера, а не страницы.
 - **Коды из писем**: бэкенд отправляет 64-символьный токен без ссылки, поэтому `/reset-password` и `/verify-email` принимают его в поле вручную; `?token=` в URL остаётся опциональным диплинком.
-- **Лимиты полей** собраны в `apps/web/src/lib/api/limits.ts` по Form Requests бэкенда — `maxLength` на инпутах, чтобы длинная вставка не стоила лишнего 422 (а на троттлящихся публичных эндпоинтах — и 429).
-- **Переиспользование для мобильного приложения**: `apps/web/src/lib/api` и `apps/web/src/lib/auth/token-store.ts` не зависят от Next/DOM (кроме localStorage, вынесенного за интерфейс) — переносятся в React Native почти без изменений вместе с типами.
+- **Лимиты полей** собраны в `packages/api/src/limits.ts` по Form Requests бэкенда — `maxLength` на инпутах, чтобы длинная вставка не стоила лишнего 422 (а на троттлящихся публичных эндпоинтах — и 429).
+- **Переиспользование для мобильного приложения**: `packages/api` не знает ни адреса бэкенда, ни способа хранить сессию — и то и другое приходит через `configureApi({ baseUrl, tokenStore })`. Мобильное приложение вызовет ту же функцию с `EXPO_PUBLIC_API_URL` и хранилищем на Keychain/Keystore, внутри пакета не меняется ничего.
 
 ## Дизайн
 
-Бренд — монограмма «bq» (b=10 синий, q=01 фиолетовый, «первый сигнал → отклик»), знак и цвета вынесены в `apps/web/src/app/globals.css` (@theme) и `apps/web/src/components/ui/{Logo,LogoMark}.tsx`. Тёмная тема, почти чёрный фон `#06070b`, карточки `#10131c`, брендовый акцент `#2e63e0`, вертикали лендинга Move/ID/Business подкрашены синим/фиолетовым/зелёным. Подробности и правила использования — в `CLAUDE.md` и `CONVENTIONS.md`. Inter, радиусы 16/20/24px. Все экраны mobile-first (дизайн 390–440px), адаптив до 1440px.
+Бренд — монограмма «bq» (b=10 синий, q=01 фиолетовый, «первый сигнал → отклик»), знак и цвета вынесены в `packages/tokens/theme.css` (@theme) и `apps/web/src/components/ui/{Logo,LogoMark}.tsx`. Тёмная тема, почти чёрный фон `#06070b`, карточки `#10131c`, брендовый акцент `#2e63e0`, вертикали лендинга Move/ID/Business подкрашены синим/фиолетовым/зелёным. Подробности и правила использования — в `CLAUDE.md` и `CONVENTIONS.md`. Inter, радиусы 16/20/24px. Все экраны mobile-first (дизайн 390–440px), адаптив до 1440px.
 
 Осознанные отклонения от макетов:
 

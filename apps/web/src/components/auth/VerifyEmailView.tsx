@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner, PageSpinner } from "@/components/ui/Spinner";
 import { AuthShell } from "@/components/auth/AuthShell";
-import { LIMITS } from "@/lib/api/limits";
+import { LIMITS } from "@birlinq/api";
 import { useApi, useHref } from "@/lib/app-env";
 
 /**

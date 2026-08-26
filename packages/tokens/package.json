@@ -1,0 +1,10 @@
+{
+  "name": "@birlinq/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./theme.css",
+  "exports": {
+    "./theme.css": "./theme.css",
+    ".": "./theme.css"
+  }
+}

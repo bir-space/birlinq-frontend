@@ -8,10 +8,10 @@ import { PageSpinner } from "@/components/ui/Spinner";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { detailsToFieldErrors } from "@/components/auth/helpers";
 import { useApi } from "@/lib/app-env";
-import { ApiRequestError, isValidationError } from "@/lib/api/client";
-import { LIMITS } from "@/lib/api/limits";
+import { ApiRequestError, isValidationError } from "@birlinq/api";
+import { LIMITS } from "@birlinq/api";
 import { normalizePlate } from "@/lib/plate";
-import type { Entity } from "@/lib/api/types";
+import type { Entity } from "@birlinq/api";
 
 const COLOR_KEYS = [
   "white",

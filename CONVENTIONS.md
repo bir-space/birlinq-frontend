@@ -4,7 +4,7 @@
 Next.js 15 (App Router, `apps/web/src/`), TypeScript strict, Tailwind CSS v4, next-intl v3.
 **No new dependencies. No external assets/CDNs. Icons = inline SVG. Font = Inter via next/font (already wired).**
 
-## Design tokens (globals.css @theme)
+## Design tokens (`packages/tokens/theme.css`, @theme)
 Brand — aligned to the final "bq" logo (b=10 blue, q=01 violet signal handshake):
 `--color-brand-blue` #2e63e0, `--color-brand-violet` #8b5cf6, `--color-brand-ice` #eef1fc
 (gradient midpoint). `bg-accent`/`text-accent`/`border-accent` = brand-blue, used for all
@@ -47,16 +47,16 @@ one signature gradient moment per section at most.
 
 ## i18n (next-intl)
 - Locales: `ru` (default, no URL prefix), `kk`, `en`. All UI strings MUST come from messages — no hardcoded text. Fill ALL THREE locale files for your namespace.
-- Messages live in `apps/web/messages/{locale}/{namespace}.json`. Own ONLY your namespace file.
+- Messages live in `packages/i18n/messages/{locale}/{namespace}.json`. Own ONLY your namespace file.
 - Server component page: `const { locale } = await params; setRequestLocale(locale);` then `useTranslations("ns")` (sync components) or `await getTranslations("ns")`.
 - Client components: `useTranslations("ns")` from `"next-intl"`.
 - Navigation ONLY via `@/i18n/navigation`: `import { Link, useRouter, usePathname, redirect } from "@/i18n/navigation";`
 - Backend locale code for API calls: use `toApiLocale(locale)` from endpoints (maps kk→kz).
 
 ## API layer (do NOT modify)
-- `@/lib/api/endpoints`: `authApi`, `entitiesApi`, `qrApi`, `publicApi`, `ownerApi`, `toApiLocale`.
-- `@/lib/api/types`: all request/response types.
-- `@/lib/api/client`: `ApiRequestError` (fields: status, code, message) — use `err instanceof ApiRequestError` and switch on `err.code` for user-facing errors.
+- `@birlinq/api` — endpoints: `authApi`, `entitiesApi`, `qrApi`, `publicApi`, `ownerApi`, `toApiLocale`.
+- `@birlinq/api` — types: all request/response types.
+- `@birlinq/api` — client: `ApiRequestError` (fields: status, code, message) — use `err instanceof ApiRequestError` and switch on `err.code` for user-facing errors.
 - Auth state (client): `const { user, loading, isAuthenticated, logout } = useAuth()` from `@/lib/auth/use-auth`. Login/register via `authApi.login/register` (they persist tokens automatically).
 
 ## Auth guard pattern (protected pages)

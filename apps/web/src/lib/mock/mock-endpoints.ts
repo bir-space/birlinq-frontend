@@ -9,7 +9,7 @@
  * `POST /entities` ({type, title} only) and `PUT /entities/{id}/vehicle`, and
  * privacy updates returning the whole entity.
  */
-import { ApiRequestError } from "@/lib/api/client";
+import { ApiRequestError } from "@birlinq/api";
 import type { AppApi } from "@/lib/app-env";
 import type {
   AbuseAccepted,
@@ -38,7 +38,7 @@ import type {
   UpsertContactRequest,
   UpsertVehicleRequest,
   User,
-} from "@/lib/api/types";
+} from "@birlinq/api";
 import {
   DEFAULT_MOCK_PRIVACY,
   MOCK_DASHBOARD,

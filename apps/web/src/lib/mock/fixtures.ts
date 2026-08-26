@@ -15,7 +15,7 @@ import type {
   PublicEntityPayload,
   QrCode,
   User,
-} from "@/lib/api/types";
+} from "@birlinq/api";
 
 export const MOCK_USER: User = {
   id: "user-mock-1",

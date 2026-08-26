@@ -10,9 +10,9 @@ import { PageSpinner } from "@/components/ui/Spinner";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { FormAlert } from "@/components/auth/FormAlert";
 import { PASSWORD_MIN, detailsToFieldErrors } from "@/components/auth/helpers";
-import { LIMITS } from "@/lib/api/limits";
+import { LIMITS } from "@birlinq/api";
 import { useApi, useHref } from "@/lib/app-env";
-import { ApiRequestError, isValidationError } from "@/lib/api/client";
+import { ApiRequestError, isValidationError } from "@birlinq/api";
 
 interface FormState {
   token?: string;

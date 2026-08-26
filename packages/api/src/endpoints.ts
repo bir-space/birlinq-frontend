@@ -32,7 +32,7 @@ import type {
   UpsertVehicleRequest,
   User,
 } from "./types";
-import { tokenStore } from "../auth/token-store";
+import { tokens } from "./config";
 
 // ---------- Auth ----------
 
@@ -48,7 +48,7 @@ async function startSession(
   // writing `undefined` to storage is what produced TOKEN_ABSENT followed by
   // a 422 on refresh.
   if (!auth) throw new MalformedAuthResponseError();
-  tokenStore.setSession(auth);
+  tokens().setSession(auth);
   return auth;
 }
 
@@ -82,13 +82,13 @@ export const authApi = {
    */
   async logout(): Promise<void> {
     try {
-      if (tokenStore.hasSession()) {
+      if (tokens().hasSession()) {
         await apiFetch<void>("/auth/logout", { method: "POST", auth: true });
       }
     } catch {
       // Local sign-out must succeed even if the call fails.
     } finally {
-      tokenStore.clear();
+      tokens().clear();
     }
   },
 
@@ -98,13 +98,13 @@ export const authApi = {
    */
   async logoutAll(): Promise<void> {
     try {
-      if (tokenStore.hasSession()) {
+      if (tokens().hasSession()) {
         await apiFetch<void>("/auth/logout-all", { method: "POST", auth: true });
       }
     } catch {
       // Same as logout: never trap the user in a session locally.
     } finally {
-      tokenStore.clear();
+      tokens().clear();
     }
   },
 

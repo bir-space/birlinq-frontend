@@ -12,7 +12,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { User } from "@/lib/api/types";
+import type { User } from "@birlinq/api";
 import {
   AuthContext,
   type AuthContextValue,

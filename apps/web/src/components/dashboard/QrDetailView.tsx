@@ -3,10 +3,10 @@
 import { use, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { entityLabel } from "@/lib/api/endpoints";
+import { entityLabel } from "@birlinq/api";
 import { useApi, useHref } from "@/lib/app-env";
-import { ApiRequestError } from "@/lib/api/client";
-import type { Entity, PrivacySettings, QrCode } from "@/lib/api/types";
+import { ApiRequestError } from "@birlinq/api";
+import type { Entity, PrivacySettings, QrCode } from "@birlinq/api";
 import { normalizePlate } from "@/lib/plate";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";

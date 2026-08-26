@@ -8,8 +8,9 @@ flow, without ever seeing a phone number. This repo is the **consumer** of the L
 backend's REST API — it owns no business logic, no database, no auth server. The backend
 team's contract is the source of truth: `../birlinq-backend/docs/api/openapi.yaml`.
 
-Built to be **reused for a future mobile app**: the API/auth layer (`apps/web/src/lib/api`,
-`apps/web/src/lib/auth`) is framework-agnostic on purpose — see "Reuse for mobile" below.
+Built to be **shared with the coming mobile app** (FE-002): the API layer, translations and
+design tokens live in `packages/` and are framework-agnostic on purpose — see "The api
+package must stay platform-free" below.
 
 **Design source of truth:** Figma file `TjSplk2LZx1iH8hv7WK1y2` ("birlinq"). Brand mark is
 final (the "bq" monogram) — see `CONVENTIONS.md` for the full token/logo spec before
@@ -18,7 +19,7 @@ touching anything visual.
 ## Stack (NON-NEGOTIABLE)
 
 - **Next.js 15**, App Router, `apps/web/src/`, TypeScript **strict**
-- **Tailwind CSS v4** (`@theme` tokens in `apps/web/src/app/globals.css`, `@utility` for custom classes — NOT a `tailwind.config.js`)
+- **Tailwind CSS v4** (`@theme` tokens in `packages/tokens/theme.css`, `@utility` for custom classes — NOT a `tailwind.config.js`)
 - **next-intl v3** — RU (default, no URL prefix) / KK / EN
 - **No new runtime dependencies without asking first.** No CSS-in-JS libraries, no icon
   packs (icons are inline SVG), no state managers (React state + the two contexts we have
@@ -41,11 +42,18 @@ touching anything visual.
 
 ## Architecture
 
-The repo is an npm-workspaces monorepo (FE-001): the Next.js app lives in `apps/web/`,
-shared packages will land in `packages/`. Run everything from the root — `npm run dev`,
-`npm run typecheck` and `npm run build` delegate to the workspace.
+The repo is an npm-workspaces monorepo (FE-001). Run everything from the root — `npm run dev`,
+`npm run typecheck` and `npm run build` delegate to the workspace. Full layout, package
+boundaries and migration state: `docs/architecture/monorepo.md`.
 
 ```
+packages/                  # shared by every client; no Next.js, no DOM
+├── api/src/               # types.ts (hand-written from openapi.yaml), client.ts (fetch
+│                          # wrapper: JWT refresh-on-401, Idempotency-Key), endpoints.ts,
+│                          # limits.ts, config.ts (configureApi — see below)
+├── i18n/                  # messages/{ru,kk,en}/*.json, locales, NAMESPACES, loadMessages
+└── tokens/theme.css       # Tailwind @theme block — the design tokens
+
 apps/web/src/
 ├── app/[locale]/          # App Router pages, one per route; locale-aware via next-intl
 │   └── layout.tsx         # <html>/<body>, NextIntlClientProvider, AuthProvider
@@ -55,24 +63,24 @@ apps/web/src/
 │   │                      # everywhere; treat as a mini design-system package.
 │   └── {landing,public,auth,activation,dashboard}/   # feature-scoped, own their section only
 ├── lib/
-│   ├── api/               # types.ts (hand-written from openapi.yaml), client.ts (fetch
-│   │                      # wrapper: JWT refresh-on-401, Idempotency-Key), endpoints.ts
+│   ├── api-config.ts      # configureApi({ baseUrl, tokenStore }) — the web binding
+│   ├── app-env.tsx        # AppEnvProvider: which API impl + link prefix (real vs /mock)
 │   └── auth/              # token-store.ts (access in memory, refresh in localStorage),
 │                          # use-auth.tsx (AuthProvider/useAuth)
-├── i18n/                  # routing.ts (locales), request.ts (namespace loader), navigation.ts
-apps/web/messages/{ru,kk,en}/   # translations, one JSON file per namespace, key-parity required
+├── i18n/                  # routing.ts (next-intl binding), request.ts, navigation.ts
 ```
 
 ### Data flow
 `page.tsx` (server component, reads `params.locale`, calls `setRequestLocale`) → feature
-components (client components where interactive) → `lib/api/endpoints.ts` → `lib/api/client.ts`
-(`apiFetch`, handles auth header + refresh + idempotency) → backend.
+components (client components where interactive) → `@birlinq/api` `endpoints` → `apiFetch`
+(auth header + refresh + idempotency) → backend.
 
-### Reuse for mobile
-`apps/web/src/lib/api/*` and `apps/web/src/lib/auth/token-store.ts` avoid Next.js/DOM APIs (the one exception,
-`window.localStorage`, sits behind the `tokenStore` interface). When a React Native app
-happens, these files — plus the types — should port with minimal changes. Keep it that way:
-don't leak `next/navigation`, `next/font`, or DOM globals into `lib/`.
+### The api package must stay platform-free
+`packages/api` never reads `process.env` or touches storage. Both arrive through
+`configureApi({ baseUrl, tokenStore })`, which `apps/web/src/lib/api-config.ts` calls once at
+boot; the mobile app will call the same function with its own values. So: don't import
+`next/*`, `react-native`, or DOM globals into `packages/`, and don't reach for
+`NEXT_PUBLIC_*` there — add a config field instead.
 
 ## Critical Invariants (NEVER violate)
 
@@ -132,7 +140,7 @@ notes live in `CONVENTIONS.md` — that file is the working reference; this file
 - Inline hex colors that duplicate an existing token (`#2e63e0` instead of `bg-accent`/`text-move`/etc.)
 - A new npm dependency added without asking first
 - Hotlinked Figma asset URLs (`figma.com/api/mcp/asset/...`) left in committed code — they expire
-- Re-implementing `fetch` calls instead of using `lib/api/endpoints.ts`
+- Re-implementing `fetch` calls instead of using the endpoints from `@birlinq/api`
 - Storing the JWT access token in `localStorage` or a cookie
 - Offset-based pagination UI (`?page=2`) — the API is cursor-only
 - Adding a translation key to `ru` only "for now" — all three locales, every time
@@ -171,7 +179,7 @@ notes live in `CONVENTIONS.md` — that file is the working reference; this file
 | `../birlinq-backend/docs/api/openapi.yaml` | API contract (read-only from here) |
 | `../birlinq-backend/docs/decision-log.md` | Backend's own log (`D-NNN`) — read for context, never write to it. Anything binding both sides (contract, notification channels, privacy) is theirs to decide |
 | `../birlinq-backend/docs/architecture/overview.md` | System-level architecture (auth flow, scenario engine) |
-| `apps/web/src/lib/api/types.ts` | Hand-written API types — keep in sync with the OpenAPI spec |
+| `packages/api/src/types.ts` | Hand-written API types — keep in sync with the OpenAPI spec |
 | `apps/web/.env.example` | All frontend env vars documented |
 | `CLAUDE.md` | This file — read first every session |
 

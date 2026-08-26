@@ -10,6 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@birlinq/api": "*",
+    "@birlinq/i18n": "*",
+    "@birlinq/tokens": "*",
     "next": "^15.3.3",
     "next-intl": "^4.13.4",
     "react": "^19.1.0",

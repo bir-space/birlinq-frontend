@@ -6,7 +6,7 @@ import type {
   PublicContact,
   PublicEntityPayload,
   PublicScenario,
-} from "@/lib/api/types";
+} from "@birlinq/api";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { LeadForm } from "./LeadForm";

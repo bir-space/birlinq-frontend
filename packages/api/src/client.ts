@@ -1,15 +1,12 @@
 import type { ApiError, ApiLocale } from "./types";
 import { normalizeAuthResponse } from "./auth-normalize";
-import { tokenStore } from "../auth/token-store";
+import { apiBaseUrl, tokens } from "./config";
 
 export {
   MalformedAuthResponseError,
   isUsableToken,
   normalizeAuthResponse,
 } from "./auth-normalize";
-
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 /**
  * Error codes emitted by the backend (bootstrap/app.php + the QR controller).
@@ -167,15 +164,15 @@ let refreshPromise: Promise<boolean> | null = null;
 async function refreshTokens(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
-      const refreshToken = tokenStore.getRefreshToken();
+      const refreshToken = tokens().getRefreshToken();
       // getRefreshToken already rejects unusable values, so a null here means
       // there is nothing to rotate — don't send a doomed request.
       if (!refreshToken) {
-        tokenStore.clear();
+        tokens().clear();
         return false;
       }
       try {
-        const res = await fetch(`${API_URL}/auth/refresh`, {
+        const res = await fetch(`${apiBaseUrl()}/auth/refresh`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -186,15 +183,15 @@ async function refreshTokens(): Promise<boolean> {
         // 4xx means this token will never work again (invalid, expired,
         // rotated, or theft-revoked) — drop the session instead of looping.
         if (!res.ok) {
-          tokenStore.clear();
+          tokens().clear();
           return false;
         }
         const auth = normalizeAuthResponse(await parseBody(res));
         if (!auth) {
-          tokenStore.clear();
+          tokens().clear();
           return false;
         }
-        tokenStore.setSession(auth);
+        tokens().setSession(auth);
         return true;
       } catch {
         // Network blip — keep the session so the next attempt can retry.
@@ -212,7 +209,7 @@ async function refreshTokens(): Promise<boolean> {
 
 /**
  * Core request helper. Automatically:
- *  - prefixes API_URL
+ *  - prefixes the configured base URL
  *  - serialises JSON
  *  - attaches Bearer token when `auth` is true
  *  - on 401 with auth — refreshes once and retries
@@ -240,10 +237,10 @@ export async function apiFetch<T>(
     if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
     if (locale) headers["Accept-Language"] = locale;
     if (auth) {
-      const token = tokenStore.getAccessToken();
+      const token = tokens().getAccessToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
     }
-    return fetch(`${API_URL}${path}`, {
+    return fetch(`${apiBaseUrl()}${path}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,

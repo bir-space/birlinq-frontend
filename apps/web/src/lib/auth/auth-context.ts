@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { User } from "../api/types";
+import type { User } from "@birlinq/api";
 
 /**
  * One context, two providers: `AuthProvider` (real, token-backed) and

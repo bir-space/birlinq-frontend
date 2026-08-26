@@ -1,5 +1,5 @@
-import type { AuthResponse, User } from "../api/types";
-import { isUsableToken } from "../api/auth-normalize";
+import type { AuthResponse, User } from "@birlinq/api";
+import { isUsableToken } from "@birlinq/api";
 
 /**
  * Token storage strategy (web):

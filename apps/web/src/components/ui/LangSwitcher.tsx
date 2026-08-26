@@ -2,7 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { locales } from "@/i18n/routing";
+import { locales } from "@birlinq/i18n";
 
 const labels: Record<string, string> = {
   ru: "Рус",

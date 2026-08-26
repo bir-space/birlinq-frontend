@@ -1,5 +1,6 @@
 "use client";
 
+import "./api-config";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
   authApi,
@@ -7,7 +8,7 @@ import {
   ownerApi,
   publicApi,
   qrApi,
-} from "./api/endpoints";
+} from "@birlinq/api";
 
 /**
  * Single injection point for everything that differs between the real app and

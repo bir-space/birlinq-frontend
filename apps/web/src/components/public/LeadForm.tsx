@@ -2,10 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { toApiLocale } from "@/lib/api/endpoints";
+import { toApiLocale } from "@birlinq/api";
 import { useApi } from "@/lib/app-env";
-import { isRateLimited } from "@/lib/api/client";
-import { LIMITS } from "@/lib/api/limits";
+import { isRateLimited } from "@birlinq/api";
+import { LIMITS } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { IconCheck } from "./icons";

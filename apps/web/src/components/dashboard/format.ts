@@ -1,4 +1,4 @@
-import type { InteractionStatus, QrStatus } from "@/lib/api/types";
+import type { InteractionStatus, QrStatus } from "@birlinq/api";
 
 /** Loose translator signature so helpers can accept next-intl's `t`. */
 export type TranslateFn = (

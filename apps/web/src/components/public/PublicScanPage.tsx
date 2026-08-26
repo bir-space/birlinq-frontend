@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { toApiLocale } from "@/lib/api/endpoints";
+import { toApiLocale } from "@birlinq/api";
 import { useApi } from "@/lib/app-env";
-import { ApiRequestError } from "@/lib/api/client";
-import type { PublicEntityPayload, PublicScenario } from "@/lib/api/types";
+import { ApiRequestError } from "@birlinq/api";
+import type { PublicEntityPayload, PublicScenario } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { Spinner } from "@/components/ui/Spinner";

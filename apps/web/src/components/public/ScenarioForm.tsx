@@ -2,15 +2,15 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { toApiLocale } from "@/lib/api/endpoints";
+import { toApiLocale } from "@birlinq/api";
 import { useApi } from "@/lib/app-env";
 import {
   ApiRequestError,
   isQrNotScannable,
   isRateLimited,
-} from "@/lib/api/client";
-import { LIMITS } from "@/lib/api/limits";
-import type { PublicScenario } from "@/lib/api/types";
+} from "@birlinq/api";
+import { LIMITS } from "@birlinq/api";
+import type { PublicScenario } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { IconArrowLeft, IconClose, IconInfo, ScenarioIcon } from "./icons";

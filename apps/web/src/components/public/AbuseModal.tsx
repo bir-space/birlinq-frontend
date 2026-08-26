@@ -3,9 +3,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useApi } from "@/lib/app-env";
-import { isRateLimited } from "@/lib/api/client";
-import { LIMITS } from "@/lib/api/limits";
-import type { AbuseReason } from "@/lib/api/types";
+import { isRateLimited } from "@birlinq/api";
+import { LIMITS } from "@birlinq/api";
+import type { AbuseReason } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Input";

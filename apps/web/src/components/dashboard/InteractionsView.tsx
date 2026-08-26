@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useApi, useHref } from "@/lib/app-env";
-import type { Interaction } from "@/lib/api/types";
+import type { Interaction } from "@birlinq/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
