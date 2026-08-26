@@ -1,6 +1,6 @@
 # birlinq-frontend
 
-Веб-фронтенд проекта **Birlinq** (группа BirSpace). Next.js 15 + TypeScript + Tailwind CSS v4 + next-intl (RU / KK / EN). Работает поверх Laravel-бэкенда `birlinq-backend` (`/api/v1`).
+Клиентская часть проекта **Birlinq** (группа BirSpace) — монорепо на npm workspaces. Сейчас в нём веб-приложение `apps/web` (Next.js 15 + TypeScript + Tailwind CSS v4 + next-intl, RU / KK / EN); мобильное приложение на Expo и общие пакеты появятся в `apps/mobile` и `packages/` (см. `docs/architecture/monorepo.md`). Работает поверх Laravel-бэкенда `birlinq-backend` (`/api/v1`).
 
 ## Быстрый старт
 
@@ -17,6 +17,17 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
 Проверки: `npm run typecheck`, `npm run build`.
+
+## Документация
+
+| Файл | Что внутри |
+|---|---|
+| `CLAUDE.md` | Правила работы в репозитории: стек, инварианты, антипаттерны |
+| `CONVENTIONS.md` | Дизайн-система: токены, логотип, API компонентов, i18n, работа с Figma |
+| `docs/decision-log.md` | Решения этого репозитория (`FE-NNN`, append-only) и открытые вопросы |
+| `docs/architecture/monorepo.md` | Структура монорепо, границы пакетов, модель релизов, статус миграции |
+
+Контракт с бэкендом — его OpenAPI-спека; решения, затрагивающие обе стороны, живут в логе бэкенда.
 
 ## Что реализовано
 
@@ -40,7 +51,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 
 ## Архитектура
 
-Репозиторий — монорепо на npm workspaces (D-034): Next.js-приложение в `apps/web/`,
+Репозиторий — монорепо на npm workspaces (FE-001): Next.js-приложение в `apps/web/`,
 общие пакеты появятся в `packages/`. Все команды запускаются из корня.
 
 ```

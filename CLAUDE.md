@@ -41,7 +41,7 @@ touching anything visual.
 
 ## Architecture
 
-The repo is an npm-workspaces monorepo (D-034): the Next.js app lives in `apps/web/`,
+The repo is an npm-workspaces monorepo (FE-001): the Next.js app lives in `apps/web/`,
 shared packages will land in `packages/`. Run everything from the root — `npm run dev`,
 `npm run typecheck` and `npm run build` delegate to the workspace.
 
@@ -166,9 +166,10 @@ notes live in `CONVENTIONS.md` — that file is the working reference; this file
 |---|---|
 | `CONVENTIONS.md` | Design tokens, logo/brand usage, component API, i18n pattern, Figma workflow — read before any UI work |
 | `README.md` | What's built, routes ↔ backend endpoints table, setup |
-| `docs/architecture/monorepo.md` | Planned monorepo layout (web + Expo app over shared packages), package boundaries, migration steps — **describes the target, not the current tree** (D-034, D-035) |
+| `docs/decision-log.md` | **This repo's own decisions** (`FE-NNN`, append-only) — structure, client stack, platform choices. Frontend decisions go here, not in the backend's log |
+| `docs/architecture/monorepo.md` | Monorepo layout (web + Expo app over shared packages), package boundaries, release model, migration state (FE-001, FE-002) |
 | `../birlinq-backend/docs/api/openapi.yaml` | API contract (read-only from here) |
-| `../birlinq-backend/docs/decision-log.md` | Cross-cutting architecture decisions (append-only, backend-owned) |
+| `../birlinq-backend/docs/decision-log.md` | Backend's own log (`D-NNN`) — read for context, never write to it. Anything binding both sides (contract, notification channels, privacy) is theirs to decide |
 | `../birlinq-backend/docs/architecture/overview.md` | System-level architecture (auth flow, scenario engine) |
 | `apps/web/src/lib/api/types.ts` | Hand-written API types — keep in sync with the OpenAPI spec |
 | `apps/web/.env.example` | All frontend env vars documented |
@@ -177,6 +178,15 @@ notes live in `CONVENTIONS.md` — that file is the working reference; this file
 ## Session Start Checklist
 
 1. Read this file (`CLAUDE.md`)
-2. Read `CONVENTIONS.md` if the task touches anything visual
-3. Skim `../birlinq-backend/docs/api/openapi.yaml` if the task touches API calls
-4. Confirm scope before a broad restyle or refactor — narrate the plan, then execute
+2. Read `docs/decision-log.md` — check whether the question was already decided, and what is
+   still open
+3. Read `CONVENTIONS.md` if the task touches anything visual
+4. Skim `../birlinq-backend/docs/api/openapi.yaml` if the task touches API calls
+5. Confirm scope before a broad restyle or refactor — narrate the plan, then execute
+
+### Deciding something new
+
+If a task needs an architectural decision this repo owns, append an `FE-NNN` entry to
+`docs/decision-log.md` **before** implementing it, and get it approved. Never edit a
+historical entry — supersede it. If the decision binds the backend too, it is theirs: raise
+it with the backend lead rather than writing it down here as settled.
