@@ -1,7 +1,7 @@
 # birlinq-frontend — conventions (read before writing any page)
 
 ## Stack
-Next.js 15 (App Router, `src/` dir), TypeScript strict, Tailwind CSS v4, next-intl v3.
+Next.js 15 (App Router, `apps/web/src/`), TypeScript strict, Tailwind CSS v4, next-intl v3.
 **No new dependencies. No external assets/CDNs. Icons = inline SVG. Font = Inter via next/font (already wired).**
 
 ## Design tokens (globals.css @theme)
@@ -47,7 +47,7 @@ one signature gradient moment per section at most.
 
 ## i18n (next-intl)
 - Locales: `ru` (default, no URL prefix), `kk`, `en`. All UI strings MUST come from messages — no hardcoded text. Fill ALL THREE locale files for your namespace.
-- Messages live in `messages/{locale}/{namespace}.json`. Own ONLY your namespace file.
+- Messages live in `apps/web/messages/{locale}/{namespace}.json`. Own ONLY your namespace file.
 - Server component page: `const { locale } = await params; setRequestLocale(locale);` then `useTranslations("ns")` (sync components) or `await getTranslations("ns")`.
 - Client components: `useTranslations("ns")` from `"next-intl"`.
 - Navigation ONLY via `@/i18n/navigation`: `import { Link, useRouter, usePathname, redirect } from "@/i18n/navigation";`

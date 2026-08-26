@@ -8,8 +8,8 @@ flow, without ever seeing a phone number. This repo is the **consumer** of the L
 backend's REST API — it owns no business logic, no database, no auth server. The backend
 team's contract is the source of truth: `../birlinq-backend/docs/api/openapi.yaml`.
 
-Built to be **reused for a future mobile app**: the API/auth layer (`src/lib/api`,
-`src/lib/auth`) is framework-agnostic on purpose — see "Reuse for mobile" below.
+Built to be **reused for a future mobile app**: the API/auth layer (`apps/web/src/lib/api`,
+`apps/web/src/lib/auth`) is framework-agnostic on purpose — see "Reuse for mobile" below.
 
 **Design source of truth:** Figma file `TjSplk2LZx1iH8hv7WK1y2` ("birlinq"). Brand mark is
 final (the "bq" monogram) — see `CONVENTIONS.md` for the full token/logo spec before
@@ -17,8 +17,8 @@ touching anything visual.
 
 ## Stack (NON-NEGOTIABLE)
 
-- **Next.js 15**, App Router, `src/` dir, TypeScript **strict**
-- **Tailwind CSS v4** (`@theme` tokens in `src/app/globals.css`, `@utility` for custom classes — NOT a `tailwind.config.js`)
+- **Next.js 15**, App Router, `apps/web/src/`, TypeScript **strict**
+- **Tailwind CSS v4** (`@theme` tokens in `apps/web/src/app/globals.css`, `@utility` for custom classes — NOT a `tailwind.config.js`)
 - **next-intl v3** — RU (default, no URL prefix) / KK / EN
 - **No new runtime dependencies without asking first.** No CSS-in-JS libraries, no icon
   packs (icons are inline SVG), no state managers (React state + the two contexts we have
@@ -28,10 +28,10 @@ touching anything visual.
 
 ## Operating Environment
 
-- **OS:** Windows 11, project lives at `D:\Work\Projects\bir-space\birlinq-frontend`
+- **OS:** Windows 11, project lives at `E:\Work\Projects\bir-space\birlinq-frontend`
 - Backend runs separately (`php artisan serve`, local OpenServer/Laragon) at
-  `http://localhost:8000/api/v1` — set via `NEXT_PUBLIC_API_URL` in `.env.local`
-  (copy from `.env.example`; never commit `.env.local`)
+  `http://localhost:8000/api/v1` — set via `NEXT_PUBLIC_API_URL` in `apps/web/.env.local`
+  (copy from `apps/web/.env.example`; never commit it)
 - Dev: `npm run dev` → `http://localhost:3000`. Verify with `npm run typecheck` and
   `npm run build` before calling anything done — both must be clean.
 - If you're an agent running in a cloud sandbox without network access to
@@ -41,8 +41,12 @@ touching anything visual.
 
 ## Architecture
 
+The repo is an npm-workspaces monorepo (D-034): the Next.js app lives in `apps/web/`,
+shared packages will land in `packages/`. Run everything from the root — `npm run dev`,
+`npm run typecheck` and `npm run build` delegate to the workspace.
+
 ```
-src/
+apps/web/src/
 ├── app/[locale]/          # App Router pages, one per route; locale-aware via next-intl
 │   └── layout.tsx         # <html>/<body>, NextIntlClientProvider, AuthProvider
 ├── components/
@@ -56,7 +60,7 @@ src/
 │   └── auth/              # token-store.ts (access in memory, refresh in localStorage),
 │                          # use-auth.tsx (AuthProvider/useAuth)
 ├── i18n/                  # routing.ts (locales), request.ts (namespace loader), navigation.ts
-messages/{ru,kk,en}/       # translations, one JSON file per namespace, key-parity required
+apps/web/messages/{ru,kk,en}/   # translations, one JSON file per namespace, key-parity required
 ```
 
 ### Data flow
@@ -65,7 +69,7 @@ components (client components where interactive) → `lib/api/endpoints.ts` → 
 (`apiFetch`, handles auth header + refresh + idempotency) → backend.
 
 ### Reuse for mobile
-`src/lib/api/*` and `src/lib/auth/token-store.ts` avoid Next.js/DOM APIs (the one exception,
+`apps/web/src/lib/api/*` and `apps/web/src/lib/auth/token-store.ts` avoid Next.js/DOM APIs (the one exception,
 `window.localStorage`, sits behind the `tokenStore` interface). When a React Native app
 happens, these files — plus the types — should port with minimal changes. Keep it that way:
 don't leak `next/navigation`, `next/font`, or DOM globals into `lib/`.
@@ -142,8 +146,8 @@ notes live in `CONVENTIONS.md` — that file is the working reference; this file
 
 - Anything under `../birlinq-backend/` (separate repo, separate team boundary — same rule
   the backend's own `CLAUDE.md` states in reverse)
-- `.env` / `.env.local` (only edit `.env.example`)
-- `src/components/ui/*` component **APIs** (props) without checking call sites first — these
+- `apps/web/.env.local` (only edit `apps/web/.env.example`)
+- `apps/web/src/components/ui/*` component **APIs** (props) without checking call sites first — these
   are shared across every feature area; a prop rename cascades everywhere
 - `node_modules/`, `.next/`, `package-lock.json` (regenerate via npm, don't hand-edit)
 
@@ -166,8 +170,8 @@ notes live in `CONVENTIONS.md` — that file is the working reference; this file
 | `../birlinq-backend/docs/api/openapi.yaml` | API contract (read-only from here) |
 | `../birlinq-backend/docs/decision-log.md` | Cross-cutting architecture decisions (append-only, backend-owned) |
 | `../birlinq-backend/docs/architecture/overview.md` | System-level architecture (auth flow, scenario engine) |
-| `src/lib/api/types.ts` | Hand-written API types — keep in sync with the OpenAPI spec |
-| `.env.example` | All frontend env vars documented |
+| `apps/web/src/lib/api/types.ts` | Hand-written API types — keep in sync with the OpenAPI spec |
+| `apps/web/.env.example` | All frontend env vars documented |
 | `CLAUDE.md` | This file — read first every session |
 
 ## Session Start Checklist

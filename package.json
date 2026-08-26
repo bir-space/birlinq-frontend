@@ -2,25 +2,15 @@
   "name": "birlinq-frontend",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "next": "^15.3.3",
-    "next-intl": "^4.13.4",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.8",
-    "@types/node": "^22.15.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "tailwindcss": "^4.1.8",
-    "typescript": "^5.8.3"
+    "dev": "npm run dev --workspace @birlinq/web",
+    "build": "npm run build --workspace @birlinq/web",
+    "start": "npm run start --workspace @birlinq/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   }
 }

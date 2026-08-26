@@ -6,11 +6,11 @@
 
 ```bash
 npm install
-cp .env.example .env.local   # укажи адрес бэкенда
+cp apps/web/.env.example apps/web/.env.local   # укажи адрес бэкенда
 npm run dev                  # http://localhost:3000
 ```
 
-`.env.local`:
+`apps/web/.env.local`:
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
@@ -40,8 +40,11 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 
 ## Архитектура
 
+Репозиторий — монорепо на npm workspaces (D-034): Next.js-приложение в `apps/web/`,
+общие пакеты появятся в `packages/`. Все команды запускаются из корня.
+
 ```
-src/
+apps/web/src/
 ├── app/[locale]/          # App Router, локали ru (default, без префикса) / kk / en
 ├── components/
 │   ├── ui/                # дизайн-система: Button, Card, Input, Badge, Logo…
@@ -50,7 +53,7 @@ src/
 │   ├── api/               # types.ts (по openapi.yaml), client.ts (fetch + JWT refresh + Idempotency-Key), endpoints.ts
 │   └── auth/              # token-store (access в памяти, refresh в localStorage), AuthProvider/useAuth
 ├── i18n/                  # next-intl: routing, request (namespace-файлы), navigation
-messages/{ru,kk,en}/       # переводы по неймспейсам
+apps/web/messages/{ru,kk,en}/   # переводы по неймспейсам
 ```
 
 Ключевые решения:
@@ -62,12 +65,12 @@ messages/{ru,kk,en}/       # переводы по неймспейсам
 - **Дубликаты сценариев**: повторная отправка того же сценария тем же посетителем в окне дедупликации возвращает `202` со `status: "duplicate"` — экран благодарности показывается, но текстом «владелец уже знает».
 - **Локали**: в URL ISO-код `kk`, бэкенду отправляется `kz` (`toApiLocale`). Публичные эндпоинты берут локаль только из `Accept-Language`, поэтому `scan` и `submitLead` шлют её заголовком — иначе событие скана логируется с локалью браузера, а не страницы.
 - **Коды из писем**: бэкенд отправляет 64-символьный токен без ссылки, поэтому `/reset-password` и `/verify-email` принимают его в поле вручную; `?token=` в URL остаётся опциональным диплинком.
-- **Лимиты полей** собраны в `src/lib/api/limits.ts` по Form Requests бэкенда — `maxLength` на инпутах, чтобы длинная вставка не стоила лишнего 422 (а на троттлящихся публичных эндпоинтах — и 429).
-- **Переиспользование для мобильного приложения**: `src/lib/api` и `src/lib/auth/token-store.ts` не зависят от Next/DOM (кроме localStorage, вынесенного за интерфейс) — переносятся в React Native почти без изменений вместе с типами.
+- **Лимиты полей** собраны в `apps/web/src/lib/api/limits.ts` по Form Requests бэкенда — `maxLength` на инпутах, чтобы длинная вставка не стоила лишнего 422 (а на троттлящихся публичных эндпоинтах — и 429).
+- **Переиспользование для мобильного приложения**: `apps/web/src/lib/api` и `apps/web/src/lib/auth/token-store.ts` не зависят от Next/DOM (кроме localStorage, вынесенного за интерфейс) — переносятся в React Native почти без изменений вместе с типами.
 
 ## Дизайн
 
-Бренд — монограмма «bq» (b=10 синий, q=01 фиолетовый, «первый сигнал → отклик»), знак и цвета вынесены в `src/app/globals.css` (@theme) и `src/components/ui/{Logo,LogoMark}.tsx`. Тёмная тема, почти чёрный фон `#06070b`, карточки `#10131c`, брендовый акцент `#2e63e0`, вертикали лендинга Move/ID/Business подкрашены синим/фиолетовым/зелёным. Подробности и правила использования — в `CLAUDE.md` и `CONVENTIONS.md`. Inter, радиусы 16/20/24px. Все экраны mobile-first (дизайн 390–440px), адаптив до 1440px.
+Бренд — монограмма «bq» (b=10 синий, q=01 фиолетовый, «первый сигнал → отклик»), знак и цвета вынесены в `apps/web/src/app/globals.css` (@theme) и `apps/web/src/components/ui/{Logo,LogoMark}.tsx`. Тёмная тема, почти чёрный фон `#06070b`, карточки `#10131c`, брендовый акцент `#2e63e0`, вертикали лендинга Move/ID/Business подкрашены синим/фиолетовым/зелёным. Подробности и правила использования — в `CLAUDE.md` и `CONVENTIONS.md`. Inter, радиусы 16/20/24px. Все экраны mobile-first (дизайн 390–440px), адаптив до 1440px.
 
 Осознанные отклонения от макетов:
 
