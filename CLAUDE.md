@@ -162,6 +162,7 @@ notes live in `CONVENTIONS.md` — that file is the working reference; this file
 |---|---|
 | `CONVENTIONS.md` | Design tokens, logo/brand usage, component API, i18n pattern, Figma workflow — read before any UI work |
 | `README.md` | What's built, routes ↔ backend endpoints table, setup |
+| `docs/architecture/monorepo.md` | Planned monorepo layout (web + Expo app over shared packages), package boundaries, migration steps — **describes the target, not the current tree** (D-034, D-035) |
 | `../birlinq-backend/docs/api/openapi.yaml` | API contract (read-only from here) |
 | `../birlinq-backend/docs/decision-log.md` | Cross-cutting architecture decisions (append-only, backend-owned) |
 | `../birlinq-backend/docs/architecture/overview.md` | System-level architecture (auth flow, scenario engine) |
