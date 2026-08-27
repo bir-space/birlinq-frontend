@@ -5,8 +5,9 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { IntlProvider } from "use-intl";
 import { defaultLocale, loadMessages, type Locale } from "@birlinq/i18n";
+import { AuthProvider } from "@birlinq/core";
 import { NativePlatform } from "@/platform";
-import { hydrate } from "@/token-store";
+import { hydrate, nativeTokenStore } from "@/token-store";
 import "../global.css";
 
 /**
@@ -43,15 +44,17 @@ export default function RootLayout() {
   return (
     <IntlProvider locale={locale} messages={messages} timeZone="Asia/Almaty">
       <NativePlatform>
-        <SafeAreaProvider>
-          <StatusBar style="light" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "#06070b" },
-            }}
-          />
-        </SafeAreaProvider>
+        <AuthProvider store={nativeTokenStore}>
+          <SafeAreaProvider>
+            <StatusBar style="light" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: "#06070b" },
+              }}
+            />
+          </SafeAreaProvider>
+        </AuthProvider>
       </NativePlatform>
     </IntlProvider>
   );

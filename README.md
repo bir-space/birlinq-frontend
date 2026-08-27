@@ -1,6 +1,6 @@
 # birlinq-frontend
 
-Клиентская часть проекта **Birlinq** (группа BirSpace) — монорепо на npm workspaces: веб-приложение `apps/web` (Next.js 15 + Tailwind CSS v4 + next-intl, RU / KK / EN), мобильное `apps/mobile` (Expo SDK 57 + Expo Router + NativeWind) и общие пакеты `api`, `i18n`, `tokens`, `platform` в `packages/` (см. `docs/architecture/monorepo.md`). Работает поверх Laravel-бэкенда `birlinq-backend` (`/api/v1`).
+Клиентская часть проекта **Birlinq** (группа BirSpace) — монорепо на npm workspaces: веб-приложение `apps/web` (Next.js 15 + Tailwind CSS v4 + next-intl, RU / KK / EN), мобильное `apps/mobile` (Expo SDK 57 + Expo Router + NativeWind) и общие пакеты `api`, `core`, `i18n`, `tokens`, `platform` в `packages/` (см. `docs/architecture/monorepo.md`). Работает поверх Laravel-бэкенда `birlinq-backend` (`/api/v1`).
 
 ## Быстрый старт
 
@@ -67,8 +67,11 @@ packages/                  # общее для всех клиентов; без
 │                          # Idempotency-Key), endpoints.ts, limits.ts, config.ts
 ├── i18n/                  # messages/{ru,kk,en}/*.json, locales, NAMESPACES, loadMessages
 ├── tokens/theme.css       # дизайн-токены (Tailwind @theme)
-└── platform/src/          # контракт Platform: PlatformProvider, usePlatform,
-                           # useApi, useHref — без реализаций
+├── platform/src/          # контракт Platform: PlatformProvider, usePlatform,
+│                          # useApi, useHref — без реализаций
+└── core/src/              # headless-хуки для обоих клиентов: AuthProvider/useAuth,
+                           # useOverview, useInteractions, useQrList — без JSX и без
+                           # переведённых строк (ошибки возвращаются кодами)
 
 apps/web/src/
 ├── app/[locale]/          # App Router, локали ru (default, без префикса) / kk / en
@@ -78,12 +81,13 @@ apps/web/src/
 ├── lib/
 │   ├── api-config.ts      # configureApi({ baseUrl, tokenStore }) — привязка пакета к вебу
 │   ├── platform.tsx       # WebPlatform: боевой API без префикса (/mock вкладывает свой)
-│   └── auth/              # token-store (access в памяти, refresh в localStorage), AuthProvider/useAuth
+│   └── auth/              # token-store (access в памяти, refresh в localStorage),
+│                          # auth-provider.tsx — привязка AuthProvider из @birlinq/core
 ├── i18n/                  # next-intl: routing, request, navigation
 
 apps/mobile/               # Expo SDK 57, файловый роутинг
-├── app/                   # _layout.tsx (гидратация + IntlProvider + platform),
-│                          # index (вход), dashboard (заглушка)
+├── app/                   # _layout.tsx (гидратация + IntlProvider + platform + auth),
+│                          # index (вход), (cabinet)/ — вкладки кабинета
 ├── src/                   # platform.tsx, api-config.ts, token-store.ts (Keychain/Keystore)
 └── tailwind.config.js     # NativeWind, тема разбирается из packages/tokens/theme.css
 ```
@@ -98,7 +102,7 @@ apps/mobile/               # Expo SDK 57, файловый роутинг
 - **Локали**: в URL ISO-код `kk`, бэкенду отправляется `kz` (`toApiLocale`). Публичные эндпоинты берут локаль только из `Accept-Language`, поэтому `scan` и `submitLead` шлют её заголовком — иначе событие скана логируется с локалью браузера, а не страницы.
 - **Коды из писем**: бэкенд отправляет 64-символьный токен без ссылки, поэтому `/reset-password` и `/verify-email` принимают его в поле вручную; `?token=` в URL остаётся опциональным диплинком.
 - **Лимиты полей** собраны в `packages/api/src/limits.ts` по Form Requests бэкенда — `maxLength` на инпутах, чтобы длинная вставка не стоила лишнего 422 (а на троттлящихся публичных эндпоинтах — и 429).
-- **Переиспользование для мобильного приложения**: `packages/api` не знает ни адреса бэкенда, ни способа хранить сессию — и то и другое приходит через `configureApi({ baseUrl, tokenStore })`. Мобильное приложение вызовет ту же функцию с `EXPO_PUBLIC_API_URL` и хранилищем на Keychain/Keystore, внутри пакета не меняется ничего.
+- **Переиспользование для мобильного приложения**: `packages/api` не знает ни адреса бэкенда, ни способа хранить сессию — и то и другое приходит через `configureApi({ baseUrl, tokenStore })`. Мобильное приложение вызывает ту же функцию с `EXPO_PUBLIC_API_URL` и хранилищем на Keychain/Keystore — внутри пакета не поменялось ничего.
 
 ## Дизайн
 

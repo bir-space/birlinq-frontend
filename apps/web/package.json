@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@birlinq/api": "*",
+    "@birlinq/core": "*",
     "@birlinq/i18n": "*",
     "@birlinq/platform": "*",
     "@birlinq/tokens": "*",

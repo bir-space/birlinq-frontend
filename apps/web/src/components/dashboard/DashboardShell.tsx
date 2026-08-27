@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
-import { useAuth } from "@/lib/auth/use-auth";
+import { useAuth } from "@birlinq/core";
 import { useHref, usePlatform } from "@birlinq/platform";
 import { Logo } from "@/components/ui/Logo";
 import { LangSwitcher } from "@/components/ui/LangSwitcher";

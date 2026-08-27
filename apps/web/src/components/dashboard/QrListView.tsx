@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { entityLabel } from "@birlinq/api";
-import { useApi, useHref } from "@birlinq/platform";
-import type { Entity, QrCode, QrStatus } from "@birlinq/api";
+import { useHref } from "@birlinq/platform";
+import { useQrList } from "@birlinq/core";
+import type { QrCode } from "@birlinq/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -33,95 +34,21 @@ function QrList() {
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const api = useApi();
   const href = useHref();
 
-  const [items, setItems] = useState<QrCode[]>([]);
-  const [entities, setEntities] = useState<Record<string, Entity>>({});
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    (async () => {
-      try {
-        // Entities are optional context (titles); don't fail the page on them.
-        const [qrRes, entRes] = await Promise.allSettled([
-          api.qr.list(),
-          api.entities.listAll(),
-        ]);
-        if (cancelled) return;
-        if (qrRes.status === "rejected") {
-          setError(true);
-          return;
-        }
-        setItems(qrRes.value.data);
-        setCursor(qrRes.value.meta.next_cursor);
-        setHasMore(qrRes.value.meta.has_more);
-        if (entRes.status === "fulfilled") {
-          setEntities(Object.fromEntries(entRes.value.map((e) => [e.id, e])));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [attempt]);
-
-  const loadMore = async () => {
-    if (!cursor || loadingMore) return;
-    setLoadingMore(true);
-    setActionError(null);
-    try {
-      const res = await api.qr.list(cursor);
-      setItems((cur) => [...cur, ...res.data]);
-      setCursor(res.meta.next_cursor);
-      setHasMore(res.meta.has_more);
-    } catch {
-      setActionError(tc("error"));
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  const togglePause = async (qr: QrCode) => {
-    if (busyId) return;
-    const pausing = qr.status === "activated";
-    const prevStatus: QrStatus = qr.status;
-    setBusyId(qr.id);
-    setActionError(null);
-    // Optimistic status flip.
-    setItems((cur) =>
-      cur.map((i) =>
-        i.id === qr.id
-          ? { ...i, status: (pausing ? "paused" : "activated") as QrStatus }
-          : i
-      )
-    );
-    try {
-      const { qr_code } = pausing
-        ? await api.qr.pause(qr.id)
-        : await api.qr.resume(qr.id);
-      setItems((cur) => cur.map((i) => (i.id === qr.id ? qr_code : i)));
-    } catch {
-      setItems((cur) =>
-        cur.map((i) => (i.id === qr.id ? { ...i, status: prevStatus } : i))
-      );
-      setActionError(t("qrList.actionError"));
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const {
+    items,
+    entities,
+    loading,
+    error,
+    hasMore,
+    loadingMore,
+    busyId,
+    actionError,
+    retry,
+    loadMore,
+    togglePause,
+  } = useQrList();
 
   return (
     <div className="flex flex-col gap-5">
@@ -138,7 +65,7 @@ function QrList() {
         <ErrorCard
           message={tc("error")}
           retryLabel={tc("retry")}
-          onRetry={() => setAttempt((n) => n + 1)}
+          onRetry={retry}
         />
       ) : items.length === 0 ? (
         <EmptyState
@@ -157,7 +84,7 @@ function QrList() {
         <>
           {actionError && (
             <p className="rounded-(--radius-btn) border border-danger/30 bg-danger/10 px-4 py-2.5 text-[13px] text-danger">
-              {actionError}
+              {actionError === "toggle" ? t("qrList.actionError") : tc("error")}
             </p>
           )}
 

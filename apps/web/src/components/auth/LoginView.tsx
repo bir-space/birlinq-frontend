@@ -20,7 +20,7 @@ import {
 import { useApi, useHref } from "@birlinq/platform";
 import { ApiRequestError, isValidationError } from "@birlinq/api";
 import { LIMITS } from "@birlinq/api";
-import { useAuth } from "@/lib/auth/use-auth";
+import { useAuth } from "@birlinq/core";
 
 interface FormState {
   identifier?: string;

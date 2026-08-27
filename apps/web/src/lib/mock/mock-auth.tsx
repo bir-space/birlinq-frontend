@@ -16,7 +16,7 @@ import type { User } from "@birlinq/api";
 import {
   AuthContext,
   type AuthContextValue,
-} from "@/lib/auth/auth-context";
+} from "@birlinq/core";
 import { mockAuthApi } from "./mock-endpoints";
 
 export function MockAuthProvider({

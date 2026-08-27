@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { useApi, useHref } from "@birlinq/platform";
-import type { Interaction, OwnerDashboard } from "@birlinq/api";
-import { useAuth } from "@/lib/auth/use-auth";
+import { useHref } from "@birlinq/platform";
+import type { Interaction } from "@birlinq/api";
+import { useAuth, useOverview } from "@birlinq/core";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { PageSpinner } from "@/components/ui/Spinner";
@@ -38,45 +38,9 @@ function Overview() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const { user } = useAuth();
-  const api = useApi();
   const href = useHref();
 
-  /**
-   * Every figure comes from GET /owner/dashboard, which aggregates them with
-   * indexed COUNTs server-side. Deriving them from GET /qr instead — as this
-   * page did while the owner cabinet was unimplemented — would page through
-   * every QR code just to add up `scan_count`, and still could not produce the
-   * 7/30-day windows or the unresolved count.
-   */
-  const [stats, setStats] = useState<OwnerDashboard | null>(null);
-  const [latest, setLatest] = useState<Interaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    (async () => {
-      try {
-        const [dash, inter] = await Promise.all([
-          api.owner.dashboard(),
-          api.owner.interactions({ limit: 5 }),
-        ]);
-        if (cancelled) return;
-        setStats(dash);
-        setLatest(inter.data);
-      } catch {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [api, attempt]);
+  const { stats, latest, loading, error, retry } = useOverview();
 
   return (
     <div className="flex flex-col gap-8">
@@ -93,7 +57,7 @@ function Overview() {
         <ErrorCard
           message={tc("error")}
           retryLabel={tc("retry")}
-          onRetry={() => setAttempt((n) => n + 1)}
+          onRetry={retry}
         />
       ) : (
         <>

@@ -6,7 +6,7 @@ import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { WebPlatform } from "@/lib/platform";
-import { AuthProvider } from "@/lib/auth/use-auth";
+import { AuthProvider } from "@/lib/auth/auth-provider";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],

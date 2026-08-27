@@ -160,6 +160,40 @@ channels, privacy rules — belongs to the backend log. Reference it from here, 
 
 ---
 
+## FE-007 — Version pinning uses root `dependencies` only, not `overrides`
+
+- **Status:** Accepted
+- **Supersedes:** the `overrides` half of **FE-006**; the rest of that entry stands
+- **Date:** 2026-08-27
+- **Owner:** Frontend lead
+- **Context:** FE-006 pinned React and the native modules in both `dependencies` and
+  `overrides`, on the reasoning that one is the lever and the other states intent. That was
+  written while `overrides` merely appeared to do nothing. On the next clean resolve — after
+  deleting the lockfile to add `packages/core` — npm refused to install at all:
+  `EOVERRIDE: Override for react-native@0.86.3 conflicts with direct dependency`. npm forbids
+  overriding a package the manifest also depends on directly unless the specs match exactly,
+  and `expo install --fix` had meanwhile moved the direct spec to a newer patch. So the field
+  was never silently ignored; it was invalid, and an incremental install simply had not
+  re-resolved far enough to say so.
+- **Decision:** Pin in root `dependencies` only. Do not add an `overrides` block for a
+  package the root already depends on.
+- **Rationale:** Root `dependencies` alone produce exactly one copy of each package, which is
+  the whole goal, and they cannot contradict themselves. Keeping a second declaration of the
+  same intent bought nothing and turned a version bump into a broken install.
+- **Alternatives considered:** (a) Keep `overrides` and mirror every bump into both fields —
+  two places to forget, and forgetting fails the install rather than degrading. (b) Drop the
+  root `dependencies` and keep only `overrides` — then `next`, which resolves from the root,
+  finds no React at all; that failure mode was observed while getting here.
+- **Consequences:**
+  - Bumping the Expo SDK means re-reading `expo/bundledNativeModules.json` and updating the
+    root pins in the same commit, exactly as FE-006 says — but in one place.
+  - `npx expo install --fix` from `apps/mobile` is what discovers a drifted patch version;
+    `expo-doctor` reports it, and the root pins then have to follow.
+  - The recovery note in FE-006 still applies: after changing a pin, delete the relevant
+    `node_modules/<pkg>` directories and the lockfile, then install again.
+
+---
+
 ## Decisions yet to be made
 
 | ID | Question | Owner | Target |

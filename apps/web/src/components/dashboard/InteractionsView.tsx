@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { useApi, useHref } from "@birlinq/platform";
+import { useHref } from "@birlinq/platform";
+import { useInteractions } from "@birlinq/core";
 import type { Interaction } from "@birlinq/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -24,8 +25,6 @@ import {
   scenarioLabel,
 } from "@/components/dashboard/format";
 
-const PAGE_SIZE = 20;
-
 export function InteractionsView({ banner }: { banner?: ReactNode }) {
   return (
     <DashboardShell banner={banner}>
@@ -40,87 +39,22 @@ function InteractionsList() {
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const api = useApi();
   const href = useHref();
 
-  const [items, setItems] = useState<Interaction[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(false);
-  const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<Filter>("all");
-  const [resolving, setResolving] = useState<Set<string>>(new Set());
-  const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    (async () => {
-      try {
-        const res = await api.owner.interactions({ limit: PAGE_SIZE });
-        if (cancelled) return;
-        setItems(res.data);
-        setCursor(res.meta.next_cursor);
-        setHasMore(res.meta.has_more);
-      } catch {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [attempt]);
-
-  const loadMore = async () => {
-    if (!cursor || loadingMore) return;
-    setLoadingMore(true);
-    setActionError(null);
-    try {
-      const res = await api.owner.interactions({
-        limit: PAGE_SIZE,
-        cursor,
-      });
-      setItems((cur) => [...cur, ...res.data]);
-      setCursor(res.meta.next_cursor);
-      setHasMore(res.meta.has_more);
-    } catch {
-      setActionError(tc("error"));
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  const resolve = async (id: string) => {
-    if (resolving.has(id)) return;
-    setResolving((prev) => new Set(prev).add(id));
-    setActionError(null);
-    // Optimistic, and it stays that way: the endpoint answers 204 with no
-    // body. Per D-033 `status` is the only field resolving can change, so the
-    // local flip below is the whole truth — there is nothing to read back.
-    setItems((cur) =>
-      cur.map((i) => (i.id === id ? { ...i, status: "resolved" as const } : i))
-    );
-    try {
-      await api.owner.resolveInteraction(id);
-    } catch {
-      // Revert on failure.
-      setItems((cur) =>
-        cur.map((i) => (i.id === id ? { ...i, status: "new" as const } : i))
-      );
-      setActionError(t("interactions.resolveError"));
-    } finally {
-      setResolving((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
-  };
+  const {
+    items,
+    loading,
+    error,
+    hasMore,
+    loadingMore,
+    resolving,
+    actionError,
+    retry,
+    loadMore,
+    resolve,
+  } = useInteractions();
 
   const newCount = items.filter((i) => i.status === "new").length;
   const visible = filter === "new" ? items.filter((i) => i.status === "new") : items;
@@ -142,7 +76,7 @@ function InteractionsList() {
         <ErrorCard
           message={tc("error")}
           retryLabel={tc("retry")}
-          onRetry={() => setAttempt((n) => n + 1)}
+          onRetry={retry}
         />
       ) : items.length === 0 ? (
         <EmptyState
@@ -175,7 +109,9 @@ function InteractionsList() {
 
           {actionError && (
             <p className="rounded-(--radius-btn) border border-danger/30 bg-danger/10 px-4 py-2.5 text-[13px] text-danger">
-              {actionError}
+              {actionError === "resolve"
+                ? t("interactions.resolveError")
+                : tc("error")}
             </p>
           )}
 

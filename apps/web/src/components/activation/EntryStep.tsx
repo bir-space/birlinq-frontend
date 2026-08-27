@@ -9,7 +9,7 @@ import { FormAlert } from "@/components/auth/FormAlert";
 import { useApi, useHref } from "@birlinq/platform";
 import { LIMITS } from "@birlinq/api";
 import { ApiRequestError, ErrorCode, isValidationError } from "@birlinq/api";
-import { useAuth } from "@/lib/auth/use-auth";
+import { useAuth } from "@birlinq/core";
 
 type View = "form" | "notFound" | "already";
 

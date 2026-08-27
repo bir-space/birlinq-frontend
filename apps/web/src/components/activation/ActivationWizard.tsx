@@ -9,7 +9,7 @@ import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { useApi, useHref } from "@birlinq/platform";
 import { ApiRequestError, ErrorCode } from "@birlinq/api";
-import { useAuth } from "@/lib/auth/use-auth";
+import { useAuth } from "@birlinq/core";
 import type { Entity } from "@birlinq/api";
 import { StepProgress } from "./StepProgress";
 import { EntryStep } from "./EntryStep";

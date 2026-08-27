@@ -8,8 +8,9 @@ Decisions this implements: **FE-001** (npm-workspaces monorepo) and **FE-002** (
 the owner. The website is a business card and the first touch — landing, guide, the public
 scan page a stranger opens after scanning a sticker, and (for now) sticker activation.
 
-**Current state:** steps 1–4 are done — `apps/web` and `apps/mobile` both exist and consume
-the extracted `api`, `i18n`, `tokens` and `platform` packages. Everything below describes the
+**Current state:** steps 1–5 are done in code — `apps/web` and `apps/mobile` both render the
+cabinet over the same `core` hooks, on top of the extracted `api`, `i18n`, `tokens` and
+`platform` packages. Nothing has been exercised on a device yet. Everything below describes the
 target; the migration table at the end says how far along it is.
 
 ---
@@ -23,14 +24,14 @@ birlinq-frontend/
 │  │  ├─ src/app/[locale]/     landing, guide, /q/[code], auth, activation
 │  │  └─ src/lib/platform.tsx  web implementation of the Platform contract
 │  └─ mobile/                  Expo + Expo Router + NativeWind      ← exists
-│     ├─ app/                  file-based routes; sign-in and a cabinet stub
-│     └─ src/                  platform.tsx, api-config.ts, token-store.ts
+│     ├─ app/                  sign-in, then (cabinet)/ tabs: dashboard, interactions, qr
+│     └─ src/                  platform.tsx, api-config.ts, token-store.ts, components/
 ├─ packages/
 │  ├─ api/                     fetch client, endpoints, types, ErrorCode   ← exists
 │  ├─ i18n/                    messages/{ru,kk,en}/*.json + loader         ← exists
 │  ├─ tokens/                  colours, spacing, typography, radii         ← exists
 │  ├─ platform/                the Platform contract — types + context     ← exists
-│  └─ core/                    headless hooks + domain logic (no markup)   ← step 5
+│  └─ core/                    headless hooks + domain logic (no markup)   ← exists
 └─ package.json                workspaces: ["apps/*", "packages/*"]
 ```
 
@@ -66,8 +67,8 @@ configureApi({
 
 `NEXT_PUBLIC_API_URL` means nothing under Metro, and `localStorage` means nothing on a
 phone. So `packages/api` declares a `TokenStore` interface and takes both from its host at
-boot instead of reaching for them. `apps/mobile` will call the same function with
-`EXPO_PUBLIC_API_URL` and a Keychain-backed store, and nothing inside the package changes.
+boot instead of reaching for them. `apps/mobile` calls the same function with
+`EXPO_PUBLIC_API_URL` and a Keychain-backed store, and nothing inside the package changed.
 The Platform contract below applies the same inversion to the rest of the environment.
 
 The table promotes an informal convention into an enforceable boundary; consider a
@@ -99,8 +100,8 @@ export interface Platform {
 }
 ```
 
-Three implementations, all equal citizens: web (`apps/web/src/lib/platform.tsx`), the `/mock`
-fixture tree, and native once it exists. Adding a fourth — an e2e harness, say — means writing
+Three implementations, all equal citizens: web (`apps/web/src/lib/platform.tsx`), native
+(`apps/mobile/src/platform.tsx`) and the `/mock` fixture tree. Adding a fourth — an e2e harness, say — means writing
 one object, not touching feature code.
 
 `usePlatform()` **throws** when no provider is above it, rather than falling back to a default.
@@ -132,14 +133,31 @@ Invariant #3 in `CLAUDE.md` holds on both: the access token stays in memory only
 Everything stateful that is not markup. This is where the reuse actually comes from, since
 presentation is deliberately not shared.
 
-- The activation wizard step machine (`entry → auth → vehicle → privacy → success`)
-- Cursor pagination for the interactions and QR lists
-- `ErrorCode` → translated-message mapping
-- Form validation shapes, including plate normalisation
-- Idempotency-key lifecycle around state-changing calls
+Already there:
+
+- `AuthProvider` / `useAuth` — session restore, background verify, sign-out. The store is a
+  prop, not an import, because where the session physically lives is the one genuine
+  difference between the apps.
+- `useOverview` — the cabinet summary.
+- `useInteractions` — cursor pagination plus optimistic resolve.
+- `useQrList` — cursor pagination plus optimistic pause/resume, with entity titles treated as
+  optional context rather than a reason to fail the screen.
+
+Still to come: the activation wizard's step machine and the idempotency-key lifecycle around
+state-changing calls.
 
 A hook in `core` returns state and callbacks. It never returns JSX, never reads `window`, and
-never imports from an app. `apps/web` and `apps/mobile` each render their own view over it.
+never imports from an app.
+
+**It also never returns a translated string.** Errors surface as codes — `"loadMore"`,
+`"resolve"`, `"toggle"` — and the view maps them onto messages it already has. A hook that
+formatted its own text would have to know which i18n library the host uses, which is exactly
+the coupling this package exists to avoid.
+
+One wrinkle the web hits and native does not: a server component cannot hand an object of
+functions to a client component, so `AuthProvider` is bound to the store inside
+`apps/web/src/lib/auth/auth-provider.tsx` rather than in the layout. `apps/mobile` binds it
+directly, because its root layout is already a client component.
 
 ## i18n
 
@@ -218,8 +236,12 @@ Six steps. Each leaves the repository green — there is no big-bang commit.
 | 2 | extract `packages/{api,i18n,tokens}` | `apps/web` imports them; no behavioural change | **done** |
 | 3 | `packages/platform`; `app-env.tsx` grows into it; `/mock` becomes an implementation | `/mock` still renders the real components | **done** |
 | 4 | `apps/mobile` scaffold: Expo, Expo Router, NativeWind, JWT via `expo-secure-store` | login works on a device | **built, unverified on device** |
-| 5 | cabinet in React Native, pulling `packages/core` out of web components as it goes | interactions and QR lists usable on a device | next |
+| 5 | cabinet in React Native, pulling `packages/core` out of web components as it goes | interactions and QR lists usable on a device | **built, unverified on device** |
 | 6 | push: `expo-notifications` in the app, against the backend channel | a scenario submission reaches a phone | blocked on backend |
+
+Steps 4 and 5 are written and both platforms build, but the device gate is still unmet for
+both. Sign-in against a live backend, Keychain persistence across a cold start, refresh-on-401
+and the cabinet's own paging are the things a green build cannot speak to.
 
 Steps 1–3 were mechanical and are verified by build. Step 4 is built and bundles — `expo export`
 produces an Android bundle carrying the shared messages, the design tokens and the Keychain

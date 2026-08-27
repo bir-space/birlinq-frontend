@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslations } from "use-intl";
 import { ApiRequestError, LIMITS } from "@birlinq/api";
 import { useApi } from "@birlinq/platform";
+import { useAuth } from "@birlinq/core";
 
 /**
  * Sign-in. The first screen that proves the whole chain end to end: shared
@@ -19,6 +20,7 @@ export default function SignInScreen() {
   const tc = useTranslations("common");
   const api = useApi();
   const router = useRouter();
+  const { loading: authLoading, isAuthenticated, refresh } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +35,7 @@ export default function SignInScreen() {
     setError(null);
     try {
       await api.auth.login({ email: email.trim(), password, device_name: "mobile" });
+      await refresh();
       router.replace("/dashboard");
     } catch (err) {
       setError(
@@ -41,6 +44,20 @@ export default function SignInScreen() {
     } finally {
       setPending(false);
     }
+  }
+
+  // A restored session skips this screen entirely; while it is being restored
+  // we wait rather than flashing a sign-in form at someone already signed in.
+  if (authLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-ink">
+        <ActivityIndicator color="#2e63e0" />
+      </View>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href="/dashboard" />;
   }
 
   return (

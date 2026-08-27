@@ -57,8 +57,11 @@ packages/                  # shared by every client; no Next.js, no DOM
 │                          # limits.ts, config.ts (configureApi — see below)
 ├── i18n/                  # messages/{ru,kk,en}/*.json, locales, NAMESPACES, loadMessages
 ├── tokens/theme.css       # Tailwind @theme block — the design tokens
-└── platform/src/          # Platform contract: PlatformProvider, usePlatform,
-                           # useApi, useHref. No implementations live here.
+├── platform/src/          # Platform contract: PlatformProvider, usePlatform,
+│                          # useApi, useHref. No implementations live here.
+└── core/src/              # headless hooks both apps render over: AuthProvider/useAuth,
+                           # useOverview, useInteractions, useQrList. No JSX, no DOM,
+                           # and no translated strings — errors come back as codes.
 
 apps/web/src/
 ├── app/[locale]/          # App Router pages, one per route; locale-aware via next-intl
@@ -72,12 +75,14 @@ apps/web/src/
 │   ├── api-config.ts      # configureApi({ baseUrl, tokenStore }) — the web binding
 │   ├── platform.tsx       # WebPlatform: the real API, no link prefix (/mock nests its own)
 │   └── auth/              # token-store.ts (access in memory, refresh in localStorage),
-│                          # use-auth.tsx (AuthProvider/useAuth)
+│                          # auth-provider.tsx (binds @birlinq/core's AuthProvider to it —
+│                          # a server component can't pass an object of functions to a
+│                          # client one, so the binding happens client-side)
 ├── i18n/                  # routing.ts (next-intl binding), request.ts, navigation.ts
 
 apps/mobile/               # Expo SDK 57, file-based routing
-├── app/                   # _layout.tsx (hydrate + IntlProvider + platform), index (sign-in),
-│                          # dashboard (stub — the real cabinet is next)
+├── app/                   # _layout.tsx (hydrate + IntlProvider + platform + auth),
+│                          # index (sign-in), (cabinet)/ tabs: dashboard, interactions, qr
 ├── src/                   # platform.tsx, api-config.ts, token-store.ts (Keychain/Keystore)
 └── tailwind.config.js     # NativeWind, theme parsed out of packages/tokens/theme.css
 ```
@@ -90,7 +95,7 @@ components (client components where interactive) → `@birlinq/api` `endpoints` 
 ### The api package must stay platform-free
 `packages/api` never reads `process.env` or touches storage. Both arrive through
 `configureApi({ baseUrl, tokenStore })`, which `apps/web/src/lib/api-config.ts` calls once at
-boot; the mobile app will call the same function with its own values. So: don't import
+boot and `apps/mobile/src/api-config.ts` mirrors with Expo's values. So: don't import
 `next/*`, `react-native`, or DOM globals into `packages/`, and don't reach for
 `NEXT_PUBLIC_*` there — add a config field instead.
 
@@ -105,8 +110,9 @@ boot; the mobile app will call the same function with its own values. So: don't 
    storing the access token — it's the one thing the backend's threat model cares about.
 4. **Locale mapping**: URL/UI locale is ISO `kk`; the backend expects `kz`. Always go through
    `toApiLocale()` — never send the UI locale string straight to the API.
-5. **No hardcoded UI strings.** Every visible string goes through `next-intl` (`useTranslations`/
-   `getTranslations`), with RU + KK + EN all filled — never ship a namespace with only RU.
+5. **No hardcoded UI strings.** Every visible string goes through the translation layer —
+   `next-intl` on the web, `use-intl` on native, same messages out of `@birlinq/i18n` — with
+   RU + KK + EN all filled; never ship a namespace with only RU.
    Brand/product names (birlinq, Move, Business, ID, partner names) are the one exception —
    they're never translated.
 6. **Brand color ≠ status color.** `accent` (brand blue) is for interactive/highlight UI.
