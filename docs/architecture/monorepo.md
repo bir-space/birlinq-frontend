@@ -222,9 +222,13 @@ app is for. Shipping a fixed dashboard query or a corrected translation is fine;
 new product is not.
 
 A store release cannot be rolled back, so the app needs a version floor from the backend and a
-blocking update screen below it. That floor, and the device-token table that makes the
-installed-version distribution visible, are backend work that has not been decided yet — see
-the backend dependency noted in FE-002.
+blocking update screen below it. That floor is backend work that has not been decided yet.
+
+**Push is web-only today.** The backend shipped VAPID web push (its D-034), which a service
+worker consumes and React Native cannot. `apps/web` implements it — `usePush` in
+`apps/web/src/lib/push.ts`, a push-only service worker, and a manifest, because on iOS the
+Push API only exists once the site is installed to the Home Screen. The mobile app needs a
+second transport (FCM/APNs) that the backend does not expose yet; see **FE-008**.
 
 ## Migration
 
@@ -237,7 +241,7 @@ Six steps. Each leaves the repository green — there is no big-bang commit.
 | 3 | `packages/platform`; `app-env.tsx` grows into it; `/mock` becomes an implementation | `/mock` still renders the real components | **done** |
 | 4 | `apps/mobile` scaffold: Expo, Expo Router, NativeWind, JWT via `expo-secure-store` | login works on a device | **built, unverified on device** |
 | 5 | cabinet in React Native, pulling `packages/core` out of web components as it goes | interactions and QR lists usable on a device | **built, unverified on device** |
-| 6 | push: `expo-notifications` in the app, against the backend channel | a scenario submission reaches a phone | blocked on backend |
+| 6 | push: `expo-notifications` in the app, against the backend channel | a scenario submission reaches a phone | blocked on backend (FE-008) |
 
 Steps 4 and 5 are written and both platforms build, but the device gate is still unmet for
 both. Sign-in against a live backend, Keychain persistence across a cold start, refresh-on-401

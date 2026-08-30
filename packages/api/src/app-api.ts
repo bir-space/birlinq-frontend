@@ -3,6 +3,7 @@ import {
   entitiesApi,
   ownerApi,
   publicApi,
+  pushApi,
   qrApi,
 } from "./endpoints";
 
@@ -19,6 +20,7 @@ export interface AppApi {
   qr: typeof qrApi;
   public: typeof publicApi;
   owner: typeof ownerApi;
+  push: typeof pushApi;
 }
 
 export const realApi: AppApi = {
@@ -27,4 +29,5 @@ export const realApi: AppApi = {
   qr: qrApi,
   public: publicApi,
   owner: ownerApi,
+  push: pushApi,
 };

@@ -134,5 +134,28 @@
     "resumeHint": "The public page will be available again",
     "notFound": "QR code not found",
     "noEntity": "No vehicle is linked to this QR yet"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "They arrive the moment someone scans your QR",
+    "enable": "Enable notifications",
+    "disable": "Turn off",
+    "enabled": "Notifications are on",
+    "enabling": "Enabling…",
+    "error": "Could not change the setting. Please try again.",
+    "emailNote": "You get an email either way — notifications are simply faster.",
+    "iosInstallTitle": "On iPhone and iPad, add birlinq to your Home Screen first",
+    "iosInstallHint": "Notifications are unavailable in regular Safari — an Apple restriction, not ours.",
+    "iosStep1": "Open this site in Safari",
+    "iosStep2": "Tap the Share button at the bottom of the screen",
+    "iosStep3": "Choose “Add to Home Screen” and confirm",
+    "iosStep4": "Open birlinq from the Home Screen and come back here",
+    "androidHint": "Tap “Enable notifications” and allow them in the browser prompt.",
+    "desktopHint": "Allow notifications in the browser prompt — they arrive while the browser is running.",
+    "blockedTitle": "Notifications are blocked in your browser",
+    "blockedIos": "Settings → Notifications → birlinq → allow notifications.",
+    "blockedAndroid": "Tap the lock icon left of the address → Permissions → turn Notifications on.",
+    "blockedDesktop": "Click the lock icon left of the address and turn Notifications on for this site.",
+    "unsupported": "This browser does not support notifications. Emails will keep arriving."
   }
 }

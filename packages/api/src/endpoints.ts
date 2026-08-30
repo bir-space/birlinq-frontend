@@ -20,6 +20,7 @@ import type {
   OwnerDashboard,
   PrivacySettings,
   PublicEntityPayload,
+  PushSubscriptionPayload,
   QrActivateRequest,
   QrCode,
   QrCursorMeta,
@@ -435,6 +436,39 @@ export const ownerApi = {
     // the action is naturally idempotent — resolving twice changes nothing.
     return apiFetch<void>(`/owner/interactions/${id}/resolve`, {
       method: "POST",
+      auth: true,
+    });
+  },
+};
+
+/**
+ * Browser push subscriptions (backend D-034). One row per browser, so a single
+ * user may hold several and a notification fans out to all of them.
+ *
+ * Web-only by construction: VAPID subscriptions come from a service worker,
+ * which React Native has none of. A native client needs FCM/APNs, which the
+ * backend does not expose yet.
+ */
+export const pushApi = {
+  /**
+   * POST /push/subscribe → 204.
+   * Safe on every page load: an endpoint already stored is updated, not
+   * duplicated, and a browser that silently revoked a subscription gets it
+   * restored by the next call.
+   */
+  subscribe(subscription: PushSubscriptionPayload): Promise<void> {
+    return apiFetch<void>("/push/subscribe", {
+      method: "POST",
+      body: subscription,
+      auth: true,
+    });
+  },
+
+  /** DELETE /push/unsubscribe → 204. Drops this browser's row only. */
+  unsubscribe(endpoint: string): Promise<void> {
+    return apiFetch<void>("/push/unsubscribe", {
+      method: "DELETE",
+      body: { endpoint },
       auth: true,
     });
   },

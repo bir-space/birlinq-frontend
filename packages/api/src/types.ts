@@ -349,6 +349,21 @@ export interface AbuseAccepted {
 
 // ---------- Owner cabinet ----------
 
+// ---------- Web push ----------
+
+/**
+ * Exactly what `PushSubscription.toJSON()` produces — the backend takes it
+ * verbatim, so nothing here should ever be assembled by hand.
+ */
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  content_encoding?: string | null;
+}
+
 export interface OwnerDashboard {
   total_qrs: number;
   active_qrs: number;

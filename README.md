@@ -14,6 +14,7 @@ npm run dev                  # http://localhost:3000
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=   # публичный VAPID-ключ, выдаёт бэкенд; без него карточка уведомлений скрыта
 ```
 
 Проверки: `npm run typecheck`, `npm run build`. Для мобильного — `npx expo-doctor` и `npm run bundle:check` из `apps/mobile`.
@@ -53,6 +54,7 @@ npm start -w apps/mobile     # Expo dev server, дальше a / i для уст
 | Кабинет: обзор | `/dashboard` | `GET /owner/dashboard` |
 | Кабинет: сообщения | `/dashboard/interactions` | `GET /owner/interactions`, `POST .../resolve` |
 | Кабинет: мои QR (pause/resume) | `/dashboard/qr`, `/dashboard/qr/[id]` | `GET /qr`, `POST /qr/{id}/pause|resume` |
+| Web push: подписка и инструкции для iOS / Android | карточка в `/dashboard` | `POST /push/subscribe`, `DELETE /push/unsubscribe` |
 
 Админ-экраны из фигмы (ADM1–ADM3) сознательно **не** делались — админка уже есть на Filament (`/admin`).
 

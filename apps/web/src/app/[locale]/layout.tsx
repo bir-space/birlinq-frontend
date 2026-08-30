@@ -21,6 +21,17 @@ export const metadata: Metadata = {
   },
   description:
     "birlinq — умные QR-наклейки: свяжитесь с владельцем машины или вещи, не раскрывая личных данных.",
+  manifest: "/manifest.webmanifest",
+  // iOS reads these when the site is added to the Home Screen, which is the
+  // only way push works there at all.
+  appleWebApp: {
+    capable: true,
+    title: "birlinq",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export function generateStaticParams() {

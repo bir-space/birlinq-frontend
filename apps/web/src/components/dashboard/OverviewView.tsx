@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { NotificationsCard } from "@/components/dashboard/NotificationsCard";
 import {
   EmptyState,
   ErrorCard,
@@ -50,6 +51,8 @@ function Overview() {
         </h1>
         <p className="mt-1 text-[13px] text-muted-2">{t("overview.subtitle")}</p>
       </div>
+
+      <NotificationsCard />
 
       {loading ? (
         <PageSpinner />

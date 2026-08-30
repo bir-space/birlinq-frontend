@@ -118,7 +118,12 @@ boot and `apps/mobile/src/api-config.ts` mirrors with Expo's values. So: don't i
 6. **Brand color ≠ status color.** `accent` (brand blue) is for interactive/highlight UI.
    `success`/`warn`/`danger` are status semantics (activated, resolved, error) and must stay
    independently adjustable. Don't reuse one for the other just because the hex is close.
-7. **PrivacyFilter is a backend concept, not a frontend one** — never render a field the
+7. **Push is web-only** (FE-008). The backend's channel is VAPID web push, which needs a
+   service worker — `apps/mobile` has no push and cannot get one until the backend adds
+   FCM/APNs. Keep `usePush` in `apps/web/src/lib/push.ts`; it must never move to
+   `packages/core`. On iOS it only works in an installed PWA, so the UI explains that instead
+   of showing a dead button — don't "simplify" that branch away.
+8. **PrivacyFilter is a backend concept, not a frontend one** — never render a field the
    public payload didn't send, and never add a client-side toggle that fakes hiding a field
    the API already sent. If something needs hiding, it needs a backend privacy setting.
 

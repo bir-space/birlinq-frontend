@@ -405,10 +405,21 @@ export const mockOwnerApi = {
  * `src/lib/api/endpoints.ts`, this fails to compile instead of silently
  * drifting, which is the whole point of routing both trees through one type.
  */
+/**
+ * Push in the preview tree accepts and forgets. The real thing needs a service
+ * worker, a VAPID key and a permission prompt; none of that belongs in a
+ * fixture tree whose whole point is to render without a backend.
+ */
+const mockPushApi: AppApi["push"] = {
+  subscribe: async () => {},
+  unsubscribe: async () => {},
+};
+
 export const mockApi: AppApi = {
   auth: mockAuthApi,
   entities: mockEntitiesApi,
   qr: mockQrApi,
   public: mockPublicApi,
   owner: mockOwnerApi,
+  push: mockPushApi,
 };

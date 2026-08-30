@@ -194,6 +194,52 @@ channels, privacy rules — belongs to the backend log. Reference it from here, 
 
 ---
 
+## FE-008 — Web push is a web-only channel; the mobile app is not covered by it
+
+- **Status:** Accepted
+- **Supersedes:** the push-transport half of **FE-002**; its choice of Expo stands
+- **Date:** 2026-08-27
+- **Owner:** Frontend lead
+- **Context:** The backend shipped **D-034 — Web push as the primary owner channel, email as
+  fallback**: `laravel-notification-channels/webpush` over VAPID, with `POST /push/subscribe`
+  and `DELETE /push/unsubscribe` taking a browser `PushSubscription.toJSON()` verbatim. This
+  is not the transport FE-002 assumed. FE-002 said push tokens would be native FCM/APNs ones;
+  VAPID subscriptions are produced by a service worker, which React Native does not have. The
+  backend has no FCM or APNs path at all, so there is nothing for `apps/mobile` to register
+  with.
+- **Decision:** Implement web push in `apps/web` against D-034 as shipped, and treat it as a
+  **web-only** channel. `usePush` lives in `apps/web/src/lib/push.ts`, not in
+  `@birlinq/core` — it is exactly the kind of platform-specific thing that package exists to
+  keep out. `packages/api` gains `pushApi` because the endpoints are contract, not platform.
+  `apps/mobile` gets no push in this change.
+- **Rationale:** Shipping the channel the backend actually has beats waiting for the one we
+  planned. The web is also where the owner already is at the moment that matters — they
+  activate a sticker in a browser — so a web subscription reaches people who have not
+  installed anything. Putting the hook in the web app rather than `core` keeps the package
+  boundary honest instead of adding a capability three of four consumers cannot use.
+- **Alternatives considered:** (a) Ask the backend for FCM before building anything — leaves
+  the shipped channel unused and the product's most time-sensitive moment on email alone.
+  (b) Put `usePush` in `@birlinq/core` behind a capability check — a hook that throws or
+  no-ops on native is worse than not having it there.
+- **Consequences:**
+  - **Mobile step 6 is still blocked, and on a different thing than FE-002 recorded.** It now
+    needs the backend to add FCM/APNs alongside web push — a second transport, not a
+    reconfiguration. That is the backend's decision to make; raise it before planning step 6.
+  - **iOS needs the site installed to the Home Screen.** Safari exposes no Push API in a
+    normal tab, and gives no hint why, so the UI detects the case and explains it rather than
+    showing a button that cannot work. That is why `app/manifest.ts`, the apple-touch icon
+    and `appleWebApp` metadata are part of this change: installability is a push requirement
+    here, not a nice-to-have.
+  - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` joins the web environment. The backend hands it over
+    separately; without it the notifications card hides itself rather than failing loudly at
+    an owner.
+  - `public/sw.js` is deliberately push-only — no caching. Adding a cache would make the web
+    app's update story a second thing to reason about, for no benefit here.
+  - Email keeps arriving on both channels by the backend's design, so a failed subscription
+    degrades rather than silences.
+
+---
+
 ## Decisions yet to be made
 
 | ID | Question | Owner | Target |
