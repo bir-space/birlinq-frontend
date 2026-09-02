@@ -157,6 +157,9 @@
     "checking": "Checking notification settings…",
     "inAppIos": "You opened birlinq inside another app. Open this page in Safari — otherwise “Add to Home Screen” is not available.",
     "inAppAndroid": "You opened birlinq inside another app, where notifications do not work. Open the page in Chrome: menu ⋮ → “Open in browser”.",
-    "iosOutdated": "Notifications on iPhone need iOS 16.4 or newer. Update iOS: Settings → General → Software Update."
+    "iosOutdated": "Notifications on iPhone need iOS 16.4 or newer. Update iOS: Settings → General → Software Update.",
+    "deviceDesktop": "Desktop",
+    "deviceIos": "iPhone / iPad",
+    "deviceAndroid": "Android"
   }
 }

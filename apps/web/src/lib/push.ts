@@ -154,16 +154,24 @@ function isInAppBrowser(): boolean {
 }
 
 /**
- * The Push API is missing. Only consulted once it is, so a WebView that
- * happens to support push is never turned away on the strength of a UA string.
+ * Why there is no button, before the browser is even asked.
+ *
+ * iOS is decided by where the page runs, not by whether the API is present:
+ * a real Safari tab has no Push API and a real Home Screen app does, so the
+ * two rules agree on devices — and deciding by `standalone` also makes a
+ * desktop browser emulating an iPhone show the real iPhone scenario, which is
+ * the only way to preview it without a phone. Null means "no objection".
  */
-function whyNoPushApi(platform: PushPlatform): PushState {
-  if (isInAppBrowser()) return "in-app";
-  if (platform === "ios" && isIosOutdated()) return "ios-outdated";
-  // On iOS the API only appears in an installed PWA, so "no support" and
-  // "not installed yet" are the same observation with different answers.
-  if (platform === "ios" && !isStandalone()) return "needs-install";
-  return "unsupported";
+function blockedBeforeApi(platform: PushPlatform): PushState | null {
+  if (platform === "ios") {
+    if (isIosOutdated()) return "ios-outdated";
+    if (!isStandalone()) return isInAppBrowser() ? "in-app" : "needs-install";
+    return null;
+  }
+  if (hasPushSupport()) return null;
+  // Only now is the UA consulted, so a WebView that happens to support push is
+  // never turned away on the strength of a string.
+  return isInAppBrowser() ? "in-app" : "unsupported";
 }
 
 async function registration(): Promise<ServiceWorkerRegistration> {
@@ -200,8 +208,9 @@ export function usePush(): UsePush {
         return;
       }
 
-      if (!hasPushSupport()) {
-        if (!cancelled) setState(whyNoPushApi(detected));
+      const blocked = blockedBeforeApi(detected);
+      if (blocked !== null || !hasPushSupport()) {
+        if (!cancelled) setState(blocked ?? "unsupported");
         return;
       }
 
