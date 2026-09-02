@@ -88,13 +88,16 @@ function QrList() {
             </p>
           )}
 
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {/* grid-cols-1 / min-w-0: without them the single-column phone
+              layout takes its width from the cards' min-content, and a
+              `truncate` line's min-content is the full untruncated string. */}
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((qr) => {
               const entity = qr.entity_id ? entities[qr.entity_id] : undefined;
               const canPause = qr.status === "activated";
               const canResume = qr.status === "paused";
               return (
-                <li key={qr.id} className="flex">
+                <li key={qr.id} className="flex min-w-0">
                   <Card className="flex w-full flex-col gap-4">
                     <Link
                       href={href(`/dashboard/qr/${qr.id}`)}

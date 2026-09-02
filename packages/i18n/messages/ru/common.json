@@ -14,7 +14,5 @@
   "logout": "Выйти",
   "register": "Регистрация",
   "dashboard": "Кабинет",
-  "language": "Язык",
-  "logoutAll": "Везде",
-  "logoutAllHint": "Выйти на всех устройствах"
+  "language": "Язык"
 }

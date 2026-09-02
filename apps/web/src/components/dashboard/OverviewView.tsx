@@ -89,10 +89,17 @@ function Overview() {
           </div>
 
           {/* On the full-width track these two sit side by side from lg up,
-              so the page doesn't become one long stretched column. */}
-          <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr] lg:items-start">
+              so the page doesn't become one long stretched column.
+
+              Every track is minmax(0, …) and every item is min-w-0 on purpose:
+              a track's automatic floor is its items' min-content, and the
+              min-content of a `truncate` line is the whole untruncated string
+              (truncate implies white-space: nowrap). Leave either off and one
+              long interaction message stretches the column past the viewport
+              instead of being cut with an ellipsis. */}
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
             {/* Latest interactions */}
-            <section>
+            <section className="min-w-0">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-[15px] font-bold">
                   {t("overview.latest.title")}
@@ -114,7 +121,10 @@ function Overview() {
                 <ul className="flex flex-col gap-2.5">
                   {latest.map((item) => (
                     <li key={item.id}>
-                      <Link href={href("/dashboard/interactions")} className="block">
+                      <Link
+                        href={href("/dashboard/interactions")}
+                        className="block min-w-0"
+                      >
                         <Card className="flex items-center gap-3 !p-4 transition-colors hover:border-line">
                           <IconBubble
                             tone={item.status === "new" ? "warn" : "muted"}
@@ -148,7 +158,7 @@ function Overview() {
             </section>
 
             {/* Quick links */}
-            <section>
+            <section className="min-w-0">
               <h2 className="mb-3 text-[15px] font-bold">
                 {t("overview.quick.title")}
               </h2>
@@ -223,7 +233,7 @@ function QuickLink({
   hint: string;
 }) {
   return (
-    <Link href={href} className="block">
+    <Link href={href} className="block min-w-0">
       <Card className="flex items-center gap-3 !p-4 transition-colors hover:border-line">
         <IconBubble tone="accent">{icon}</IconBubble>
         <div className="min-w-0 flex-1">

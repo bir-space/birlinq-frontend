@@ -14,7 +14,5 @@
   "logout": "Log out",
   "register": "Sign up",
   "dashboard": "Dashboard",
-  "language": "Language",
-  "logoutAll": "Everywhere",
-  "logoutAllHint": "Sign out on all devices"
+  "language": "Language"
 }
