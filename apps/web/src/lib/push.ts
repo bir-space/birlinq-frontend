@@ -15,6 +15,13 @@ export type PushState =
   | "loading"
   /** No VAPID key in the environment — a deployment gap, not a user's problem. */
   | "unconfigured"
+  /**
+   * The page is not on a secure origin, so the browser withholds the whole
+   * API. Distinct from "unsupported" on purpose: the browser is perfectly
+   * capable, the address is the problem — which is exactly what happens when
+   * a phone opens the dev server over http://192.168.x.x.
+   */
+  | "insecure"
   /** The browser has no push at all. Nothing to offer. */
   | "unsupported"
   /** iOS Safari: push exists, but only once the site is on the Home Screen. */
@@ -76,6 +83,15 @@ function isStandalone(): boolean {
   );
 }
 
+/**
+ * https, localhost or 127.0.0.1. Anything else — a LAN address in development,
+ * most often — hides service workers entirely, and a browser that hid them
+ * looks identical to one that never had them.
+ */
+function isSecureOrigin(): boolean {
+  return typeof window !== "undefined" && window.isSecureContext;
+}
+
 function hasPushSupport(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -108,6 +124,11 @@ export function usePush(): UsePush {
           );
         }
         if (!cancelled) setState("unconfigured");
+        return;
+      }
+
+      if (!isSecureOrigin()) {
+        if (!cancelled) setState("insecure");
         return;
       }
 

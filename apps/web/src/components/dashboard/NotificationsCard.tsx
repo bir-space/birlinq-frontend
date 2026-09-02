@@ -3,15 +3,16 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PushInstructions } from "@/components/public/PushInstructions";
 import { usePush } from "@/lib/push";
 
 /**
  * Owner-facing control for web push (backend D-034).
  *
- * Most of this component is instructions rather than controls, and that is the
- * point: on iOS a push subscription is impossible until the site is installed
- * to the Home Screen, and Apple gives no prompt saying so. Showing a button
- * that cannot work is worse than explaining why it is not there yet.
+ * Often there is no button to show, and that is the interesting part. On iOS
+ * the Push API does not exist until the site is on the Home Screen, and Apple
+ * offers no way to trigger that from a page — so the card carries the manual
+ * steps instead of a control that could not work.
  */
 export function NotificationsCard() {
   const t = useTranslations("dashboard.notifications");
@@ -19,6 +20,13 @@ export function NotificationsCard() {
 
   // A missing VAPID key is a deployment gap; nothing useful to say to an owner.
   if (state === "loading" || state === "unconfigured") return null;
+
+  const offHint =
+    platform === "android"
+      ? t("androidHint")
+      : platform === "ios"
+        ? t("iosHint")
+        : t("desktopHint");
 
   return (
     <Card>
@@ -45,17 +53,13 @@ export function NotificationsCard() {
           <p className="text-[13px] text-success">{t("enabled")}</p>
         )}
 
-        {state === "off" && (
-          <p className="text-[13px] text-muted-2">
-            {platform === "android"
-              ? t("androidHint")
-              : platform === "ios"
-                ? t("iosStep4")
-                : t("desktopHint")}
-          </p>
-        )}
+        {state === "off" && <p className="text-[13px] text-muted-2">{offHint}</p>}
 
-        {state === "needs-install" && <IosInstallSteps />}
+        {state === "needs-install" && <PushInstructions platform="ios" />}
+
+        {state === "insecure" && (
+          <p className="text-[13px] text-muted-2">{t("insecure")}</p>
+        )}
 
         {state === "denied" && (
           <div className="rounded-(--radius-btn) border border-warn/30 bg-warn/15 p-3">
@@ -81,22 +85,5 @@ export function NotificationsCard() {
         <p className="text-[12px] text-muted">{t("emailNote")}</p>
       </div>
     </Card>
-  );
-}
-
-function IosInstallSteps() {
-  const t = useTranslations("dashboard.notifications");
-
-  return (
-    <div className="rounded-(--radius-btn) border border-card-border bg-ink-soft p-3">
-      <p className="text-[13px] font-medium">{t("iosInstallTitle")}</p>
-      <ol className="mt-2 flex list-inside list-decimal flex-col gap-1 text-[13px] text-muted-2">
-        <li>{t("iosStep1")}</li>
-        <li>{t("iosStep2")}</li>
-        <li>{t("iosStep3")}</li>
-        <li>{t("iosStep4")}</li>
-      </ol>
-      <p className="mt-2 text-[12px] text-muted">{t("iosInstallHint")}</p>
-    </div>
   );
 }

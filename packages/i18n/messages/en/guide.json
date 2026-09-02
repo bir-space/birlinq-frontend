@@ -50,5 +50,22 @@
   "cta": {
     "activate": "Activate a sticker",
     "login": "I already have an account"
+  },
+  "push": {
+    "heading": "Notifications on your phone",
+    "lead": "So you hear about a scan straight away, not from an email.",
+    "iosTitle": "iPhone and iPad",
+    "iosLead": "Add birlinq to your Home Screen once.",
+    "iosStep1": "Open birlinq in Safari — other browsers on iPhone will not work for this",
+    "iosStep2": "Tap the Share button at the bottom of the screen:",
+    "iosStep3": "Scroll the list down and choose “Add to Home Screen”:",
+    "iosStep4": "Tap “Add” — a birlinq icon appears on your Home Screen",
+    "iosStep5": "Open birlinq from that icon, sign in and tap “Enable notifications”",
+    "iosNote": "This is Apple's restriction rather than ours: a normal Safari tab has no notification support at all, which is why no button appears there.",
+    "androidTitle": "Android",
+    "androidLead": "Nothing to install.",
+    "androidStep1": "Sign in to the cabinet and tap “Enable notifications”",
+    "androidStep2": "Allow notifications in the browser prompt",
+    "androidNote": "If no prompt appeared, tap the lock icon left of the address, open Permissions and turn Notifications on."
   }
 }

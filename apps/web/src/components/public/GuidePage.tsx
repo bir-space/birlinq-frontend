@@ -5,6 +5,7 @@ import { Logo } from "@/components/ui/Logo";
 import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { Card } from "@/components/ui/Card";
 import { IconArrowLeft, IconMapPin, IconDroplet, IconClock } from "./icons";
+import { PushInstructions } from "./PushInstructions";
 
 const ACTIVATE_STEPS = ["s1", "s2", "s3", "s4", "s5"] as const;
 
@@ -143,6 +144,16 @@ export function GuidePage() {
           <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
             {t("check.text")}
           </p>
+        </section>
+
+        <section id="push" className="mt-10 scroll-mt-6">
+          <h2 className="text-lg font-bold">{t("push.heading")}</h2>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+            {t("push.lead")}
+          </p>
+          <div className="mt-4">
+            <PushInstructions platform="both" />
+          </div>
         </section>
 
         <section className="mt-10">

@@ -54,7 +54,8 @@ npm start -w apps/mobile     # Expo dev server, дальше a / i для уст
 | Кабинет: обзор | `/dashboard` | `GET /owner/dashboard` |
 | Кабинет: сообщения | `/dashboard/interactions` | `GET /owner/interactions`, `POST .../resolve` |
 | Кабинет: мои QR (pause/resume) | `/dashboard/qr`, `/dashboard/qr/[id]` | `GET /qr`, `POST /qr/{id}/pause|resume` |
-| Web push: подписка и инструкции для iOS / Android | карточка в `/dashboard` | `POST /push/subscribe`, `DELETE /push/unsubscribe` |
+| Web push: подписка | карточка в `/dashboard` | `POST /push/subscribe`, `DELETE /push/unsubscribe` |
+| Инструкция «как включить уведомления» для iOS / Android | `/guide#push` | статика |
 
 Админ-экраны из фигмы (ADM1–ADM3) сознательно **не** делались — админка уже есть на Filament (`/admin`).
 
