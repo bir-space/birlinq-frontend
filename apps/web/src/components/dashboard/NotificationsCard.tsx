@@ -3,23 +3,30 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
 import { PushInstructions } from "@/components/public/PushInstructions";
 import { usePush } from "@/lib/push";
 
 /**
- * Owner-facing control for web push (backend D-034).
+ * Owner-facing control for web push (backend D-034, FE-009).
  *
  * Often there is no button to show, and that is the interesting part. On iOS
  * the Push API does not exist until the site is on the Home Screen, and Apple
  * offers no way to trigger that from a page — so the card carries the manual
- * steps instead of a control that could not work.
+ * steps instead of a control that could not work. Inside another app's
+ * WebView the answer is "open it in the browser"; on an old iPhone it is
+ * "update iOS". Each gets its own text rather than a shared shrug.
+ *
+ * The card is never blank once the VAPID key exists: an empty space is what
+ * made "no notifications on phones" indistinguishable from a stale deploy.
  */
 export function NotificationsCard() {
   const t = useTranslations("dashboard.notifications");
-  const { state, platform, busy, failed, enable, disable } = usePush();
+  const { state, platform, standalone, busy, failed, enable, disable } =
+    usePush();
 
   // A missing VAPID key is a deployment gap; nothing useful to say to an owner.
-  if (state === "loading" || state === "unconfigured") return null;
+  if (state === "unconfigured") return null;
 
   const offHint =
     platform === "android"
@@ -49,6 +56,13 @@ export function NotificationsCard() {
           )}
         </div>
 
+        {state === "loading" && (
+          <p className="flex items-center gap-2 text-[13px] text-muted-2">
+            <Spinner className="size-4" />
+            {t("checking")}
+          </p>
+        )}
+
         {state === "on" && (
           <p className="text-[13px] text-success">{t("enabled")}</p>
         )}
@@ -56,6 +70,16 @@ export function NotificationsCard() {
         {state === "off" && <p className="text-[13px] text-muted-2">{offHint}</p>}
 
         {state === "needs-install" && <PushInstructions platform="ios" />}
+
+        {state === "in-app" && (
+          <p className="text-[13px] text-muted-2">
+            {platform === "ios" ? t("inAppIos") : t("inAppAndroid")}
+          </p>
+        )}
+
+        {state === "ios-outdated" && (
+          <p className="text-[13px] text-muted-2">{t("iosOutdated")}</p>
+        )}
 
         {state === "insecure" && (
           <p className="text-[13px] text-muted-2">{t("insecure")}</p>
@@ -83,6 +107,13 @@ export function NotificationsCard() {
         {failed && <p className="text-[13px] text-danger">{t("error")}</p>}
 
         <p className="text-[12px] text-muted">{t("emailNote")}</p>
+
+        {/* A phone has no console. Dev builds say which branch it landed in. */}
+        {process.env.NODE_ENV !== "production" && (
+          <p className="font-mono text-[11px] text-muted">
+            push: {state} · {platform} · standalone={String(standalone)}
+          </p>
+        )}
       </div>
     </Card>
   );

@@ -9,6 +9,10 @@ import { useApi } from "@birlinq/platform";
  * Web-only on purpose, so it lives here and not in `@birlinq/core`: VAPID
  * subscriptions come out of a service worker, and React Native has none. A
  * native client would need FCM/APNs, which the backend does not expose.
+ *
+ * Most of the states below are answers to "why is there no button?". On a
+ * phone that question has several honest answers, and each needs a different
+ * instruction — see FE-009.
  */
 
 export type PushState =
@@ -22,6 +26,14 @@ export type PushState =
    * a phone opens the dev server over http://192.168.x.x.
    */
   | "insecure"
+  /**
+   * A WebView inside another app — Telegram, Instagram, a bank's browser.
+   * Android WebView has no Push API, and on iOS the Share sheet that leads to
+   * "Add to Home Screen" is missing. The fix is the same on both: leave.
+   */
+  | "in-app"
+  /** iPhone below 16.4, where Web Push does not exist even once installed. */
+  | "ios-outdated"
   /** The browser has no push at all. Nothing to offer. */
   | "unsupported"
   /** iOS Safari: push exists, but only once the site is on the Home Screen. */
@@ -35,6 +47,8 @@ export type PushPlatform = "ios" | "android" | "desktop";
 export interface UsePush {
   state: PushState;
   platform: PushPlatform;
+  /** Launched from the Home Screen rather than in a browser tab. */
+  standalone: boolean;
   /** An enable/disable call is in flight. */
   busy: boolean;
   failed: boolean;
@@ -43,6 +57,9 @@ export interface UsePush {
 }
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+
+/** First iOS release with Web Push in Home Screen web apps. */
+const IOS_PUSH_MIN = { major: 16, minor: 4 };
 
 /**
  * The browser wants the VAPID key as bytes, not as the base64url it ships in.
@@ -101,6 +118,54 @@ function hasPushSupport(): boolean {
   );
 }
 
+/**
+ * iOS version from the UA, or null when it is not there. An iPad in desktop
+ * mode presents itself as a Mac and hides it; null means "assume current".
+ */
+function iosVersion(): { major: number; minor: number } | null {
+  if (typeof navigator === "undefined") return null;
+  const match = /OS (\d+)_(\d+)/.exec(navigator.userAgent);
+  return match
+    ? { major: Number(match[1]), minor: Number(match[2]) }
+    : null;
+}
+
+function isIosOutdated(): boolean {
+  const version = iosVersion();
+  if (version === null) return false;
+  return (
+    version.major < IOS_PUSH_MIN.major ||
+    (version.major === IOS_PUSH_MIN.major &&
+      version.minor < IOS_PUSH_MIN.minor)
+  );
+}
+
+/**
+ * Android WebView marks itself with "; wv)". The apps listed wrap WebKit on
+ * iOS under their own name and hide the Share sheet. Telegram and WhatsApp on
+ * iOS use Safari's own view controller with Safari's UA, so they cannot be
+ * told apart — the "needs-install" copy covers them by saying "open in
+ * Safari".
+ */
+function isInAppBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /;\s?wv\)/.test(ua) || /FBAN|FBAV|Instagram|Line\//i.test(ua);
+}
+
+/**
+ * The Push API is missing. Only consulted once it is, so a WebView that
+ * happens to support push is never turned away on the strength of a UA string.
+ */
+function whyNoPushApi(platform: PushPlatform): PushState {
+  if (isInAppBrowser()) return "in-app";
+  if (platform === "ios" && isIosOutdated()) return "ios-outdated";
+  // On iOS the API only appears in an installed PWA, so "no support" and
+  // "not installed yet" are the same observation with different answers.
+  if (platform === "ios" && !isStandalone()) return "needs-install";
+  return "unsupported";
+}
+
 async function registration(): Promise<ServiceWorkerRegistration> {
   return navigator.serviceWorker.register("/sw.js");
 }
@@ -109,12 +174,15 @@ export function usePush(): UsePush {
   const api = useApi();
   const [state, setState] = useState<PushState>("loading");
   const [platform, setPlatform] = useState<PushPlatform>("desktop");
+  const [standalone, setStandalone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setPlatform(detectPlatform());
+    const detected = detectPlatform();
+    setPlatform(detected);
+    setStandalone(isStandalone());
 
     void (async () => {
       if (VAPID_PUBLIC_KEY === "") {
@@ -133,15 +201,7 @@ export function usePush(): UsePush {
       }
 
       if (!hasPushSupport()) {
-        // On iOS the API only appears in an installed PWA, so "no support" and
-        // "not installed yet" are the same observation with different answers.
-        if (!cancelled) {
-          setState(
-            detectPlatform() === "ios" && !isStandalone()
-              ? "needs-install"
-              : "unsupported"
-          );
-        }
+        if (!cancelled) setState(whyNoPushApi(detected));
         return;
       }
 
@@ -230,5 +290,5 @@ export function usePush(): UsePush {
     }
   }, [api]);
 
-  return { state, platform, busy, failed, enable, disable };
+  return { state, platform, standalone, busy, failed, enable, disable };
 }

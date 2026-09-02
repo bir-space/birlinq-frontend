@@ -122,7 +122,11 @@ boot and `apps/mobile/src/api-config.ts` mirrors with Expo's values. So: don't i
    service worker — `apps/mobile` has no push and cannot get one until the backend adds
    FCM/APNs. Keep `usePush` in `apps/web/src/lib/push.ts`; it must never move to
    `packages/core`. On iOS it only works in an installed PWA, so the UI explains that instead
-   of showing a dead button — don't "simplify" that branch away.
+   of showing a dead button — don't "simplify" that branch away. The Home Screen app has its
+   own storage, so the owner signs in again inside it; don't try to hand the session over
+   (FE-009). Push needs https: a phone on `http://192.168.x.x` cannot subscribe, and a
+   production build must be made with `NEXT_PUBLIC_VAPID_PUBLIC_KEY` set — it is inlined at
+   `next build`, not read by `next start`.
 8. **PrivacyFilter is a backend concept, not a frontend one** — never render a field the
    public payload didn't send, and never add a client-side toggle that fakes hiding a field
    the API already sent. If something needs hiding, it needs a backend privacy setting.

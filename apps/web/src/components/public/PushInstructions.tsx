@@ -52,6 +52,7 @@ function IosSteps() {
         </Step>
         <Step n={4}>{t("iosStep4")}</Step>
         <Step n={5}>{t("iosStep5")}</Step>
+        <Step n={6}>{t("iosStep6")}</Step>
       </ol>
 
       <p className="mt-3 text-[12px] text-muted">{t("iosNote")}</p>
@@ -73,6 +74,7 @@ function AndroidSteps() {
       </ol>
 
       <p className="mt-3 text-[12px] text-muted">{t("androidNote")}</p>
+      <p className="mt-2 text-[12px] text-muted">{t("androidSamsungNote")}</p>
     </div>
   );
 }

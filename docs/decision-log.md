@@ -240,6 +240,60 @@ channels, privacy rules — belongs to the backend log. Reference it from here, 
 
 ---
 
+## FE-009 — Mobile push flow: iOS only inside the Home Screen app, in-app browsers are turned away
+
+- **Status:** Accepted
+- **Date:** 2026-09-03
+- **Owner:** Frontend lead
+- **Context:** The first check on real phones found no notifications on either an iPhone or a
+  Samsung, while the desktop worked. The two were not looking at the same build: the desktop
+  was the local dev server, the phones were the production domain, and production had been
+  deployed before web push landed — `/sw.js`, `/manifest.webmanifest` and the guide's push
+  section all answered 404. A stale deploy, not a phone problem. But the exercise showed that
+  the card's states did not describe what phones actually run into: a link opened inside
+  Telegram or Instagram lands in a WebView with no Push API; an iPhone below 16.4 has no Web
+  Push even once installed; and a Home Screen app on iOS starts signed out, because Apple
+  gives it a storage container of its own. Each of those had been showing either the generic
+  "your browser doesn't support notifications" or nothing at all — and "nothing at all" is
+  exactly what a stale deploy looks like too.
+- **Decision:** One flow per platform, and the card is never blank once the VAPID key exists.
+  - **Android:** the button in the cabinet, nothing to install. Chrome and Samsung Internet
+    both subscribe from a tab. A WebView (`; wv)` in the UA, or the Facebook/Instagram/Line
+    wrappers) gets "open this in Chrome" instead of a button that cannot work.
+  - **iOS:** no button in a Safari tab, ever — the card shows the manual steps. Push lives
+    only in the Home Screen app, which has its own storage, so step five is "open it from the
+    icon and sign in again"; no attempt is made to carry the Safari session over. An iPhone
+    below 16.4 gets "update iOS" rather than six steps that lead nowhere. iOS in-app views
+    that use Safari's own UA (Telegram, WhatsApp) cannot be told apart from Safari; the
+    first step says "open in Safari", which covers them.
+  - **Loading** shows a spinner line rather than nothing, so an absent card means one thing
+    only: no VAPID key in the build. Dev builds print the resolved state under the card,
+    because a phone has no console.
+  - **Testing on phones is against an https deployment,** built with
+    `NEXT_PUBLIC_VAPID_PUBLIC_KEY` present at `next build`. LAN over http is fine for
+    everything except push, and the card says so.
+- **Rationale:** Every state above is a different instruction for a real person holding a
+  phone, and the cost of getting it wrong is that the person concludes the feature is broken
+  and stops. The states are cheap; the UA sniffing is confined to the branch where the Push
+  API is already known to be missing, so a browser that has push is never turned away on the
+  strength of a string.
+- **Alternatives considered:** (a) Hand the session to the Home Screen app through a URL
+  token — a token in a URL is a security smell, and the separate container is Apple's
+  design rather than a bug to route around. (b) `beforeinstallprompt` on Android to offer an
+  install button — not needed for push, so not in this change; it remains a reasonable
+  separate step if the app-like entry point is wanted. (c) Keep hiding the card while
+  loading — that is what made "nothing on phones" indistinguishable from a stale deploy.
+- **Consequences:**
+  - `PushState` gains `in-app` and `ios-outdated`; `usePush` exposes `standalone`. The iOS
+    instruction has six steps; Android gets a Samsung battery note.
+  - `README.md` carries the deploy checklist and the per-platform flow; `CLAUDE.md`
+    invariant 7 names the storage-container rule and the build-time key.
+  - The manifest's `start_url` is `/dashboard`, which is the RU route. KK and EN users who
+    install the app land in RU on launch until the manifest is made per-locale — small,
+    known, and not worth a fourth locale-aware manifest route today.
+
+---
+
 ## Decisions yet to be made
 
 | ID | Question | Owner | Target |

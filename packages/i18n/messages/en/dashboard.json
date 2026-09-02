@@ -153,6 +153,10 @@
     "unsupported": "This browser does not support notifications. Emails will keep arriving.",
     "insecure": "Notifications require a secure connection (https).",
     "iosHint": "Tap “Enable notifications” and allow them in the prompt.",
-    "installCta": "How to enable it on your phone"
+    "installCta": "How to enable it on your phone",
+    "checking": "Checking notification settings…",
+    "inAppIos": "You opened birlinq inside another app. Open this page in Safari — otherwise “Add to Home Screen” is not available.",
+    "inAppAndroid": "You opened birlinq inside another app, where notifications do not work. Open the page in Chrome: menu ⋮ → “Open in browser”.",
+    "iosOutdated": "Notifications on iPhone need iOS 16.4 or newer. Update iOS: Settings → General → Software Update."
   }
 }

@@ -55,17 +55,19 @@
     "heading": "Notifications on your phone",
     "lead": "So you hear about a scan straight away, not from an email.",
     "iosTitle": "iPhone and iPad",
-    "iosLead": "Add birlinq to your Home Screen once.",
-    "iosStep1": "Open birlinq in Safari — other browsers on iPhone will not work for this",
+    "iosLead": "Add birlinq to your Home Screen once and enable notifications from there. Works on iOS 16.4 and newer.",
+    "iosStep1": "Open birlinq in Safari. If the link opened inside Telegram, WhatsApp or Instagram, tap “Open in Safari” there",
     "iosStep2": "Tap the Share button at the bottom of the screen:",
     "iosStep3": "Scroll the list down and choose “Add to Home Screen”:",
     "iosStep4": "Tap “Add” — a birlinq icon appears on your Home Screen",
-    "iosStep5": "Open birlinq from that icon, sign in and tap “Enable notifications”",
-    "iosNote": "This is Apple's restriction rather than ours: a normal Safari tab has no notification support at all, which is why no button appears there.",
+    "iosStep5": "Open birlinq from that icon and sign in again: the Home Screen app has its own storage, so a Safari sign-in does not carry over",
+    "iosStep6": "Tap “Enable notifications” and allow them in the iPhone prompt",
+    "iosNote": "This is Apple's restriction: a normal Safari tab has no notifications at all, which is why no button appears there. Already added the icon? Then just open birlinq from it.",
     "androidTitle": "Android",
-    "androidLead": "Nothing to install.",
-    "androidStep1": "Sign in to the cabinet and tap “Enable notifications”",
-    "androidStep2": "Allow notifications in the browser prompt",
-    "androidNote": "If no prompt appeared, tap the lock icon left of the address, open Permissions and turn Notifications on."
+    "androidLead": "Nothing to install — works in Chrome and Samsung Internet.",
+    "androidStep1": "Open birlinq in your browser (not inside Telegram or WhatsApp), sign in to the cabinet and tap “Enable notifications”",
+    "androidStep2": "Allow notifications in the prompt — on recent Android the system itself shows it",
+    "androidNote": "If no prompt appeared, tap the lock icon left of the address, open Permissions and turn Notifications on.",
+    "androidSamsungNote": "Samsung may put the browser to sleep to save battery, which delays notifications. Settings → Battery → Sleeping apps — remove the browser from the list."
   }
 }
