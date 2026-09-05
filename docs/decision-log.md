@@ -332,9 +332,12 @@ channels, privacy rules — belongs to the backend log. Reference it from here, 
     and narrowed through `isPartnerCode()`; an unknown code degrades to the plain page.
   - Adding a partner: one entry in `PARTNER_CODES`, one in `PARTNERS`, one CSS scope,
     three token values. No component changes.
-  - The Geely palette is an approximation of the corporate blue lifted for legibility on
-    near-black; it and the wordmark are placeholders to be replaced from the partner's
-    brand kit. Both live in one place each.
+  - The Geely palette uses the documented reference blues (Pantone 299 C `#0099ff` as
+    accent, `#005bac` as the gradient's deep end) and the lockup mirrors the 2023
+    identity's structure — gradient tile lighter top-left, squarish all-caps wordmark.
+    The gradient's exact stops and the six-panel crest are not public; both come from
+    the partner's brand kit and live in one place each (`theme.css`, `PartnerMark.tsx`).
+    `geely.kz` itself could not be inspected from the build sandbox (egress allowlist).
   - The `/mock` tree previews the partner page at `/mock/q/GEELY001` and the partner card
     editor at `/mock/dashboard/qr/qr-2`.
 

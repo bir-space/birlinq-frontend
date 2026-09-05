@@ -87,7 +87,9 @@ body {
    subtree: every `accent`/surface utility below this attribute resolves to
    the partner palette, so the public flow and the card editor rebrand without
    a second component tree. The violet half of the "bq" signature is dropped —
-   it is birlinq's mark, not the partner's. */
+   it is birlinq's mark, not the partner's. `bg-brand-gradient` (135deg) then
+   runs light → deep blue top-left to bottom-right, which is the direction of
+   Geely's own "borderless blue" gradient. */
 [data-partner="geely"] {
   --color-accent: var(--color-geely);
   --color-brand-blue: var(--color-geely);

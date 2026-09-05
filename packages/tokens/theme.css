@@ -45,13 +45,17 @@
   --color-id: var(--color-brand-violet);
   --color-biz: #22c55e;
 
-  /* Partner co-branding (Geely dealership cards). Lifted from the Geely
-     corporate blue so it stays legible as text on near-black; the neutral
-     blacks replace birlinq's cool ink inside a partner-themed surface.
-     Calibrate against the partner's brand kit when the dealer hands it over —
+  /* Partner co-branding (Geely dealership cards).
+     Geely's 2023 identity: a flat six-panel shield on a "borderless blue"
+     gradient — lighter top-left, darker bottom-right — with a squarish
+     all-caps wordmark. The gradient's exact stops are not published; these
+     are the documented reference blues: Pantone 299 C cerulean (#0099ff) and
+     the #005bac primary. Cerulean is the accent because it is the one that
+     stays legible as text on near-black (≈6.5:1); the deep blue is the
+     gradient's dark end. Replace from the partner's brand kit when it lands —
      these three are the only values that need touching. */
-  --color-geely: #2f6fe8;
-  --color-geely-deep: #0a2f7c;
+  --color-geely: #0099ff;
+  --color-geely-deep: #005bac;
   --color-geely-ink: #0a0a0b;
 
   /* Typography */
