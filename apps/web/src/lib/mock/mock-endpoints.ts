@@ -45,6 +45,7 @@ import {
   MOCK_ENTITIES,
   MOCK_INTERACTIONS,
   MOCK_PUBLIC_PAYLOAD,
+  MOCK_PUBLIC_PAYLOAD_GEELY,
   MOCK_QR_CODES,
   MOCK_USER,
 } from "./fixtures";
@@ -326,11 +327,13 @@ export const mockQrApi = {
 };
 
 export const mockPublicApi = {
-  async scan(
-    _code: string,
-    _locale?: ApiLocale
-  ): Promise<PublicEntityPayload> {
-    return delay(MOCK_PUBLIC_PAYLOAD);
+  async scan(code: string, _locale?: ApiLocale): Promise<PublicEntityPayload> {
+    // /mock/q/GEELY… previews the partner-themed page.
+    return delay(
+      code.toUpperCase().startsWith("GEELY")
+        ? MOCK_PUBLIC_PAYLOAD_GEELY
+        : MOCK_PUBLIC_PAYLOAD
+    );
   },
 
   async submitScenario(

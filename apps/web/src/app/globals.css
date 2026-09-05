@@ -81,3 +81,26 @@ body {
       transparent 60%
     );
 }
+
+/* ---------- Partner theme scope ---------- */
+/* A card sold through a partner re-tunes the design tokens inside its own
+   subtree: every `accent`/surface utility below this attribute resolves to
+   the partner palette, so the public flow and the card editor rebrand without
+   a second component tree. The violet half of the "bq" signature is dropped —
+   it is birlinq's mark, not the partner's. `bg-brand-gradient` (135deg) then
+   runs light → deep blue top-left to bottom-right, which is the direction of
+   Geely's own "borderless blue" gradient. */
+[data-partner="geely"] {
+  --color-accent: var(--color-geely);
+  --color-brand-blue: var(--color-geely);
+  --color-brand-violet: var(--color-geely-deep);
+  --color-ink: var(--color-geely-ink);
+  --color-ink-soft: #101113;
+  --color-card: #141518;
+  --color-card-border: #26282e;
+  --color-line: #30333b;
+}
+
+[data-partner="geely"] ::selection {
+  background: var(--color-geely);
+}

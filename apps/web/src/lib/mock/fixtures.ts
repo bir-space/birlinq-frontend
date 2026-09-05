@@ -91,8 +91,8 @@ export const MOCK_ENTITIES: Entity[] = [
     status: "active",
     privacy_settings: MOCK_PRIVACY_ENTITY_2,
     vehicle_profile: {
-      make: "Hyundai",
-      model: "Tucson",
+      make: "Geely",
+      model: "Atlas",
       year: null,
       color: "Серый",
       license_plate: null,
@@ -122,6 +122,7 @@ export const MOCK_QR_CODES: QrCode[] = [
     activated_at: "2026-02-18T14:25:00Z",
     last_scan_at: "2026-07-20T18:10:00Z",
     scan_count: 6,
+    partner: "geely",
   },
   {
     id: "qr-3",
@@ -227,4 +228,21 @@ export const MOCK_PUBLIC_PAYLOAD: PublicEntityPayload = {
     },
   ],
   meta: { locale: "ru", privacy_badge: true },
+};
+
+/** Same flow, sold through a Geely dealership — exercises the partner theme. */
+export const MOCK_PUBLIC_PAYLOAD_GEELY: PublicEntityPayload = {
+  ...MOCK_PUBLIC_PAYLOAD,
+  entity: {
+    type: "car",
+    title: null,
+    vehicle: {
+      make: "Geely",
+      model: "Coolray",
+      year: 2025,
+      color: "Синий",
+      license_plate: "777GLY02",
+    },
+  },
+  meta: { ...MOCK_PUBLIC_PAYLOAD.meta, partner: "geely" },
 };

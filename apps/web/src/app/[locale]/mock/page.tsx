@@ -43,6 +43,7 @@ export default async function MockIndexPage({ params }: Props) {
       title: t("sections.public"),
       links: [
         { href: "/mock/q/AB12CD34", label: t("links.publicScan") },
+        { href: "/mock/q/GEELY001", label: t("links.publicScanGeely") },
       ],
     },
     {

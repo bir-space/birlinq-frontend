@@ -21,7 +21,8 @@
       "register": "Регистрация",
       "forgotPassword": "Забыли пароль",
       "resetPassword": "Сброс пароля",
-      "verifyEmail": "Подтверждение почты"
+      "verifyEmail": "Подтверждение почты",
+      "publicScanGeely": "Сканирование QR-стикера (карточка Geely)"
     }
   }
 }

@@ -294,6 +294,55 @@ channels, privacy rules — belongs to the backend log. Reference it from here, 
 
 ---
 
+## FE-010 — Partner co-branding is a token scope, not a second page tree
+
+- **Status:** Accepted
+- **Date:** 2026-09-05
+- **Owner:** Frontend lead
+- **Context:** Geely dealerships will sell birlinq cards under their own brand. Everything
+  that belongs to such a card — the public scan page a stranger lands on, the owner's card
+  editor in the cabinet — has to read as Geely, while the flow (scenarios, privacy, abuse,
+  lead) stays birlinq's. The backend will mark these cards with a partner flag; at the time
+  of writing the field is promised but not in `openapi.yaml`.
+- **Decision:** A partner is a `data-partner="<code>"` attribute on a wrapper
+  (`PartnerTheme`) whose subtree re-defines the design tokens
+  (`[data-partner="geely"]` in `globals.css`, palette in `packages/tokens/theme.css`).
+  The same components render both brands; partner-specific chrome (lockup, "official
+  card" strip, "powered by birlinq" footer, lead copy) branches on the partner code. The
+  partner's wordmark is set as text in `PartnerMark` — the trademark artwork is the
+  partner's to supply, not ours to redraw. The flag is read in exactly two functions,
+  `publicPartner()` / `qrPartner()` in `packages/api/src/partner.ts`, which currently
+  assume `meta.partner` on the public payload and `partner` on the QR resource.
+- **Rationale:** Tailwind v4 emits `@theme` values as CSS variables and every `bg-accent`,
+  `border-card-border`, `text-muted` utility resolves through them, so re-scoping the
+  variables rebrands the whole subtree for the cost of one CSS block. A second component
+  tree per partner is exactly the copy-paste drift the `/mock` rebuild (FE-001) was meant
+  to end. Keeping the flag readers in one file means the day the backend publishes the
+  real field name is a two-line change, not a hunt through components.
+- **Alternatives considered:** (a) A light "geely.kz-style" surface — the public flow
+  hardcodes `text-white`/`bg-white` in a dozen places and the shared `Button` primary is a
+  white pill; a light partner theme is a foreground-token refactor of `components/ui`
+  first, and is deferred until the partner's brand kit says a light surface is required.
+  (b) Branching on a query parameter or a per-partner route — the brand is a property of
+  the card, so it must come from the payload, or a visitor could dress any card as Geely.
+  (c) Reading the flag straight from the entity in components — spreads the unconfirmed
+  field name across the codebase.
+- **Consequences:**
+  - `PublicEntityPayload.meta.partner` and `QrCode.partner` are typed as `string | null`
+    and narrowed through `isPartnerCode()`; an unknown code degrades to the plain page.
+  - Adding a partner: one entry in `PARTNER_CODES`, one in `PARTNERS`, one CSS scope,
+    three token values. No component changes.
+  - The Geely palette uses the documented reference blues (Pantone 299 C `#0099ff` as
+    accent, `#005bac` as the gradient's deep end) and the lockup mirrors the 2023
+    identity's structure — gradient tile lighter top-left, squarish all-caps wordmark.
+    The gradient's exact stops and the six-panel crest are not public; both come from
+    the partner's brand kit and live in one place each (`theme.css`, `PartnerMark.tsx`).
+    `geely.kz` itself could not be inspected from the build sandbox (egress allowlist).
+  - The `/mock` tree previews the partner page at `/mock/q/GEELY001` and the partner card
+    editor at `/mock/dashboard/qr/qr-2`.
+
+---
+
 ## Decisions yet to be made
 
 | ID | Question | Owner | Target |

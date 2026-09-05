@@ -3,7 +3,7 @@
 import { type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { entityLabel } from "@birlinq/api";
+import { entityLabel, qrPartner } from "@birlinq/api";
 import { useHref } from "@birlinq/platform";
 import { useQrList } from "@birlinq/core";
 import type { QrCode } from "@birlinq/api";
@@ -21,6 +21,7 @@ import {
   IconQr,
 } from "@/components/dashboard/bits";
 import { formatRelativeTime, qrBadgeTone } from "@/components/dashboard/format";
+import { PARTNERS } from "@/components/partner/partners";
 
 export function QrListView({ banner }: { banner?: ReactNode }) {
   return (
@@ -96,6 +97,7 @@ function QrList() {
               const entity = qr.entity_id ? entities[qr.entity_id] : undefined;
               const canPause = qr.status === "activated";
               const canResume = qr.status === "paused";
+              const partner = qrPartner(qr);
               return (
                 <li key={qr.id} className="flex min-w-0">
                   <Card className="flex w-full flex-col gap-4">
@@ -115,13 +117,18 @@ function QrList() {
                         <IconQr />
                       </IconBubble>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="truncate font-mono text-[15px] font-semibold tracking-wide">
                             {qr.code}
                           </span>
                           <Badge tone={qrBadgeTone(qr.status)}>
                             {t(`qrStatus.${qr.status}`)}
                           </Badge>
+                          {partner && (
+                            <Badge tone="accent" className="normal-case tracking-normal">
+                              {PARTNERS[partner].name}
+                            </Badge>
+                          )}
                         </div>
                         {entity && (
                           <p className="mt-0.5 flex items-center gap-1.5 truncate text-[13px] text-muted">
