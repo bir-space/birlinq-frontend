@@ -4,11 +4,19 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toApiLocale } from "@birlinq/api";
 import { useApi } from "@birlinq/platform";
-import { ApiRequestError } from "@birlinq/api";
-import type { PublicEntityPayload, PublicScenario } from "@birlinq/api";
+import { ApiRequestError, publicPartner } from "@birlinq/api";
+import type {
+  PartnerCode,
+  PublicEntityPayload,
+  PublicScenario,
+} from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
+import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { Logo } from "@/components/ui/Logo";
 import { Spinner } from "@/components/ui/Spinner";
+import { PartnerMark } from "@/components/partner/PartnerMark";
+import { PartnerTheme } from "@/components/partner/PartnerTheme";
+import { PARTNERS } from "@/components/partner/partners";
 import { EntityView, entityTitle } from "./EntityView";
 import { ScenarioForm } from "./ScenarioForm";
 import { ThankYouScreen } from "./ThankYouScreen";
@@ -41,6 +49,10 @@ function mapError(err: unknown): ErrorKind {
  * Orchestrator for the public QR scan flow: fetches api.public.scan(code) on
  * mount and switches between loading / error / entity / scenario / thank-you
  * screens. Content is a mobile-first max-w-md column centered on desktop.
+ *
+ * A partner-sold card (payload.meta.partner) swaps the chrome for the
+ * partner's lockup and re-tunes the tokens through PartnerTheme; the flow
+ * itself is the same component tree.
  */
 export function PublicScanPage({ code }: { code: string }) {
   const t = useTranslations("public");
@@ -73,18 +85,28 @@ export function PublicScanPage({ code }: { code: string }) {
 
   // Scenario form brings its own compact header; hide global chrome there.
   const showChrome = !(state.status === "ready" && screen.name === "scenario");
+  const partner = state.status === "ready" ? publicPartner(state.payload) : null;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-6 pt-5">
+    <PartnerTheme partner={partner} className="min-h-dvh bg-ink">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-6 pt-5">
       {showChrome && (
-        <header className="mb-6 flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <Logo />
-            <span className="text-sm text-muted-2">· {t("product")}</span>
-          </div>
-          <IconShieldCheck className="size-5 text-accent" />
+        <header className="mb-6 flex items-center justify-between gap-3">
+          {partner ? (
+            <PartnerMark partner={partner} />
+          ) : (
+            <div className="flex items-baseline gap-2">
+              <Logo />
+              <span className="text-sm text-muted-2">· {t("product")}</span>
+            </div>
+          )}
+          {/* The visitor is a stranger with no account: the URL is the only
+              place their language lives, so the switcher must be right here. */}
+          <LangSwitcher />
         </header>
       )}
+
+      {showChrome && partner && <PartnerStrip partner={partner} />}
 
       <main className="flex flex-1 flex-col">
         {state.status === "loading" && (
@@ -102,6 +124,7 @@ export function PublicScanPage({ code }: { code: string }) {
           <EntityView
             payload={state.payload}
             code={code}
+            partner={partner}
             onSelectScenario={(scenario) =>
               setScreen({ name: "scenario", scenario })
             }
@@ -131,6 +154,7 @@ export function PublicScanPage({ code }: { code: string }) {
         {state.status === "ready" && screen.name === "thanks" && (
           <ThankYouScreen
             code={code}
+            partner={partner}
             ownerMessage={screen.ownerMessage}
             duplicate={screen.duplicate}
             onClose={() => setScreen({ name: "entity" })}
@@ -140,6 +164,12 @@ export function PublicScanPage({ code }: { code: string }) {
 
       {showChrome && (
         <footer className="mt-10 flex flex-col items-center gap-2 pb-2 text-center">
+          {partner && (
+            <p className="flex items-center gap-1.5 text-[11px] text-muted-2">
+              {t("partner.poweredBy")}
+              <Logo size="sm" markOnly />
+            </p>
+          )}
           <p className="text-[11px] text-muted-2">{t("footer.note")}</p>
           <button
             type="button"
@@ -154,6 +184,29 @@ export function PublicScanPage({ code }: { code: string }) {
       {abuseOpen && (
         <AbuseModal code={code} onClose={() => setAbuseOpen(false)} />
       )}
+      </div>
+    </PartnerTheme>
+  );
+}
+
+/**
+ * "Official <partner> card" strip under the header — tells the visitor whose
+ * customer they are reaching and that the relay (and the privacy) is birlinq's.
+ */
+function PartnerStrip({ partner }: { partner: PartnerCode }) {
+  const t = useTranslations("public");
+  const { name } = PARTNERS[partner];
+  return (
+    <div className="mb-6 flex items-start gap-3 rounded-(--radius-card) border border-accent/25 bg-accent/10 p-4">
+      <IconShieldCheck className="mt-0.5 size-5 shrink-0 text-accent" />
+      <div>
+        <p className="text-[13px] font-semibold text-accent">
+          {t("partner.badge", { partner: name })}
+        </p>
+        <p className="mt-0.5 text-[12px] text-muted">
+          {t("partner.intro", { partner: name })}
+        </p>
+      </div>
     </div>
   );
 }

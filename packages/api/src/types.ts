@@ -232,6 +232,12 @@ export interface QrCode {
   activated_at: string | null;
   last_scan_at: string | null;
   scan_count: number;
+  /**
+   * Partner the card was sold through (e.g. "geely"), absent or null for a
+   * plain birlinq card. Wire shape is an assumption until the backend publishes
+   * it — read it through `qrPartner()` in partner.ts, never directly.
+   */
+  partner?: string | null;
 }
 
 export interface QrLookupRequest {
@@ -295,6 +301,8 @@ export interface PublicEntityPayload {
   meta: {
     locale?: string;
     privacy_badge?: boolean;
+    /** Partner code of a co-branded card — see partner.ts. */
+    partner?: string | null;
   };
 }
 

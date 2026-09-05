@@ -45,6 +45,15 @@
   --color-id: var(--color-brand-violet);
   --color-biz: #22c55e;
 
+  /* Partner co-branding (Geely dealership cards). Lifted from the Geely
+     corporate blue so it stays legible as text on near-black; the neutral
+     blacks replace birlinq's cool ink inside a partner-themed surface.
+     Calibrate against the partner's brand kit when the dealer hands it over —
+     these three are the only values that need touching. */
+  --color-geely: #2f6fe8;
+  --color-geely-deep: #0a2f7c;
+  --color-geely-ink: #0a0a0b;
+
   /* Typography */
   --font-sans: "Inter", "Inter Fallback", system-ui, -apple-system, "Segoe UI",
     Roboto, sans-serif;

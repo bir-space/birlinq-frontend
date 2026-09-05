@@ -21,7 +21,8 @@
       "register": "Тіркелу",
       "forgotPassword": "Құпия сөзді ұмыттым",
       "resetPassword": "Құпия сөзді қалпына келтіру",
-      "verifyEmail": "Поштаны растау"
+      "verifyEmail": "Поштаны растау",
+      "publicScanGeely": "QR-стикерді сканерлеу (Geely картасы)"
     }
   }
 }

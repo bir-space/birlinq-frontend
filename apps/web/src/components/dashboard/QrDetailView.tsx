@@ -3,11 +3,14 @@
 import { use, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { entityLabel } from "@birlinq/api";
+import { entityLabel, qrPartner } from "@birlinq/api";
 import { useApi, useHref } from "@birlinq/platform";
 import { ApiRequestError } from "@birlinq/api";
 import type { Entity, PrivacySettings, QrCode } from "@birlinq/api";
 import { normalizePlate } from "@/lib/plate";
+import { PartnerMark } from "@/components/partner/PartnerMark";
+import { PartnerTheme } from "@/components/partner/PartnerTheme";
+import { PARTNERS } from "@/components/partner/partners";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -235,31 +238,47 @@ function QrDetail({ id }: { id: string }) {
     : null;
   const canPause = qr.status === "activated";
   const canResume = qr.status === "paused";
+  const partner = qrPartner(qr);
 
   return (
-    <div className="flex flex-col gap-6">
+    // The editor of a partner card lives in the partner palette, same as the
+    // public page it edits — the owner sees the card the way visitors will.
+    <PartnerTheme partner={partner} className="flex flex-col gap-6">
       <BackLink label={tc("back")} />
 
       {/* Header card */}
-      <Card className="flex items-center gap-4">
-        <IconBubble tone={qr.status === "activated" ? "accent" : "muted"}>
-          <IconCar className="size-6" />
-        </IconBubble>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[18px] font-bold">
-            {entity ? entityLabel(entity, qr.code) : qr.code}
-          </h1>
-          {vehicleDesc && (
-            <p className="mt-0.5 truncate text-[13px] text-muted">
-              {vehicleDesc}
-            </p>
-          )}
-          <div className="mt-2">
-            <Badge tone={qrBadgeTone(qr.status)}>
-              {t(`qrStatus.${qr.status}`)}
-            </Badge>
+      <Card className="flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          <IconBubble tone={qr.status === "activated" ? "accent" : "muted"}>
+            <IconCar className="size-6" />
+          </IconBubble>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-[18px] font-bold">
+              {entity ? entityLabel(entity, qr.code) : qr.code}
+            </h1>
+            {vehicleDesc && (
+              <p className="mt-0.5 truncate text-[13px] text-muted">
+                {vehicleDesc}
+              </p>
+            )}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Badge tone={qrBadgeTone(qr.status)}>
+                {t(`qrStatus.${qr.status}`)}
+              </Badge>
+              {partner && (
+                <Badge tone="accent" className="normal-case tracking-normal">
+                  {t("detail.partnerBadge", { partner: PARTNERS[partner].name })}
+                </Badge>
+              )}
+            </div>
           </div>
+          {partner && <PartnerMark partner={partner} size="sm" />}
         </div>
+        {partner && (
+          <p className="border-t border-card-border pt-3 text-[12px] text-muted-2">
+            {t("detail.partnerNote", { partner: PARTNERS[partner].name })}
+          </p>
+        )}
       </Card>
 
       {/* QR info */}
@@ -435,7 +454,7 @@ function QrDetail({ id }: { id: string }) {
           </Card>
         </section>
       )}
-    </div>
+    </PartnerTheme>
   );
 }
 

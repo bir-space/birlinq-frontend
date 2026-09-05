@@ -21,7 +21,8 @@
       "register": "Register",
       "forgotPassword": "Forgot password",
       "resetPassword": "Reset password",
-      "verifyEmail": "Verify email"
+      "verifyEmail": "Verify email",
+      "publicScanGeely": "QR sticker scan (Geely card)"
     }
   }
 }

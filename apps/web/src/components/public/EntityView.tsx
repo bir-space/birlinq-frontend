@@ -3,12 +3,14 @@
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import type {
+  PartnerCode,
   PublicContact,
   PublicEntityPayload,
   PublicScenario,
 } from "@birlinq/api";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { PARTNERS } from "@/components/partner/partners";
 import { LeadForm } from "./LeadForm";
 import {
   IconBriefcase,
@@ -130,14 +132,24 @@ function contactChannels(contact: PublicContact): Channel[] {
 export function EntityView({
   payload,
   code,
+  partner = null,
   onSelectScenario,
 }: {
   payload: PublicEntityPayload;
   code: string;
+  /** Co-branded card: the lead block sells the partner's card, not ours. */
+  partner?: PartnerCode | null;
   onSelectScenario: (scenario: PublicScenario) => void;
 }) {
   const t = useTranslations("public");
   const [leadOpen, setLeadOpen] = useState(false);
+  const partnerName = partner ? PARTNERS[partner].name : null;
+  const leadTitle = partnerName
+    ? t("partner.leadTitle", { partner: partnerName })
+    : t("lead.cardTitle");
+  const leadText = partnerName
+    ? t("partner.leadText")
+    : t("lead.cardText");
 
   const isPersonal = payload.entity.type === "personal";
   const vehicle = payload.entity.vehicle;
@@ -294,10 +306,8 @@ export function EntityView({
       <div className="mt-6">
         {leadOpen ? (
           <Card>
-            <p className="text-[15px] font-bold">{t("lead.cardTitle")}</p>
-            <p className="mt-0.5 text-[12px] text-muted">
-              {t("lead.cardText")}
-            </p>
+            <p className="text-[15px] font-bold">{leadTitle}</p>
+            <p className="mt-0.5 text-[12px] text-muted">{leadText}</p>
             <div className="mt-4">
               <LeadForm code={code} />
             </div>
@@ -312,7 +322,7 @@ export function EntityView({
               {t("lead.cta")}
             </span>
             <span className="mt-0.5 block text-[11px] text-muted-2">
-              {t("lead.ctaSub")}
+              {partnerName ? leadTitle : t("lead.ctaSub")}
             </span>
           </button>
         )}

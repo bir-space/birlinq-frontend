@@ -133,7 +133,9 @@
     "resumeTitle": "Resume QR",
     "resumeHint": "The public page will be available again",
     "notFound": "QR code not found",
-    "noEntity": "No vehicle is linked to this QR yet"
+    "noEntity": "No vehicle is linked to this QR yet",
+    "partnerNote": "Issued through {partner}. The public page carries the partner's branding.",
+    "partnerBadge": "{partner} card"
   },
   "notifications": {
     "title": "Notifications",

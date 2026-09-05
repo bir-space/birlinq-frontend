@@ -90,5 +90,12 @@
   },
   "footer": {
     "note": "birlinq.com · Not an emergency service"
+  },
+  "partner": {
+    "badge": "Official {partner} card",
+    "intro": "The owner of this car is a {partner} customer. Your message reaches them through birlinq — their phone number stays private.",
+    "poweredBy": "Powered by birlinq",
+    "leadTitle": "A {partner} QR card for your car",
+    "leadText": "Get the same one at the dealership or leave a request"
   }
 }

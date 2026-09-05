@@ -1,8 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import type { PartnerCode } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PARTNERS } from "@/components/partner/partners";
 import { LeadForm } from "./LeadForm";
 import { IconCar, IconCheck, IconShieldCheck } from "./icons";
 
@@ -13,11 +15,14 @@ import { IconCar, IconCheck, IconShieldCheck } from "./icons";
  */
 export function ThankYouScreen({
   code,
+  partner = null,
   ownerMessage,
   duplicate = false,
   onClose,
 }: {
   code: string;
+  /** Co-branded card: the lead block sells the partner's card, not ours. */
+  partner?: PartnerCode | null;
   ownerMessage: string | null;
   /**
    * The backend recognised this as a repeat of a submission it already has
@@ -28,6 +33,7 @@ export function ThankYouScreen({
   onClose: () => void;
 }) {
   const t = useTranslations("public");
+  const partnerName = partner ? PARTNERS[partner].name : null;
 
   return (
     <div className="flex flex-col">
@@ -85,9 +91,13 @@ export function ThankYouScreen({
             <IconCar className="size-6" />
           </span>
           <div>
-            <p className="text-[14px] font-bold">{t("lead.cardTitle")}</p>
+            <p className="text-[14px] font-bold">
+              {partnerName
+                ? t("partner.leadTitle", { partner: partnerName })
+                : t("lead.cardTitle")}
+            </p>
             <p className="mt-0.5 text-[12px] text-muted">
-              {t("lead.cardText")}
+              {partnerName ? t("partner.leadText") : t("lead.cardText")}
             </p>
           </div>
         </div>
