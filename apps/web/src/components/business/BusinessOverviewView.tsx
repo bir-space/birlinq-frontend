@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useHref } from "@birlinq/platform";
 import { useBusinessOverview } from "@birlinq/core";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
@@ -19,7 +18,7 @@ import {
   StatCard,
 } from "@/components/dashboard/bits";
 import { IconChart } from "@/components/card/icons";
-import { CardTile } from "@/components/business/bits";
+import { CardTile, LinkButton } from "@/components/business/bits";
 
 export function BusinessOverviewView({ banner }: { banner?: ReactNode }) {
   return (
@@ -65,11 +64,9 @@ function BusinessOverview() {
           title={t("overview.cards.empty")}
           hint={t("overview.cards.emptyHint")}
           cta={
-            <Link href={href("/dashboard/cards/new")}>
-              <Button variant="accent" size="sm">
-                {t("overview.cards.create")}
-              </Button>
-            </Link>
+            <LinkButton variant="accent" href={href("/dashboard/cards/new")}>
+              {t("overview.cards.create")}
+            </LinkButton>
           }
         />
       ) : (

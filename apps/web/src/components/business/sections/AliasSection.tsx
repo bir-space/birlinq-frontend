@@ -5,7 +5,11 @@ import { useTranslations } from "next-intl";
 import { cardUrl } from "@/lib/public-url";
 import { copyText } from "@/lib/share";
 import { Button } from "@/components/ui/Button";
-import { AliasInput, aliasIssue } from "@/components/forms/AliasInput";
+import {
+  AliasInput,
+  aliasIssue,
+  trimAliasDashes,
+} from "@/components/forms/AliasInput";
 import { IconCopy } from "@/components/card/icons";
 import { Section, type SectionProps } from "./shared";
 
@@ -21,6 +25,9 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
   const tEdit = useTranslations("cards.edit");
   const [draft, setDraft] = useState(entity.alias ?? "");
   const [dirty, setDirty] = useState(false);
+  // Typed since the last write: a server answer is about the value that was
+  // sent, so it hides as soon as the owner edits and the local hints return.
+  const [edited, setEdited] = useState(false);
   const [saving, setSaving] = useState<"save" | "close" | null>(null);
   // Built on the client only — `appOrigin()` is empty on the server.
   const [url, setUrl] = useState<string | null>(null);
@@ -50,14 +57,19 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSave || saving) return;
+    const alias = trimAliasDashes(draft);
+    if (alias !== draft) setDraft(alias);
+    if (alias === "") return;
+    setEdited(false);
     setSaving("save");
-    const ok = await run(() => card.saveAlias(draft));
+    const ok = await run(() => card.saveAlias(alias));
     if (ok) setDirty(false);
     setSaving(null);
   };
 
   const close = async () => {
     if (saving) return;
+    setEdited(false);
     setSaving("close");
     const ok = await run(() => card.saveAlias(null));
     if (ok) setDirty(false);
@@ -127,8 +139,9 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
           onChange={(alias) => {
             setDraft(alias);
             setDirty(true);
+            setEdited(true);
           }}
-          error={serverError}
+          error={edited ? null : serverError}
           disabled={busyElsewhere}
         />
 

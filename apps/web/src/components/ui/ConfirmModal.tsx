@@ -72,12 +72,14 @@ export function ConfirmModal({
             >
               {confirmLabel}
             </Button>
+            {/* Focus lands on the safe choice when the sheet opens. */}
             <Button
               type="button"
               variant="ghost"
               className="w-full"
               disabled={loading}
               onClick={onClose}
+              autoFocus
             >
               {cancelLabel}
             </Button>

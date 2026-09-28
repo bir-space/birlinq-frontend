@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
 import type { Entity } from "@birlinq/api";
 import { useHref } from "@birlinq/platform";
 import { useCards } from "@birlinq/core";
@@ -19,7 +18,7 @@ import {
   IconQr,
 } from "@/components/dashboard/bits";
 import { IconTrash } from "@/components/card/icons";
-import { CardTile } from "@/components/business/bits";
+import { CardTile, LinkButton } from "@/components/business/bits";
 
 export function CardsListView({ banner }: { banner?: ReactNode }) {
   return (
@@ -64,12 +63,10 @@ function CardsList() {
         : null;
 
   const createButton = (
-    <Link href={href("/dashboard/cards/new")}>
-      <Button variant="accent" size="sm">
-        <IconPlus className="size-4" />
-        {t("create")}
-      </Button>
-    </Link>
+    <LinkButton variant="accent" href={href("/dashboard/cards/new")}>
+      <IconPlus className="size-4" />
+      {t("create")}
+    </LinkButton>
   );
 
   return (
@@ -96,11 +93,9 @@ function CardsList() {
           title={t("empty")}
           hint={t("emptyHint")}
           cta={
-            <Link href={href("/dashboard/cards/new")}>
-              <Button variant="accent" size="sm">
-                {t("emptyCta")}
-              </Button>
-            </Link>
+            <LinkButton variant="accent" href={href("/dashboard/cards/new")}>
+              {t("emptyCta")}
+            </LinkButton>
           }
         />
       ) : (
@@ -126,28 +121,22 @@ function CardsList() {
                   href={href(`/dashboard/cards/${entity.id}`)}
                 >
                   {entity.alias && (
-                    <Link
+                    <LinkButton
                       href={href(`/p/${entity.alias}`)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <Button variant="ghost" size="sm">
-                        <IconExternal />
-                        {t("actions.open")}
-                      </Button>
-                    </Link>
+                      <IconExternal />
+                      {t("actions.open")}
+                    </LinkButton>
                   )}
-                  <Link href={href(`/dashboard/cards/${entity.id}#qr`)}>
-                    <Button variant="ghost" size="sm">
-                      <IconQr className="size-4" />
-                      {t("actions.qr")}
-                    </Button>
-                  </Link>
-                  <Link href={href(`/dashboard/cards/${entity.id}`)}>
-                    <Button variant="ghost" size="sm">
-                      {t("actions.edit")}
-                    </Button>
-                  </Link>
+                  <LinkButton href={href(`/dashboard/cards/${entity.id}#qr`)}>
+                    <IconQr className="size-4" />
+                    {t("actions.qr")}
+                  </LinkButton>
+                  <LinkButton href={href(`/dashboard/cards/${entity.id}`)}>
+                    {t("actions.edit")}
+                  </LinkButton>
                   <Button
                     variant="ghost"
                     size="sm"

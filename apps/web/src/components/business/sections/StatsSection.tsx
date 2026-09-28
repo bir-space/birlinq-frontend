@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { CONTACT_CHANNELS, SOCIAL_PLATFORMS } from "@birlinq/api";
 import { useCardStats } from "@birlinq/core";
 import { Button } from "@/components/ui/Button";
-import { PageSpinner } from "@/components/ui/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { StatCard } from "@/components/dashboard/bits";
 import { MiniBars } from "@/components/business/bits";
 import { formatDateTime, formatShortDay } from "@/components/business/dates";
@@ -39,7 +39,9 @@ export function StatsSection({ id }: { id: string }) {
   return (
     <Section id="stats" title={tSections("stats")} hint={t("hint")}>
       {loading ? (
-        <PageSpinner />
+        <div className="flex justify-center py-4">
+          <Spinner />
+        </div>
       ) : error || !stats || !clickSplit ? (
         <div className="flex flex-col items-center gap-3 py-4 text-center">
           <p className="text-[14px] text-muted">{t("error")}</p>
@@ -111,6 +113,7 @@ export function StatsSection({ id }: { id: string }) {
                 label: formatShortDay(d.date, locale),
                 value: d.views,
               }))}
+              ariaLabel={t("viewsChart", { n: stats.views_30d })}
               height={64}
             />
             <MiniBars
@@ -118,6 +121,7 @@ export function StatsSection({ id }: { id: string }) {
                 label: formatShortDay(d.date, locale),
                 value: d.clicks,
               }))}
+              ariaLabel={t("clicksChart", { n: stats.clicks_30d })}
               barClassName="bg-white/60"
               height={28}
               className="mt-1"

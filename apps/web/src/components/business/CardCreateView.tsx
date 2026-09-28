@@ -15,7 +15,11 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Input } from "@/components/ui/Input";
-import { AliasInput, aliasIssue } from "@/components/forms/AliasInput";
+import {
+  AliasInput,
+  aliasIssue,
+  trimAliasDashes,
+} from "@/components/forms/AliasInput";
 import { ThemePicker } from "@/components/forms/ThemePicker";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { BackLink, IconCheck, SectionLabel } from "@/components/dashboard/bits";
@@ -69,7 +73,9 @@ function CardCreate() {
     if (!name) next.displayName = t("create.errors.nameRequired");
     else if (name.length < NAME_MIN)
       next.displayName = t("create.errors.nameMin", { n: NAME_MIN });
-    const issue = aliasIssue(alias);
+    const slug = trimAliasDashes(alias);
+    if (slug !== alias) setAlias(slug);
+    const issue = aliasIssue(slug);
     if (issue) next.alias = tAlias(`errors.${issue}`, { n: LIMITS.aliasMin });
     setLocalErrors(next);
     if (next.displayName || next.alias) return;
@@ -82,7 +88,7 @@ function CardCreate() {
         theme,
       },
       privacy_settings: PRIVACY_PRESETS[preset],
-      ...(alias ? { alias } : {}),
+      ...(slug ? { alias: slug } : {}),
     });
     if (entity) router.replace(href(`/dashboard/cards/${entity.id}`));
   };

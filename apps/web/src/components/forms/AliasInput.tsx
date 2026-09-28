@@ -25,11 +25,17 @@ export function aliasIssue(alias: string): AliasIssue {
   return null;
 }
 
+/** The dashes a space typed at either end leaves behind — trimmed on blur and submit, not per keystroke. */
+export function trimAliasDashes(alias: string): string {
+  return alias.replace(/^-+|-+$/g, "");
+}
+
 /**
  * The `/p/…` slug field. Whatever is typed or pasted is normalised on the
  * way in (lower-case, spaces to dashes, the rest dropped), so the value the
  * parent holds is always what the server would store — or a clear local
- * message about why it will not.
+ * message about why it will not. Only the dashes at either end wait for
+ * blur (`trimAliasDashes`), so "john doe" can be typed as "john-doe".
  */
 export function AliasInput({
   value,
@@ -53,6 +59,7 @@ export function AliasInput({
   autoFocus?: boolean;
 }) {
   const t = useTranslations("cards.alias");
+  const fieldLabel = label ?? t("label");
   const issue = aliasIssue(value);
   const message =
     error ?? (issue ? t(`errors.${issue}`, { n: LIMITS.aliasMin }) : null);
@@ -62,17 +69,24 @@ export function AliasInput({
       <span
         aria-hidden="true"
         className={`flex h-[50px] shrink-0 items-center font-mono text-[15px] text-muted-2 ${
-          label ? "mt-[26px]" : ""
+          fieldLabel ? "mt-[26px]" : ""
         }`}
       >
         {t("prefix")}
       </span>
       <div className="min-w-0 flex-1">
         <Input
-          label={label ?? t("label")}
+          label={fieldLabel}
           placeholder={placeholder ?? t("placeholder")}
           value={value}
-          onChange={(e) => onChange(normalizeAlias(e.target.value))}
+          // Spaces become dashes before `normalizeAlias` could trim them away.
+          onChange={(e) =>
+            onChange(normalizeAlias(e.target.value.replace(/\s+/g, "-")))
+          }
+          onBlur={() => {
+            const trimmed = trimAliasDashes(value);
+            if (trimmed !== value) onChange(trimmed);
+          }}
           maxLength={LIMITS.alias}
           autoCapitalize="off"
           autoCorrect="off"

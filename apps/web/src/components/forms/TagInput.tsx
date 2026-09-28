@@ -115,6 +115,7 @@ export function TagInput({
           onKeyDown={onKeyDown}
           onBlur={add}
           placeholder={full ? "" : t("placeholder")}
+          aria-label={t("label")}
           maxLength={maxLength + 10}
           disabled={disabled || full}
           aria-invalid={Boolean(message)}

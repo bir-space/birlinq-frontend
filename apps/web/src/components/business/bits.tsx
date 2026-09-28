@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { Entity, EntityStatus } from "@birlinq/api";
@@ -39,18 +39,52 @@ export function CardStatusBadge({
   );
 }
 
+/*
+ * The small pill of `ui/Button.tsx` on a link, repeated because that file's
+ * API is frozen and a <button> may not sit inside an <a>. Keep in step with
+ * `base`, `variants.accent`/`variants.ghost` and `sizes.sm` there.
+ */
+const linkButtonBase =
+  "inline-flex h-9 items-center justify-center gap-2 rounded-(--radius-btn) px-4 text-sm font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+
+const linkButtonVariants = {
+  accent: "bg-accent text-white hover:bg-[#2f68d8]",
+  ghost:
+    "bg-transparent text-muted border border-transparent hover:text-white hover:border-line",
+} as const;
+
+/** A `Link` that looks like `<Button size="sm">` — the list's per-card actions and the create CTA. */
+export function LinkButton({
+  variant = "ghost",
+  className = "",
+  ...rest
+}: ComponentProps<typeof Link> & {
+  variant?: keyof typeof linkButtonVariants;
+}) {
+  return (
+    <Link
+      className={`${linkButtonBase} ${linkButtonVariants[variant]} ${className}`}
+      {...rest}
+    />
+  );
+}
+
 /**
  * Thirty (or however many) bars in a row, tallest = the maximum. Pure
  * presentation: `bars` carry a label for the tooltip and a value; the
- * caller picks views or clicks and formats the label.
+ * caller picks views or clicks, formats the label and sums the chart up in
+ * `ariaLabel` — the bars themselves say nothing to a screen reader.
  */
 export function MiniBars({
   bars,
+  ariaLabel,
   className = "",
   barClassName = "bg-accent",
   height = 56,
 }: {
   bars: readonly { label: string; value: number }[];
+  /** What the chart shows, with its total — the accessible name of the image. */
+  ariaLabel: string;
   className?: string;
   barClassName?: string;
   /** Height of the track in px. */
@@ -62,6 +96,7 @@ export function MiniBars({
       className={`flex items-end gap-px ${className}`}
       style={{ height }}
       role="img"
+      aria-label={ariaLabel}
     >
       {bars.map((bar, i) => (
         <span

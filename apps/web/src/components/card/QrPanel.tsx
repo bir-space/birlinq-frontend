@@ -13,6 +13,14 @@ type Notice = "copied" | "shareFailed" | "downloadFailed" | null;
 
 const NOTICE_MS = 2200;
 
+/*
+ * Icon above the label: three cells of a phone-wide panel are too narrow for
+ * "Скопировать ссылку" on one line, so the label wraps under the icon instead
+ * of being truncated.
+ */
+const actionCls = "!h-auto flex-col !px-2 py-2.5";
+const actionLabelCls = "text-center text-[12px] leading-tight";
+
 /**
  * The QR of a link with the three things people do with it: copy the link,
  * share it, download a 512 px PNG. Used on the public QR page and in the
@@ -122,20 +130,20 @@ export function QrPanel({
           variant="secondary"
           size="sm"
           onClick={handleCopy}
-          className="!px-2"
+          className={actionCls}
         >
           <IconCopy className="size-4" />
-          <span className="truncate">{t("qrPage.copy")}</span>
+          <span className={actionLabelCls}>{t("qrPage.copy")}</span>
         </Button>
         <Button
           type="button"
           variant="secondary"
           size="sm"
           onClick={handleShare}
-          className="!px-2"
+          className={actionCls}
         >
           <IconShare className="size-4" />
-          <span className="truncate">{t("qrPage.share")}</span>
+          <span className={actionLabelCls}>{t("qrPage.share")}</span>
         </Button>
         <Button
           type="button"
@@ -143,10 +151,10 @@ export function QrPanel({
           size="sm"
           onClick={handleDownload}
           loading={downloading}
-          className="!px-2"
+          className={actionCls}
         >
           {!downloading && <IconDownload className="size-4" />}
-          <span className="truncate">{t("qrPage.download")}</span>
+          <span className={actionLabelCls}>{t("qrPage.download")}</span>
         </Button>
       </div>
 

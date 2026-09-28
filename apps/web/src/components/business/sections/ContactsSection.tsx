@@ -118,7 +118,10 @@ export function ContactsSection({ card, entity, feedback, run }: SectionProps) {
               onChange={(e) => update(field.key, e.target.value)}
               onBlur={
                 field.phone
-                  ? (e) => update(field.key, formatKzPhoneDisplay(e.target.value))
+                  ? (e) => {
+                      const tidy = formatKzPhoneDisplay(e.target.value);
+                      if (tidy !== e.target.value) update(field.key, tidy);
+                    }
                   : undefined
               }
               maxLength={field.max}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useHref } from "@birlinq/platform";
@@ -62,6 +62,15 @@ function CardEdit({ id }: { id: string }) {
   const href = useHref();
   const card = useCard(id);
   const [last, setLast] = useState<LastWrite | null>(null);
+
+  // A `#qr` link from the list arrives before the sections exist, so the
+  // browser finds nothing to scroll to; do it once the entity is in.
+  const entityId = card.entity?.id;
+  useEffect(() => {
+    if (!entityId) return;
+    const anchor = window.location.hash.slice(1);
+    if (anchor) document.getElementById(anchor)?.scrollIntoView({ block: "start" });
+  }, [entityId]);
 
   const runFor =
     (section: SectionKey) => async (write: () => Promise<boolean>) => {

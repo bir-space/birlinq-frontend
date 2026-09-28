@@ -53,8 +53,11 @@ export function identifierPayload(
 export { detailsToFieldErrors } from "@birlinq/core";
 export type { FieldErrors } from "@birlinq/core";
 
-/** Only allow same-origin relative redirects for ?next=. */
+/**
+ * Only allow same-origin relative redirects for ?next=: one leading "/",
+ * not "//" or "/\" (both read as a host), and no backslash anywhere.
+ */
 export function safeNext(next: string | null): string | null {
-  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  if (next && /^\/(?![/\\])/.test(next) && !next.includes("\\")) return next;
   return null;
 }

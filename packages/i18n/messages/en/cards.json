@@ -182,6 +182,7 @@
   },
   "tags": {
     "hint": "Up to {n} tags of {len} characters — skills, topics, services",
+    "label": "New tag",
     "placeholder": "Add a tag and press Enter",
     "add": "Add",
     "remove": "Remove tag {tag}",
@@ -314,6 +315,8 @@
     "lastView": "Last view",
     "never": "not yet",
     "daily": "Views and clicks by day",
+    "viewsChart": "Views by day: {n} in the last 30 days",
+    "clicksChart": "Clicks by day: {n} in the last 30 days",
     "byChannel": "By channel",
     "noClicks": "No clicks yet",
     "channels": {
