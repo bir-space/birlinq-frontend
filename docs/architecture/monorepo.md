@@ -6,7 +6,9 @@ Decisions this implements: **FE-001** (npm-workspaces monorepo) and **FE-002** (
 
 **Premise everything below follows from:** the mobile app is the primary product surface for
 the owner. The website is a business card and the first touch — landing, guide, the public
-scan page a stranger opens after scanning a sticker, and (for now) sticker activation.
+scan page a stranger opens after scanning a sticker, and (for now) sticker activation. Since
+the Business product it is also, literally, the business card: `/p/{alias}` and the Business
+cabinet are web-only today (FE-011), and the app has no Business screens.
 
 **Current state:** steps 1–5 are done in code — `apps/web` and `apps/mobile` both render the
 cabinet over the same `core` hooks, on top of the extracted `api`, `i18n`, `tokens` and
@@ -21,7 +23,8 @@ target; the migration table at the end says how far along it is.
 birlinq-frontend/
 ├─ apps/
 │  ├─ web/                     Next.js 15, App Router, SSR          ← exists
-│  │  ├─ src/app/[locale]/     landing, guide, /q/[code], auth, activation
+│  │  ├─ src/app/[locale]/     landing, guide, /q/[code], /p/[alias], auth, activation,
+│  │  │                        dashboard (Move + Business), legal pages
 │  │  └─ src/lib/platform.tsx  web implementation of the Platform contract
 │  └─ mobile/                  Expo + Expo Router + NativeWind      ← exists
 │     ├─ app/                  sign-in, then (cabinet)/ tabs: dashboard, interactions, qr
@@ -142,9 +145,27 @@ Already there:
 - `useInteractions` — cursor pagination plus optimistic resolve.
 - `useQrList` — cursor pagination plus optimistic pause/resume, with entity titles treated as
   optional context rather than a reason to fail the screen.
+- `useCards` — the owner's business cards (`personal` entities): cursor pagination plus
+  delete in place, `blocked` for the 409 a moderated card answers.
+- `useCard` — one card's editor state: contact, privacy (with the presets), publish, alias
+  (409 → `aliasTaken`), photo and cover upload and removal, `attachSticker` (lookup, then
+  activate onto the card), remove. Every write reports a code, and `busy` names the section
+  in flight so the view disables that one alone.
+- `useCreateCard` — the create call with one idempotency key per form attempt, reset after
+  success or a field-level 422; `cardLimit` for 409 `CARD_LIMIT_REACHED`.
+- `useCardStats` — `GET /entities/{id}/stats`, with the per-channel clicks folded into
+  calls / social / website.
+- `useBusinessOverview` — the first page of cards plus one stats call per card, settled
+  together; a card whose figures fail arrives without them rather than failing the page.
+- `useProfile` — `PATCH /auth/me` and the password change; `wrongCurrent` for the 422 on
+  `current_password`.
+- `cards/privacy-presets.ts` (the card's privacy keys, groups and presets) and
+  `shared/field-errors.ts` (`detailsToFieldErrors`, the one implementation — the web's
+  `auth/helpers.ts` re-exports it).
 
-Still to come: the activation wizard's step machine and the idempotency-key lifecycle around
-state-changing calls.
+Still to come: the activation wizard's step machine. The idempotency-key lifecycle now has a
+worked example — `useCreateCard` keeps one key per form attempt — and the wizard should
+follow it.
 
 A hook in `core` returns state and callbacks. It never returns JSX, never reads `window`, and
 never imports from an app.
