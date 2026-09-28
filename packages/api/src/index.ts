@@ -10,7 +10,8 @@ export * from "./types";
 export * from "./client";
 export * from "./endpoints";
 export * from "./limits";
+export * from "./card";
 export * from "./app-api";
 
-export { configureApi } from "./config";
+export { apiBaseUrl, configureApi } from "./config";
 export type { ApiConfig, TokenStore } from "./config";

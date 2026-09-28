@@ -2,7 +2,11 @@
   "nav": {
     "overview": "Шолу",
     "interactions": "Хабарламалар",
-    "qr": "Менің QR"
+    "qr": "Менің QR",
+    "businessOverview": "Шолу",
+    "cards": "Визиткалар",
+    "pricing": "Тарифтер",
+    "profile": "Профиль"
   },
   "time": {
     "justNow": "жаңа ғана",
@@ -95,7 +99,9 @@
     "actionError": "QR күйін өзгерту мүмкін болмады. Қайталап көріңіз.",
     "empty": "Белсенді QR жоқ",
     "emptyHint": "Жапсырманы белсендіріңіз — ол осында пайда болады.",
-    "emptyCta": "QR белсендіру"
+    "emptyCta": "QR белсендіру",
+    "card": "Визитка",
+    "openCard": "Визитканы ашу"
   },
   "detail": {
     "sectionQr": "QR коды",
@@ -133,7 +139,10 @@
     "resumeTitle": "QR-ды жалғастыру",
     "resumeHint": "Жалпыға ашық бет қайта қолжетімді болады",
     "notFound": "QR коды табылмады",
-    "noEntity": "Бұл QR кодына әзірге көлік байланбаған"
+    "noEntity": "Бұл QR кодына әзірге көлік байланбаған",
+    "cardTitle": "Жапсырма визиткаға байланған",
+    "cardHint": "Байланыс, құпиялылық және безендіру Business бөлімінде бапталады",
+    "cardOpen": "Визитканы ашу"
   },
   "notifications": {
     "title": "Хабарламалар",
@@ -161,5 +170,54 @@
     "deviceDesktop": "Компьютер",
     "deviceIos": "iPhone / iPad",
     "deviceAndroid": "Android"
+  },
+  "switcher": {
+    "label": "Өнім",
+    "moveHint": "Көлікке арналған QR-жапсырмалар",
+    "businessHint": "Цифрлық визиткалар"
+  },
+  "profile": {
+    "title": "Профиль",
+    "subtitle": "Аккаунт, құпиясөз және сессиялар",
+    "sections": {
+      "account": "Аккаунт",
+      "password": "Құпиясөз",
+      "sessions": "Сессиялар",
+      "legal": "Құжаттар"
+    },
+    "fields": {
+      "name": "Аты",
+      "phone": "Телефон",
+      "phoneHint": "Формат: 77XXXXXXXXX. Нөмірді алып тастау үшін бос қалдырыңыз",
+      "email": "Email",
+      "emailHint": "Email өзгертуге болмайды",
+      "currentPassword": "Қазіргі құпиясөз",
+      "currentPasswordHint": "Телефон нөмірін ауыстыру үшін қажет",
+      "newPassword": "Жаңа құпиясөз",
+      "confirmPassword": "Жаңа құпиясөзді қайталаңыз"
+    },
+    "save": "Сақтау",
+    "saved": "Сақталды",
+    "saveError": "Сақтау мүмкін болмады. Қайталап көріңіз.",
+    "phoneChangeNote": "Нөмір ауысқан соң басқа құрылғылар аккаунттан шығады",
+    "phoneRemoveNote": "Нөмірді тек аккаунтта email болғанда алып тастауға болады",
+    "changePassword": "Құпиясөзді ауыстыру",
+    "passwordChanged": "Құпиясөз жаңартылды",
+    "passwordChangedHint": "Басқа құрылғылар аккаунттан шықты",
+    "wrongPassword": "Қазіргі құпиясөз қате",
+    "logoutAllTitle": "Барлық құрылғыдан шығу",
+    "logoutAllHint": "Осыны қоса барлық сессияны аяқтайды",
+    "logoutAll": "Барлығынан шығу",
+    "legalHint": "birlinq ережелері мен саясаттары",
+    "errors": {
+      "nameRequired": "Атыңызды көрсетіңіз",
+      "nameMin": "Аты — кемінде {n} таңба",
+      "invalidPhone": "Нөмірді 77XXXXXXXXX форматында енгізіңіз",
+      "currentRequired": "Қазіргі құпиясөзді енгізіңіз",
+      "passwordMin": "Құпиясөз кемінде {n} таңбадан тұруы керек",
+      "passwordMismatch": "Құпиясөздер сәйкес келмейді",
+      "rateLimited": "Әрекеттер тым көп. Кейінірек қайталап көріңіз.",
+      "generic": "Бірдеңе дұрыс болмады. Қайталап көріңіз."
+    }
   }
 }

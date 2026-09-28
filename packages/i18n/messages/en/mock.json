@@ -8,7 +8,9 @@
       "dashboard": "Dashboard",
       "activation": "QR activation",
       "public": "Public scan flow",
-      "auth": "Auth"
+      "auth": "Auth",
+      "business": "Business",
+      "card": "Business card"
     },
     "links": {
       "dashboardOverview": "Overview",
@@ -21,7 +23,17 @@
       "register": "Register",
       "forgotPassword": "Forgot password",
       "resetPassword": "Reset password",
-      "verifyEmail": "Verify email"
+      "verifyEmail": "Verify email",
+      "businessOverview": "Business overview",
+      "cards": "Card list",
+      "cardNew": "New card",
+      "cardEdit": "Edit a card",
+      "pricing": "Pricing",
+      "profile": "Profile",
+      "cardPublic": "Public card (demo)",
+      "cardQr": "Card QR page",
+      "cardUnpublished": "Hidden card (410)",
+      "cardScan": "Card via QR sticker"
     }
   }
 }

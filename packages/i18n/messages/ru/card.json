@@ -1,0 +1,84 @@
+{
+  "loading": "Открываем визитку…",
+  "fallbackName": "Визитка",
+  "photoAlt": "Фото: {name}",
+  "actions": {
+    "save": "Сохранить контакт",
+    "share": "Поделиться",
+    "qr": "QR-код",
+    "open": "Открыть визитку",
+    "copyLink": "Скопировать ссылку"
+  },
+  "sections": {
+    "contacts": "Контакты",
+    "socials": "Соцсети",
+    "about": "О себе",
+    "tags": "Навыки и темы",
+    "birthday": "День рождения",
+    "scenarios": "Что случилось?"
+  },
+  "channels": {
+    "phone": "Телефон",
+    "phone2": "Второй телефон",
+    "email": "Email",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "website": "Сайт",
+    "linkedin": "LinkedIn",
+    "instagram": "Instagram"
+  },
+  "socials": {
+    "facebook": "Facebook",
+    "x": "X",
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "vk": "VK",
+    "github": "GitHub",
+    "threads": "Threads"
+  },
+  "themes": {
+    "default": "Классика",
+    "premium": "Премиум",
+    "minimal": "Минимализм",
+    "vibrant": "Яркая",
+    "sunset": "Закат",
+    "ocean": "Океан",
+    "forest": "Лес",
+    "elegant": "Элегантная",
+    "dark": "Тёмная",
+    "rosegold": "Розовое золото"
+  },
+  "share": {
+    "title": "{name} — визитка",
+    "text": "Контакты {name} на birlinq",
+    "copied": "Ссылка скопирована",
+    "failed": "Не удалось поделиться — скопируйте ссылку вручную"
+  },
+  "scenarios": {
+    "choose": "Выберите ситуацию — владелец получит уведомление"
+  },
+  "cta": {
+    "title": "Создайте свою визитку",
+    "text": "Цифровая визитка с QR-кодом — за пару минут",
+    "button": "Создать визитку"
+  },
+  "qrPage": {
+    "title": "QR-код визитки",
+    "subtitle": "Наведите камеру — откроется визитка {name}",
+    "hint": "Покажите экран собеседнику, скачайте картинку или добавьте QR на печатную визитку.",
+    "linkLabel": "Ссылка",
+    "copy": "Скопировать ссылку",
+    "copied": "Скопировано",
+    "download": "Скачать PNG",
+    "share": "Поделиться",
+    "open": "Открыть визитку"
+  },
+  "errors": {
+    "qrFailed": "Не удалось построить QR-код",
+    "downloadFailed": "Не удалось скачать картинку",
+    "shareFailed": "Не удалось поделиться"
+  },
+  "footer": {
+    "note": "Визитка на birlinq Business"
+  }
+}

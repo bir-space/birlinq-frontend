@@ -4,15 +4,12 @@ import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toApiLocale } from "@birlinq/api";
 import { useApi } from "@birlinq/platform";
-import {
-  ApiRequestError,
-  isQrNotScannable,
-  isRateLimited,
-} from "@birlinq/api";
+import { isRateLimited } from "@birlinq/api";
 import { LIMITS } from "@birlinq/api";
 import type { PublicScenario } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
+import { mapPublicError, type PublicErrorKind } from "./errors";
 import { IconArrowLeft, IconClose, IconInfo, ScenarioIcon } from "./icons";
 
 /** SubmitScenarioRequest caps the message at 500. */
@@ -20,8 +17,10 @@ const MESSAGE_LIMIT = LIMITS.scenarioMessage;
 
 /**
  * P2 — scenario message form. Textarea prefilled from the scenario, 500 char
- * limit, submits via api.public.submitScenario. 429 shows an inline friendly
- * error, 410/404 bubble up as fatal page states.
+ * limit, submits via api.public.submitScenario. 429 and unknown failures
+ * show inline; 404 and the two kinds of 410 bubble up as fatal page states
+ * through `onFatal` — the sticker was paused, the card hidden or blocked,
+ * or the scenario disabled while this form was open.
  */
 export function ScenarioForm({
   code,
@@ -39,7 +38,7 @@ export function ScenarioForm({
     ownerMessage: string | null;
     duplicate: boolean;
   }) => void;
-  onFatal: (kind: "not_found" | "unavailable") => void;
+  onFatal: (kind: PublicErrorKind) => void;
 }) {
   const t = useTranslations("public");
   const api = useApi();
@@ -78,14 +77,15 @@ export function ScenarioForm({
       setSubmitting(false);
       if (isRateLimited(err)) {
         setError(t("scenario.rateLimited"));
-      } else if (isQrNotScannable(err)) {
-        // The owner paused or an admin blocked the code between load and send.
-        onFatal("unavailable");
-      } else if (err instanceof ApiRequestError && err.status === 404) {
-        // Unknown code, or the scenario was disabled while this form was open.
-        onFatal("not_found");
-      } else {
+        return;
+      }
+      const kind = mapPublicError(err);
+      if (kind === "generic") {
         setError(t("errors.genericText"));
+      } else {
+        // 410 QR_NOT_SCANNABLE / ENTITY_NOT_PUBLISHED, or a 404: the page
+        // behind this form is gone, so the page shows why instead.
+        onFatal(kind);
       }
     }
   }

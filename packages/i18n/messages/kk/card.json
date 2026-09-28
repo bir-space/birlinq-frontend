@@ -1,0 +1,84 @@
+{
+  "loading": "Визитка ашылуда…",
+  "fallbackName": "Визитка",
+  "photoAlt": "Фото: {name}",
+  "actions": {
+    "save": "Контактіні сақтау",
+    "share": "Бөлісу",
+    "qr": "QR-код",
+    "open": "Визитканы ашу",
+    "copyLink": "Сілтемені көшіру"
+  },
+  "sections": {
+    "contacts": "Байланыс",
+    "socials": "Әлеуметтік желілер",
+    "about": "Өзім туралы",
+    "tags": "Дағдылар мен тақырыптар",
+    "birthday": "Туған күні",
+    "scenarios": "Не болды?"
+  },
+  "channels": {
+    "phone": "Телефон",
+    "phone2": "Екінші телефон",
+    "email": "Email",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "website": "Сайт",
+    "linkedin": "LinkedIn",
+    "instagram": "Instagram"
+  },
+  "socials": {
+    "facebook": "Facebook",
+    "x": "X",
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "vk": "VK",
+    "github": "GitHub",
+    "threads": "Threads"
+  },
+  "themes": {
+    "default": "Классика",
+    "premium": "Премиум",
+    "minimal": "Минимализм",
+    "vibrant": "Ашық",
+    "sunset": "Күн батысы",
+    "ocean": "Мұхит",
+    "forest": "Орман",
+    "elegant": "Сәнді",
+    "dark": "Қараңғы",
+    "rosegold": "Қызғылт алтын"
+  },
+  "share": {
+    "title": "{name} — визитка",
+    "text": "{name} байланыс деректері birlinq-те",
+    "copied": "Сілтеме көшірілді",
+    "failed": "Бөлісу мүмкін болмады — сілтемені қолмен көшіріңіз"
+  },
+  "scenarios": {
+    "choose": "Жағдайды таңдаңыз — иесіне хабарландыру келеді"
+  },
+  "cta": {
+    "title": "Өз визиткаңызды жасаңыз",
+    "text": "QR-коды бар цифрлық визитка — бірнеше минутта",
+    "button": "Визитка жасау"
+  },
+  "qrPage": {
+    "title": "Визитканың QR-коды",
+    "subtitle": "Камераны бағыттаңыз — {name} визиткасы ашылады",
+    "hint": "Экранды әңгімелесушіге көрсетіңіз, суретті жүктеп алыңыз немесе QR-ды қағаз визиткаға қосыңыз.",
+    "linkLabel": "Сілтеме",
+    "copy": "Сілтемені көшіру",
+    "copied": "Көшірілді",
+    "download": "PNG жүктеу",
+    "share": "Бөлісу",
+    "open": "Визитканы ашу"
+  },
+  "errors": {
+    "qrFailed": "QR-кодты құру мүмкін болмады",
+    "downloadFailed": "Суретті жүктеу мүмкін болмады",
+    "shareFailed": "Бөлісу мүмкін болмады"
+  },
+  "footer": {
+    "note": "birlinq Business визиткасы"
+  }
+}

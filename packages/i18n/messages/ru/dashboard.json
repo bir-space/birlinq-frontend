@@ -2,7 +2,11 @@
   "nav": {
     "overview": "Обзор",
     "interactions": "Сообщения",
-    "qr": "Мои QR"
+    "qr": "Мои QR",
+    "businessOverview": "Обзор",
+    "cards": "Визитки",
+    "pricing": "Тарифы",
+    "profile": "Профиль"
   },
   "time": {
     "justNow": "только что",
@@ -95,7 +99,9 @@
     "actionError": "Не удалось изменить статус QR. Попробуйте ещё раз.",
     "empty": "Нет активных QR",
     "emptyHint": "Активируйте наклейку — и она появится здесь.",
-    "emptyCta": "Активировать QR"
+    "emptyCta": "Активировать QR",
+    "card": "Визитка",
+    "openCard": "Открыть визитку"
   },
   "detail": {
     "sectionQr": "QR-код",
@@ -133,7 +139,10 @@
     "resumeTitle": "Возобновить QR",
     "resumeHint": "Публичная страница снова станет доступна",
     "notFound": "QR-код не найден",
-    "noEntity": "К этому QR пока не привязан автомобиль"
+    "noEntity": "К этому QR пока не привязан автомобиль",
+    "cardTitle": "Наклейка привязана к визитке",
+    "cardHint": "Контакты, приватность и оформление настраиваются в разделе Business",
+    "cardOpen": "Открыть визитку"
   },
   "notifications": {
     "title": "Уведомления",
@@ -161,5 +170,54 @@
     "deviceDesktop": "Компьютер",
     "deviceIos": "iPhone / iPad",
     "deviceAndroid": "Android"
+  },
+  "switcher": {
+    "label": "Продукт",
+    "moveHint": "QR-наклейки для авто",
+    "businessHint": "Цифровые визитки"
+  },
+  "profile": {
+    "title": "Профиль",
+    "subtitle": "Аккаунт, пароль и сессии",
+    "sections": {
+      "account": "Аккаунт",
+      "password": "Пароль",
+      "sessions": "Сессии",
+      "legal": "Документы"
+    },
+    "fields": {
+      "name": "Имя",
+      "phone": "Телефон",
+      "phoneHint": "Формат: 77XXXXXXXXX. Оставьте пустым, чтобы убрать номер",
+      "email": "Email",
+      "emailHint": "Email изменить нельзя",
+      "currentPassword": "Текущий пароль",
+      "currentPasswordHint": "Нужен, чтобы сменить номер телефона",
+      "newPassword": "Новый пароль",
+      "confirmPassword": "Повторите новый пароль"
+    },
+    "save": "Сохранить",
+    "saved": "Сохранено",
+    "saveError": "Не удалось сохранить. Попробуйте ещё раз.",
+    "phoneChangeNote": "После смены номера другие устройства выйдут из аккаунта",
+    "phoneRemoveNote": "Убрать номер можно, только если у аккаунта есть email",
+    "changePassword": "Сменить пароль",
+    "passwordChanged": "Пароль обновлён",
+    "passwordChangedHint": "Другие устройства вышли из аккаунта",
+    "wrongPassword": "Неверный текущий пароль",
+    "logoutAllTitle": "Выйти на всех устройствах",
+    "logoutAllHint": "Завершит все сессии, включая эту",
+    "logoutAll": "Выйти везде",
+    "legalHint": "Правила и политики birlinq",
+    "errors": {
+      "nameRequired": "Укажите имя",
+      "nameMin": "Имя — минимум {n} символа",
+      "invalidPhone": "Введите номер в формате 77XXXXXXXXX",
+      "currentRequired": "Введите текущий пароль",
+      "passwordMin": "Пароль должен быть не короче {n} символов",
+      "passwordMismatch": "Пароли не совпадают",
+      "rateLimited": "Слишком много попыток. Попробуйте позже.",
+      "generic": "Что-то пошло не так. Попробуйте ещё раз."
+    }
   }
 }

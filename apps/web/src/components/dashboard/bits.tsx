@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
@@ -101,6 +102,26 @@ export function IconPlus({ className = "size-4" }: { className?: string }) {
   );
 }
 
+export function IconUser({ className = "size-5" }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c0-3.6 3.4-6 7.5-6s7.5 2.4 7.5 6" />
+    </svg>
+  );
+}
+
+/** A business card: a landscape card with a portrait dot and two text lines. */
+export function IconCard({ className = "size-5" }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <rect x="3" y="5" width="18" height="14" rx="2.5" />
+      <circle cx="8.5" cy="11" r="2" />
+      <path d="M13.5 10h4M13.5 13.5h4M6 16h5" />
+    </svg>
+  );
+}
+
 /* ---------- Small building blocks ---------- */
 
 /** Uppercase 11px section label (as in D3 mockup). */
@@ -187,6 +208,58 @@ export function EmptyState({
       {hint && <p className="max-w-sm text-[13px] text-muted-2">{hint}</p>}
       {cta && <div className="mt-2">{cta}</div>}
     </Card>
+  );
+}
+
+/** One figure with a label — the tiles at the top of an overview. */
+export function StatCard({
+  label,
+  value,
+  sub,
+  tone = "default",
+  dot = false,
+}: {
+  label: string;
+  value: number | string;
+  sub?: string;
+  tone?: "default" | "accent";
+  /** A red dot in the corner — "needs attention". */
+  dot?: boolean;
+}) {
+  const toneCls =
+    tone === "accent"
+      ? "border-accent/30 bg-accent/10"
+      : "border-card-border bg-card";
+  return (
+    <div className={`relative rounded-(--radius-card) border p-4 ${toneCls}`}>
+      {dot && (
+        <span className="absolute right-3.5 top-3.5 size-2 rounded-full bg-danger" />
+      )}
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-2">
+        {label}
+      </p>
+      <p
+        className={`mt-1 text-[28px] font-bold leading-none ${
+          tone === "accent" ? "text-accent" : "text-white"
+        }`}
+      >
+        {value}
+      </p>
+      {sub && <p className="mt-1.5 text-[11px] text-muted-2">{sub}</p>}
+    </div>
+  );
+}
+
+/** "← Back" link at the top of a detail page. `href` is already prefix-aware. */
+export function BackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1.5 self-start text-[13px] font-semibold text-muted transition-colors hover:text-white"
+    >
+      <IconArrowLeft className="size-4" />
+      {label}
+    </Link>
   );
 }
 

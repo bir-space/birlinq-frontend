@@ -15,8 +15,8 @@ import { Input } from "@/components/ui/Input";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import {
+  BackLink,
   ErrorCard,
-  IconArrowLeft,
   IconBubble,
   IconCar,
   IconExternal,
@@ -217,7 +217,7 @@ function QrDetail({ id }: { id: string }) {
   if (error || !qr) {
     return (
       <div className="flex flex-col gap-4">
-        <BackLink label={tc("back")} />
+        <BackLink href={href("/dashboard/qr")} label={tc("back")} />
         <ErrorCard
           message={error === "notFound" ? t("detail.notFound") : tc("error")}
           retryLabel={tc("retry")}
@@ -238,7 +238,7 @@ function QrDetail({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <BackLink label={tc("back")} />
+      <BackLink href={href("/dashboard/qr")} label={tc("back")} />
 
       {/* Header card */}
       <Card className="flex items-center gap-4">
@@ -436,19 +436,6 @@ function QrDetail({ id }: { id: string }) {
         </section>
       )}
     </div>
-  );
-}
-
-function BackLink({ label }: { label: string }) {
-  const href = useHref();
-  return (
-    <Link
-      href={href("/dashboard/qr")}
-      className="inline-flex items-center gap-1.5 self-start text-[13px] font-semibold text-muted transition-colors hover:text-white"
-    >
-      <IconArrowLeft className="size-4" />
-      {label}
-    </Link>
   );
 }
 

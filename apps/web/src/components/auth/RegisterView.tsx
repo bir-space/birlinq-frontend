@@ -104,6 +104,9 @@ function RegisterForm() {
   const loginHref = href(
     next ? `/login?next=${encodeURIComponent(next)}` : "/login"
   );
+  // Legal pages open in a new tab so the half-filled form is not lost.
+  const legalLink =
+    "font-medium text-white underline underline-offset-4 hover:text-accent";
 
   return (
     <>
@@ -176,7 +179,30 @@ function RegisterForm() {
               onChange={(e) => setTerms(e.target.checked)}
               className="mt-0.5 size-4 shrink-0 cursor-pointer accent-accent"
             />
-            <span>{t("register.terms")}</span>
+            <span>
+              {t.rich("register.terms", {
+                terms: (chunks) => (
+                  <Link
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener"
+                    className={legalLink}
+                  >
+                    {chunks}
+                  </Link>
+                ),
+                privacy: (chunks) => (
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener"
+                    className={legalLink}
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </span>
           </label>
           {errors.terms && (
             <p className="text-[12px] text-danger">{errors.terms}</p>

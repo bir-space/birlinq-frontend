@@ -14,5 +14,15 @@
   "logout": "Шығу",
   "register": "Тіркелу",
   "dashboard": "Жеке кабинет",
-  "language": "Тіл"
+  "language": "Тіл",
+  "errorTitle": "Бірдеңе дұрыс болмады",
+  "copy": "Көшіру",
+  "copied": "Көшірілді",
+  "share": "Бөлісу",
+  "download": "Жүктеу",
+  "delete": "Жою",
+  "edit": "Өңдеу",
+  "open": "Ашу",
+  "close": "Жабу",
+  "confirm": "Растау"
 }

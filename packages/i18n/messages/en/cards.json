@@ -1,0 +1,396 @@
+{
+  "overview": {
+    "title": "Business",
+    "subtitle": "Your cards and their figures for the last 30 days",
+    "stats": {
+      "views": "Views",
+      "clicks": "Contact clicks",
+      "clicksSplit": "calls {calls} · social {social} · website {website}",
+      "vcard": "Saved to contacts",
+      "shares": "Shares",
+      "period": "last 30 days",
+      "partial": "The figures of some cards did not load"
+    },
+    "cards": {
+      "title": "Cards",
+      "all": "All cards",
+      "more": "Showing the first {count}",
+      "empty": "No cards yet",
+      "emptyHint": "Create your first digital card — the link and QR code appear right away.",
+      "create": "Create a card"
+    },
+    "quick": {
+      "title": "Quick actions",
+      "createTitle": "New card",
+      "createHint": "Name, title, contacts — a minute of work",
+      "cardsTitle": "My cards",
+      "cardsHint": "Edit, links, QR",
+      "pricingTitle": "Pricing",
+      "pricingHint": "What Free, Pro and Corporate include"
+    }
+  },
+  "status": {
+    "active": "published",
+    "deactivated": "hidden",
+    "blocked": "blocked"
+  },
+  "list": {
+    "title": "My cards",
+    "subtitle": "Digital business cards and their public links",
+    "create": "Create a card",
+    "loadMore": "Load more",
+    "loadMoreError": "Could not load more. Please try again.",
+    "empty": "No cards yet",
+    "emptyHint": "Create your first card — it gets a link and a QR code.",
+    "emptyCta": "Create a card",
+    "linkClosed": "link closed",
+    "noName": "Unnamed",
+    "actions": {
+      "open": "Open",
+      "qr": "QR code",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "deleteTitle": "Delete this card?",
+    "deleteText": "The link and the QR stop working. This cannot be undone.",
+    "deleteConfirm": "Delete",
+    "deleteError": "Could not delete the card. Please try again.",
+    "deleteBlocked": "This card is blocked by moderation and cannot be deleted for now."
+  },
+  "create": {
+    "title": "New card",
+    "subtitle": "The basics now — everything else can be added after creating it.",
+    "fields": {
+      "displayName": "Full name",
+      "displayNamePlaceholder": "How to introduce you",
+      "title": "Job title",
+      "titlePlaceholder": "For example, product manager",
+      "company": "Company",
+      "companyPlaceholder": "Where you work"
+    },
+    "themeTitle": "Theme",
+    "aliasTitle": "Card address",
+    "aliasHint": "Leave empty and an address is picked for you",
+    "privacyTitle": "What to show",
+    "submit": "Create the card",
+    "created": "Card created",
+    "errors": {
+      "nameRequired": "Enter a name",
+      "nameMin": "The name needs at least {n} characters",
+      "aliasTaken": "This address is already taken — pick another one",
+      "generic": "Could not create the card. Please try again.",
+      "rateLimited": "Too many attempts. Please wait a minute."
+    },
+    "limit": {
+      "title": "Card limit reached",
+      "text": "Your plan does not allow more cards. Check the plans or delete a card you no longer need.",
+      "cta": "See the plans",
+      "close": "Close"
+    }
+  },
+  "edit": {
+    "back": "Back to cards",
+    "title": "Card",
+    "open": "Open the card",
+    "notFound": "Card not found",
+    "notFoundHint": "It may have been deleted.",
+    "loadError": "Could not load the card.",
+    "saved": "Saved",
+    "saveError": "Could not save. Please try again.",
+    "rateLimited": "Too many requests. Please wait a minute.",
+    "blocked": "This card is blocked by moderation. Changes are not published until the block is lifted."
+  },
+  "sections": {
+    "profile": "Profile",
+    "images": "Photo and cover",
+    "contacts": "Contacts",
+    "socials": "Social",
+    "tags": "Skills and topics",
+    "theme": "Theme",
+    "privacy": "Privacy",
+    "alias": "Card address",
+    "publish": "Publishing",
+    "qr": "QR code",
+    "stats": "Statistics",
+    "danger": "Danger zone"
+  },
+  "profile": {
+    "hint": "Who you are and what you do",
+    "fields": {
+      "displayName": "Full name",
+      "title": "Job title",
+      "company": "Company",
+      "bio": "About",
+      "bioPlaceholder": "A sentence or two about what you do",
+      "birthday": "Date of birth",
+      "birthdayHint": "Shown only when the privacy switch is on"
+    },
+    "save": "Save"
+  },
+  "images": {
+    "hint": "JPEG, PNG or WebP up to 5 MB. Larger files are resized for you.",
+    "photo": "Photo",
+    "cover": "Cover",
+    "upload": "Upload",
+    "replace": "Replace",
+    "remove": "Remove",
+    "processing": "Processing…",
+    "errors": {
+      "badType": "Use a JPEG, PNG or WebP",
+      "tooLarge": "The file is too large even after resizing",
+      "read": "Could not read the file",
+      "upload": "Could not upload the image. Please try again.",
+      "remove": "Could not remove the image. Please try again."
+    }
+  },
+  "contacts": {
+    "hint": "Each contact is shown only when its privacy switch is on",
+    "fields": {
+      "phone": "Phone",
+      "phone2": "Second phone",
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "website": "Website",
+      "linkedin": "LinkedIn",
+      "instagram": "Instagram"
+    },
+    "hints": {
+      "phone": "+7 700 000 00 00",
+      "whatsapp": "Number in international format",
+      "telegram": "Username without @",
+      "instagram": "Username without @",
+      "linkedin": "Profile link",
+      "website": "https://…"
+    },
+    "save": "Save"
+  },
+  "socials": {
+    "hint": "Up to {n} links — one per platform",
+    "add": "Add a link",
+    "remove": "Remove",
+    "platform": "Platform",
+    "url": "Link",
+    "urlPlaceholder": "https://…",
+    "empty": "No links yet",
+    "errors": {
+      "invalidUrl": "The link must point to {platform} and start with https://",
+      "duplicate": "This platform is already added",
+      "max": "No more than {n} links"
+    },
+    "save": "Save"
+  },
+  "tags": {
+    "hint": "Up to {n} tags of {len} characters — skills, topics, services",
+    "placeholder": "Add a tag and press Enter",
+    "add": "Add",
+    "remove": "Remove tag {tag}",
+    "errors": {
+      "max": "No more than {n} tags",
+      "tooLong": "A tag can be at most {len} characters",
+      "duplicate": "This tag is already there"
+    },
+    "save": "Save"
+  },
+  "theme": {
+    "hint": "How the public card looks",
+    "preview": "Preview",
+    "previewOpen": "Open with this theme",
+    "previewName": "Full Name",
+    "previewTitle": "Job title · Company",
+    "save": "Save"
+  },
+  "privacy": {
+    "hint": "What people see when they open the card. Everything else stays hidden.",
+    "groups": {
+      "personal": "About you",
+      "contacts": "Contacts"
+    },
+    "presets": {
+      "title": "Quick setup",
+      "card": "Business card",
+      "cardHint": "Name, title, professional links, email",
+      "open": "Everything open",
+      "openHint": "Show every field you filled in",
+      "minimal": "Minimal",
+      "minimalHint": "Only name, title and company",
+      "custom": "Custom"
+    },
+    "keys": {
+      "show_display_name": "Name",
+      "show_title": "Job title",
+      "show_company": "Company",
+      "show_bio": "About",
+      "show_birthday": "Birthday",
+      "show_tags": "Skills and topics",
+      "show_phone": "Phone",
+      "show_phone2": "Second phone",
+      "show_email": "Email",
+      "show_whatsapp": "WhatsApp",
+      "show_telegram": "Telegram",
+      "show_website": "Website",
+      "show_linkedin": "LinkedIn",
+      "show_instagram": "Instagram",
+      "show_socials": "Social links"
+    },
+    "error": "Could not update the setting. Please try again."
+  },
+  "alias": {
+    "hint": "The public link of the card. Change it with care: the old one stops working.",
+    "label": "Address",
+    "placeholder": "for example, ivan-petrov",
+    "prefix": "/p/",
+    "rules": "3–30 characters: Latin letters, digits, dash, underscore",
+    "save": "Save address",
+    "close": "Close the link",
+    "reopen": "Open the link",
+    "closed": "Link closed",
+    "closedHint": "The card opens only from a QR sticker. Set an address to enable the link.",
+    "current": "Current link",
+    "copy": "Copy",
+    "copied": "Copied",
+    "changeWarning": "The old address stops working immediately — QR codes and links you shared will need updating.",
+    "saved": "Address saved",
+    "errors": {
+      "short": "At least {n} characters",
+      "invalid": "Only lower-case Latin letters, digits, dash and underscore",
+      "reserved": "This address is reserved",
+      "taken": "This address is already taken",
+      "blocked": "The card is blocked — the address cannot be changed",
+      "generic": "Could not save the address. Please try again."
+    }
+  },
+  "publish": {
+    "hint": "A hidden card answers “Page hidden” both by link and by QR",
+    "label": "Card is published",
+    "on": "Published",
+    "off": "Hidden",
+    "onHint": "Open by link and QR code",
+    "offHint": "Visitors see a placeholder",
+    "blockedTitle": "Blocked by moderation",
+    "blockedText": "Publishing cannot be turned on until the block is lifted. If you believe this is a mistake, contact support.",
+    "error": "Could not change publishing. Please try again."
+  },
+  "qr": {
+    "hint": "The QR leads to the public link of the card",
+    "noAlias": "Set an address first",
+    "noAliasHint": "The QR code is built from the /p/… link; while the link is closed there is no code.",
+    "download": "Download PNG",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "share": "Share",
+    "print": "For print, the 512×512 PNG works on a sticker from 2 cm.",
+    "stickersTitle": "Stickers",
+    "stickersHint": "Physical birlinq QR stickers bound to this card",
+    "noStickers": "No stickers yet",
+    "sticker": "Sticker {code}",
+    "stickerPaused": "paused",
+    "attach": {
+      "title": "Attach a sticker",
+      "hint": "The code and the token are printed on the back of the sticker",
+      "code": "Sticker code",
+      "codePlaceholder": "AB12CD34",
+      "token": "Activation token",
+      "tokenPlaceholder": "From the card in the pack",
+      "submit": "Attach",
+      "success": "Sticker {code} attached",
+      "errors": {
+        "notFound": "No sticker with this code and token",
+        "taken": "This sticker is already activated",
+        "entityHasQr": "A sticker is already attached to this card. One card — one sticker.",
+        "rateLimited": "Too many attempts. Please wait a minute.",
+        "generic": "Could not attach the sticker. Please try again."
+      }
+    }
+  },
+  "stats": {
+    "hint": "Last 30 days",
+    "views": "Views",
+    "viewsSplit": "QR {qr} · link {link}",
+    "unique": "Unique visitors",
+    "clicks": "Contact clicks",
+    "vcard": "Saved to contacts",
+    "shares": "Shares",
+    "lastView": "Last view",
+    "never": "not yet",
+    "daily": "Views and clicks by day",
+    "byChannel": "By channel",
+    "noClicks": "No clicks yet",
+    "channels": {
+      "phone": "Phone",
+      "phone2": "Second phone",
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "website": "Website",
+      "linkedin": "LinkedIn",
+      "instagram": "Instagram",
+      "social": "Social"
+    },
+    "split": {
+      "calls": "Calls",
+      "social": "Social and messengers",
+      "website": "Website",
+      "other": "Other"
+    },
+    "totals": "Total",
+    "period30": "30 days",
+    "period7": "7 days",
+    "error": "Could not load the statistics.",
+    "retry": "Retry"
+  },
+  "danger": {
+    "hint": "Actions that cannot be undone",
+    "deleteTitle": "Delete the card",
+    "deleteHint": "The link, the QR and the statistics disappear",
+    "delete": "Delete",
+    "confirmTitle": "Delete this card?",
+    "confirmText": "The link and the QR stop working immediately. This cannot be undone.",
+    "confirm": "Delete",
+    "blocked": "This card is blocked by moderation and cannot be deleted for now.",
+    "error": "Could not delete the card. Please try again."
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Payments are not connected yet — leave a request and we will write when the plan is available.",
+    "soon": "Soon",
+    "current": "Your plan",
+    "perMonth": "per month",
+    "free": "Free",
+    "cta": "Leave a request",
+    "note": "Prices in tenge. Limits are not enforced yet.",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "price": "0 ₸",
+        "f1": "One card",
+        "f2": "Link and QR code",
+        "f3": "Basic statistics",
+        "f4": "All themes"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "499 ₸",
+        "f1": "Up to 5 cards",
+        "f2": "Statistics by channel",
+        "f3": "Priority support",
+        "f4": "Custom link address"
+      },
+      "corporate": {
+        "name": "Corporate",
+        "price": "1 499 ₸",
+        "f1": "Cards for the team",
+        "f2": "One company style",
+        "f3": "Shared statistics",
+        "f4": "Dedicated manager"
+      }
+    }
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "validation": "Check the form fields",
+    "blocked": "This card is blocked by moderation",
+    "rateLimited": "Too many requests. Please wait a minute.",
+    "load": "Could not load the data."
+  }
+}

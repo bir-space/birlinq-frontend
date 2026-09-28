@@ -18,6 +18,9 @@ export const LIMITS = {
   passwordMin: 8,
   token: 255,
 
+  // Auth/UpdateProfileRequest
+  profileNameMin: 2,
+
   // Entity/UpsertVehicleProfileRequest
   vehicleMake: 100,
   vehicleModel: 100,
@@ -28,15 +31,36 @@ export const LIMITS = {
 
   // Entity/CreateEntityRequest + UpdateEntityRequest
   entityTitle: 255,
+  /** App\Domain\Entity\Alias::PATTERN — `^[a-z0-9_-]{3,30}$`. */
+  aliasMin: 3,
+  alias: 30,
 
   // Entity/UpsertContactProfileRequest
   contactDisplayName: 100,
   contactPhone: 30,
+  contactWhatsapp: 30,
+  contactEmail: 255,
   contactTelegram: 100,
+  contactLinkedin: 255,
+  contactInstagram: 100,
+  contactWebsite: 255,
   contactCompany: 100,
   contactTitle: 100,
   contactBio: 2000,
   photoUrl: 500,
+  tagsMax: 10,
+  tagMax: 30,
+  socialsMax: 8,
+  socialUrl: 255,
+  /** `date_of_birth`: before_or_equal -18 years, after_or_equal -120 years. */
+  birthdayMinAge: 18,
+  birthdayMaxAge: 120,
+
+  // Entity/UploadContactImageRequest — 5120 KB, JPEG/PNG/WebP
+  imageMaxBytes: 5 * 1024 * 1024,
+
+  // Entity/ListEntitiesRequest
+  entitiesLimitMax: 100,
 
   // PublicScan/SubmitScenarioRequest
   scenarioMessage: 500,
@@ -48,6 +72,9 @@ export const LIMITS = {
 
   // PublicScan/ReportAbuseRequest
   abuseNote: 500,
+
+  // PublicScan/RecordPublicEventRequest
+  eventChannel: 40,
 
   // Qr/LookupQrRequest + ActivateQrRequest
   qrCodeMin: 6,

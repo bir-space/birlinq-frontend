@@ -45,31 +45,13 @@ export function identifierPayload(
     : { phone: normalizePhone(value) };
 }
 
-export type FieldErrors = Record<string, string>;
-
 /**
- * Flatten `VALIDATION_ERROR` details (`{ field: ["msg", ...] }` from Laravel)
- * into a `{ field: message }` map for inline display.
+ * The 422 -> field-map flattening lives in `@birlinq/core` so the card and
+ * profile hooks share it; re-exported here so the auth forms keep importing
+ * it from the place they always did.
  */
-export function detailsToFieldErrors(
-  details?: Record<string, unknown>
-): FieldErrors {
-  const out: FieldErrors = {};
-  if (!details) return out;
-  for (const [key, value] of Object.entries(details)) {
-    // Backend may nest keys like "vehicle.make" — keep the last segment too.
-    const short = key.split(".").pop() ?? key;
-    let message: string | null = null;
-    if (typeof value === "string") message = value;
-    else if (Array.isArray(value) && typeof value[0] === "string")
-      message = value[0];
-    if (message) {
-      out[key] = message;
-      out[short] = message;
-    }
-  }
-  return out;
-}
+export { detailsToFieldErrors } from "@birlinq/core";
+export type { FieldErrors } from "@birlinq/core";
 
 /** Only allow same-origin relative redirects for ?next=. */
 export function safeNext(next: string | null): string | null {

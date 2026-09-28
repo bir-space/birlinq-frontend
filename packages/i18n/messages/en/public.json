@@ -39,7 +39,8 @@
     "leadDivider": "want one for yourself?",
     "close": "Close",
     "duplicateTitle": "Already sent",
-    "duplicateSubtitle": "You sent the same message a moment ago — the owner knows, so we are not pinging them twice"
+    "duplicateSubtitle": "You sent the same message a moment ago — the owner knows, so we are not pinging them twice",
+    "privacyTextCard": "Only the card owner will see the message"
   },
   "lead": {
     "cta": "I want a sticker like this",
@@ -86,9 +87,23 @@
     "rateLimitedText": "Please wait a moment and refresh the page",
     "genericTitle": "Something went wrong",
     "genericText": "The request could not be completed. Please try again.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "cardNotFoundTitle": "Card not found",
+    "cardNotFoundText": "Check the link — the address may have changed or the card was deleted",
+    "unpublishedTitle": "Page hidden",
+    "unpublishedText": "The owner has temporarily turned publishing off",
+    "blockedTitle": "Page blocked",
+    "blockedText": "This page was blocked by moderation for breaking the rules"
   },
   "footer": {
     "note": "birlinq.com · Not an emergency service"
+  },
+  "productMove": "Move",
+  "productBusiness": "Business",
+  "card": {
+    "hiddenBadge": "Contacts protected",
+    "privacyTitle": "The data is protected",
+    "privacyText": "The owner decides which contacts to show",
+    "scenarioBanner": "Your message goes to the card owner"
   }
 }

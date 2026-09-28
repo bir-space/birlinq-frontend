@@ -4,15 +4,20 @@ import {
   newIdempotencyKey,
   normalizeAuthResponse,
 } from "./client";
+import { publicPath } from "./card";
 import type {
   AbuseAccepted,
   AbuseRequest,
   ApiLocale,
   AuthResponse,
+  ChangePasswordRequest,
+  ContactImageKind,
   CreateEntityRequest,
   CursorPaginated,
   Entity,
   EntityCursorMeta,
+  EntityListParams,
+  EntityStats,
   Interaction,
   LeadAccepted,
   LeadRequest,
@@ -20,6 +25,9 @@ import type {
   OwnerDashboard,
   PrivacySettings,
   PublicEntityPayload,
+  PublicEventRequest,
+  PublicEventResult,
+  PublicTarget,
   PushSubscriptionPayload,
   QrActivateRequest,
   QrCode,
@@ -29,11 +37,12 @@ import type {
   ScenarioSubmitRequest,
   SubmissionResult,
   UpdateEntityRequest,
+  UpdateProfileRequest,
   UpsertContactRequest,
   UpsertVehicleRequest,
   User,
 } from "./types";
-import { tokens } from "./config";
+import { apiBaseUrl, tokens } from "./config";
 
 // ---------- Auth ----------
 
@@ -115,6 +124,36 @@ export const authApi = {
   },
 
   /**
+   * PATCH /auth/me → { user } (D-043). A name change is plain. A phone change
+   * — new number or `null` — needs `current_password`, shares the
+   * password-change throttle (5 per 15 min) and signs every other device out;
+   * this session keeps its tokens. A wrong password is a 422 with
+   * `details.current_password`. No Idempotency-Key: the route carries no
+   * idempotency middleware and a repeat is a no-op.
+   */
+  updateProfile(body: UpdateProfileRequest): Promise<{ user: User }> {
+    return apiFetch<{ user: User }>("/auth/me", {
+      method: "PATCH",
+      body,
+      auth: true,
+    });
+  },
+
+  /**
+   * POST /auth/password/change → 204 (D-043). Every other session is revoked;
+   * this one keeps its tokens, so no re-login follows. A wrong current
+   * password is a 422 with `details.current_password`; the new one must be
+   * 8..100 characters and differ from the old. Throttled 5 per 15 min.
+   */
+  changePassword(body: ChangePasswordRequest): Promise<void> {
+    return apiFetch<void>("/auth/password/change", {
+      method: "POST",
+      body,
+      auth: true,
+    });
+  },
+
+  /**
    * POST /auth/verify-email → 204. Single use, 24 h TTL.
    * The token is 64 hex characters and arrives in the email as a code to
    * paste — there is no link, so the UI has to offer a field for it.
@@ -161,23 +200,39 @@ export const authApi = {
 // ---------- Entities ----------
 
 export const entitiesApi = {
-  /** GET /entities → { data, meta: { next_cursor, per_page } } (page size 20, fixed) */
-  list(cursor?: string): Promise<CursorPaginated<Entity, EntityCursorMeta>> {
-    const qs = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
+  /**
+   * GET /entities → { data, meta: { next_cursor, has_more, per_page } }.
+   * `type` narrows to one entity type — the Business cabinet asks for
+   * `personal`, the garage for `car`. `limit` is 1..100, default 20.
+   * Newest first; the cursor is opaque.
+   */
+  list(
+    params?: EntityListParams
+  ): Promise<CursorPaginated<Entity, EntityCursorMeta>> {
+    const q = new URLSearchParams();
+    if (params?.type) q.set("type", params.type);
+    if (params?.cursor) q.set("cursor", params.cursor);
+    if (params?.limit) q.set("limit", String(params.limit));
+    const qs = q.toString();
     return apiFetch<CursorPaginated<Entity, EntityCursorMeta>>(
-      `/entities${qs}`,
+      `/entities${qs ? `?${qs}` : ""}`,
       { auth: true }
     );
   },
 
-  /** Walk every cursor page. The backend caps page size at 20 server-side. */
-  async listAll(maxPages = 20): Promise<Entity[]> {
+  /** Walk every cursor page. `params.limit` is the page size, capped at 100 server-side. */
+  async listAll(
+    params?: Omit<EntityListParams, "cursor">,
+    maxPages = 20
+  ): Promise<Entity[]> {
     const out: Entity[] = [];
     let cursor: string | undefined;
     for (let page = 0; page < maxPages; page++) {
-      const res = await entitiesApi.list(cursor);
+      const res = await entitiesApi.list({ ...params, cursor });
       out.push(...res.data);
-      if (!res.meta.next_cursor) break;
+      // A backend from before D-041 sends no has_more; the cursor decides then.
+      const hasMore = res.meta.has_more ?? res.meta.next_cursor !== null;
+      if (!hasMore || !res.meta.next_cursor) break;
       cursor = res.meta.next_cursor;
     }
     return out;
@@ -185,14 +240,25 @@ export const entitiesApi = {
 
   /**
    * POST /entities → 201 { entity }.
-   * Only `type` and `title` are accepted — profile data goes through the
-   * dedicated vehicle/contact endpoints (see `createVehicle`).
+   * The route sits behind the idempotency middleware, so the header is not
+   * optional: without it the backend answers 422 IDEMPOTENCY_KEY_MISSING
+   * before validation even runs. A fresh key is minted per call; pass
+   * `idempotencyKey` to keep one key across the retries of a single form
+   * submission, so a double tap cannot create two cards.
+   * `contact` and `privacy_settings` ride along and are applied in the same
+   * transaction (D-041); a car still gets its profile through `upsertVehicle`
+   * (see `createVehicle`). 409 ALIAS_TAKEN / CARD_LIMIT_REACHED are business
+   * outcomes to surface, not bugs.
    */
-  create(body: CreateEntityRequest): Promise<{ entity: Entity }> {
+  create(
+    body: CreateEntityRequest,
+    opts?: { idempotencyKey?: string }
+  ): Promise<{ entity: Entity }> {
     return apiFetch<{ entity: Entity }>("/entities", {
       method: "POST",
       body,
       auth: true,
+      idempotencyKey: opts?.idempotencyKey ?? newIdempotencyKey(),
     });
   },
 
@@ -200,7 +266,11 @@ export const entitiesApi = {
     return apiFetch<{ entity: Entity }>(`/entities/${id}`, { auth: true });
   },
 
-  /** PATCH /entities/{id} — only `title` and `status`. */
+  /**
+   * PATCH /entities/{id} — `title`, `status` and `alias`. `alias: null`
+   * closes the public link (D-040); a taken alias is 409 ALIAS_TAKEN, an
+   * alias on a car 422. `status` on a blocked entity is 409 ENTITY_BLOCKED.
+   */
   update(id: string, body: UpdateEntityRequest): Promise<{ entity: Entity }> {
     return apiFetch<{ entity: Entity }>(`/entities/${id}`, {
       method: "PATCH",
@@ -209,6 +279,7 @@ export const entitiesApi = {
     });
   },
 
+  /** DELETE /entities/{id} → 204 (soft). 409 ENTITY_BLOCKED while moderation holds it. */
   remove(id: string): Promise<void> {
     return apiFetch<void>(`/entities/${id}`, { method: "DELETE", auth: true });
   },
@@ -225,7 +296,11 @@ export const entitiesApi = {
     });
   },
 
-  /** PUT /entities/{id}/contact → { entity } (upsert, all fields optional) */
+  /**
+   * PUT /entities/{id}/contact → { entity } (upsert, all fields optional).
+   * Images are the exception: `photo_url`/`cover_url` take only `null` here,
+   * which clears the image — see `uploadContactImage` for setting one.
+   */
   upsertContact(
     id: string,
     body: UpsertContactRequest
@@ -233,6 +308,29 @@ export const entitiesApi = {
     return apiFetch<{ entity: Entity }>(`/entities/${id}/contact`, {
       method: "PUT",
       body,
+      auth: true,
+    });
+  },
+
+  /**
+   * POST /entities/{id}/contact/{kind} → { entity }. The one multipart
+   * endpoint: JPEG, PNG or WebP up to `LIMITS.imageMaxBytes`, in a form field
+   * named `file`. The previous image we stored is deleted. No Idempotency-Key
+   * — re-uploading is harmless. `filename` matters only for the extension
+   * the browser reports; the backend names the file after the verified MIME.
+   */
+  uploadContactImage(
+    id: string,
+    kind: ContactImageKind,
+    file: Blob,
+    filename?: string
+  ): Promise<{ entity: Entity }> {
+    const form = new FormData();
+    if (filename === undefined) form.append("file", file);
+    else form.append("file", file, filename);
+    return apiFetch<{ entity: Entity }>(`/entities/${id}/contact/${kind}`, {
+      method: "POST",
+      body: form,
       auth: true,
     });
   },
@@ -249,6 +347,13 @@ export const entitiesApi = {
     return apiFetch<{ entity: Entity }>(`/entities/${id}/privacy`, {
       method: "PATCH",
       body,
+      auth: true,
+    });
+  },
+
+  /** GET /entities/{id}/stats → { stats } — the 30-day figures, see `EntityStats`. */
+  stats(id: string): Promise<{ stats: EntityStats }> {
+    return apiFetch<{ stats: EntityStats }>(`/entities/${id}/stats`, {
       auth: true,
     });
   },
@@ -333,25 +438,72 @@ export const qrApi = {
   },
 };
 
-// ---------- Public scan flow (no auth) ----------
+// ---------- Public flow (no auth) ----------
 //
-// Every endpoint here answers 404 QR_NOT_FOUND for an unknown code and
-// 410 QR_NOT_SCANNABLE when the code is real but paused / blocked / never
-// activated — different screens for the visitor, so don't collapse the two.
-// The one exception is `reportAbuse`, which deliberately accepts reports on a
-// paused or blocked code, because abuse is often *why* it was paused.
+// Two doors lead to the same page (D-040): a sticker, `/public/q/{code}`, and
+// a card's link, `/public/c/{alias}` — `PublicTarget` names either, and
+// `publicPath` turns it into the route prefix. Unknown → 404 (QR_NOT_FOUND /
+// CARD_NOT_FOUND). Known but with nothing to show → 410: QR_NOT_SCANNABLE when
+// the sticker itself is paused/blocked/unactivated, ENTITY_NOT_PUBLISHED when
+// the card behind either door is deactivated, blocked or deleted. Different
+// screens for the visitor, so don't collapse them. The one exception is
+// `reportAbuse`, which deliberately accepts reports on a paused or blocked
+// target, because abuse is often *why* it was paused.
 
 export const publicApi = {
   /**
    * GET /public/q/{code}. Records the scan as an append-only event; the
-   * visitor IP is stored only as an HMAC salted per QR code. Throttled to
+   * visitor IP is stored only as an HMAC salted per entity. Throttled to
    * 30/min per visitor IP.
    */
   scan(code: string, locale?: ApiLocale): Promise<PublicEntityPayload> {
+    return apiFetch<PublicEntityPayload>(publicPath({ kind: "qr", code }), {
+      locale,
+    });
+  },
+
+  /**
+   * GET /public/c/{alias} — the card behind its public link (D-040). Records
+   * a `view` rather than a scan, de-duplicated per visitor for 60 s and not
+   * at all for known bots. Same throttle as `scan`, which is why the page
+   * fetches this from the browser and never server-side: one SSR origin
+   * would spend the whole 30/min on itself and count as the visitor.
+   */
+  card(alias: string, locale?: ApiLocale): Promise<PublicEntityPayload> {
     return apiFetch<PublicEntityPayload>(
-      `/public/q/${encodeURIComponent(code)}`,
+      publicPath({ kind: "alias", alias }),
       { locale }
     );
+  },
+
+  /**
+   * Absolute URL of GET …/vcard, for a plain `<a href download>` — the
+   * browser fetches it itself, so this is a string, not a request. Built by
+   * the backend from the same privacy-filtered data as the page, so it never
+   * carries a field the page hides. Counted as a `vcard_download` event, not
+   * a scan.
+   */
+  vcardUrl(target: PublicTarget): string {
+    return `${apiBaseUrl()}${publicPath(target)}/vcard`;
+  },
+
+  /**
+   * POST …/events → 202 { status } (D-041). Fire-and-forget from the card: a
+   * tap on a contact tile or a share. `keepalive` lets it finish after the
+   * visitor follows the `tel:` link away. Callers ignore the result and
+   * swallow errors — analytics must never block a contact action. Throttled
+   * 60/min per visitor and target; `duplicate` means the same tap landed
+   * inside the 60 s dedup interval.
+   */
+  trackEvent(
+    target: PublicTarget,
+    body: PublicEventRequest
+  ): Promise<PublicEventResult> {
+    return apiFetch<PublicEventResult>(`${publicPath(target)}/events`, {
+      method: "POST",
+      body,
+      keepalive: true,
+    });
   },
 
   /**
@@ -388,12 +540,16 @@ export const publicApi = {
     );
   },
 
-  /** POST /public/q/{code}/abuse → 202 { status, report_id }. */
-  reportAbuse(code: string, body: AbuseRequest): Promise<AbuseAccepted> {
-    return apiFetch<AbuseAccepted>(
-      `/public/q/${encodeURIComponent(code)}/abuse`,
-      { method: "POST", body }
-    );
+  /**
+   * POST …/abuse → 202 { status, report_id }. Behind both doors (D-040), so a
+   * card reached by link can be reported too — without that, moderation is
+   * blind to the card's main entrance.
+   */
+  reportAbuse(target: PublicTarget, body: AbuseRequest): Promise<AbuseAccepted> {
+    return apiFetch<AbuseAccepted>(`${publicPath(target)}/abuse`, {
+      method: "POST",
+      body,
+    });
   },
 };
 

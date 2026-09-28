@@ -36,6 +36,13 @@ body {
   color-scheme: light;
 }
 
+/* A public card rendered with a light theme flips the UA colour scheme for
+   its own subtree (form controls, scrollbars, selection) without touching
+   the dark app around it - see components/card/themes.ts. */
+[data-scheme="light"] {
+  color-scheme: light;
+}
+
 /* ---------- Brand gradient utilities ---------- */
 /* Diagonal blue → ice → violet, matching the "bq" mark exactly. */
 

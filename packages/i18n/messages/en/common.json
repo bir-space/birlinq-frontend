@@ -14,5 +14,15 @@
   "logout": "Log out",
   "register": "Sign up",
   "dashboard": "Dashboard",
-  "language": "Language"
+  "language": "Language",
+  "errorTitle": "Something went wrong",
+  "copy": "Copy",
+  "copied": "Copied",
+  "share": "Share",
+  "download": "Download",
+  "delete": "Delete",
+  "edit": "Edit",
+  "open": "Open",
+  "close": "Close",
+  "confirm": "Confirm"
 }

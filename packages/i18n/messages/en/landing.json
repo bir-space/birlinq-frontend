@@ -56,7 +56,9 @@
     "idText": "Small QR stickers for the things that matter.",
     "idB1": "Keys, wallet, documents, phone",
     "idB2": "Found something? Notify the owner",
-    "idB3": "No personal data exposed"
+    "idB3": "No personal data exposed",
+    "businessCta": "Create a card",
+    "businessDemo": "See an example"
   },
   "trust": {
     "heading": "Trusted by"
@@ -91,6 +93,13 @@
   },
   "footer": {
     "tagline": "QR stickers for staying in touch without exposing personal data.",
-    "rights": "© {year} birlinq. All rights reserved."
+    "rights": "© {year} birlinq. All rights reserved.",
+    "legal": {
+      "title": "Documents",
+      "privacy": "Privacy",
+      "terms": "Terms of service",
+      "offer": "Public offer",
+      "consent": "Data processing consent"
+    }
   }
 }

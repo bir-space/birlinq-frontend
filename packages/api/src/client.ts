@@ -30,6 +30,19 @@ export const ErrorCode = {
   QrNotActivated: "QR_NOT_ACTIVATED",
   QrNotPaused: "QR_NOT_PAUSED",
   EntityAlreadyHasQr: "ENTITY_ALREADY_HAS_QR",
+  /** 404 on /public/c/{alias}: no card behind this alias, or not a `personal` entity. */
+  CardNotFound: "CARD_NOT_FOUND",
+  /**
+   * 410 on a public endpoint, either door (D-040): the card exists but is not
+   * showing — `details.status` is `deactivated`, `blocked` or `deleted`.
+   */
+  EntityNotPublished: "ENTITY_NOT_PUBLISHED",
+  /** 409: moderation blocked this entity; the owner can neither change its status nor delete it. */
+  EntityBlocked: "ENTITY_BLOCKED",
+  /** 409 on POST/PATCH /entities: another card already holds this alias. */
+  AliasTaken: "ALIAS_TAKEN",
+  /** 409 on POST /entities: `cards.max_per_user` reached. */
+  CardLimitReached: "CARD_LIMIT_REACHED",
   ScenarioNotFound: "SCENARIO_NOT_FOUND",
   InteractionNotFound: "INTERACTION_NOT_FOUND",
   InvalidResetToken: "INVALID_RESET_TOKEN",
@@ -39,6 +52,10 @@ export const ErrorCode = {
   IdempotencyKeyMissing: "IDEMPOTENCY_KEY_MISSING",
   IdempotencyKeyInvalid: "IDEMPOTENCY_KEY_INVALID",
   IdempotencyKeyMisuse: "IDEMPOTENCY_KEY_MISUSE",
+  /** 409: an identical request with this Idempotency-Key is still in flight — retry shortly. */
+  IdempotencyInProgress: "IDEMPOTENCY_IN_PROGRESS",
+  /** 415: a body that is not application/json on a JSON route. */
+  UnsupportedMediaType: "UNSUPPORTED_MEDIA_TYPE",
   RateLimited: "RATE_LIMITED",
   /**
    * Fallback the backend uses for any HttpException it does not map by hand —
@@ -107,13 +124,29 @@ export function isIdempotencyError(err: unknown): boolean {
 /**
  * 410 GONE on a public endpoint: the QR code is real but has nothing to show —
  * paused by the owner, blocked by an admin, or never activated. Distinct from
- * 404, which means no such code exists at all; the visitor gets a different
- * screen for each. `err.details.status` carries the current QR status.
+ * 404, which means no such code exists at all, and from
+ * `isEntityNotPublished`, the other 410 on these routes; the visitor gets a
+ * different screen for each. Decided by code — a 410 whose body carried no
+ * recognisable code (a proxy, a stripped error page) still lands here, so the
+ * visitor sees the generic "nothing to show" screen rather than a crash.
+ * `err.details.status` carries the current QR status.
  */
 export function isQrNotScannable(err: unknown): boolean {
+  if (!(err instanceof ApiRequestError)) return false;
+  if (err.code === ErrorCode.QrNotScannable) return true;
+  return err.status === 410 && err.code !== ErrorCode.EntityNotPublished;
+}
+
+/**
+ * 410 ENTITY_NOT_PUBLISHED (D-040): the sticker or the link resolves, but
+ * the card behind it is hidden. `err.details.status` says why — `deactivated`
+ * by the owner, `blocked` by moderation, or `deleted` — and each gets its own
+ * screen. Raised on both public doors, so a paused *card* behind an active
+ * sticker is this, not `isQrNotScannable`.
+ */
+export function isEntityNotPublished(err: unknown): boolean {
   return (
-    err instanceof ApiRequestError &&
-    (err.status === 410 || err.code === ErrorCode.QrNotScannable)
+    err instanceof ApiRequestError && err.code === ErrorCode.EntityNotPublished
   );
 }
 
@@ -127,6 +160,7 @@ export function isRateLimited(err: unknown): boolean {
 
 export interface RequestOptions {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+  /** JSON-serialised, except a `FormData`, which is sent as-is (multipart). */
   body?: unknown;
   /** Attach Authorization: Bearer header (default true for non-public paths) */
   auth?: boolean;
@@ -139,6 +173,12 @@ export interface RequestOptions {
    * browser rather than the locale the visitor is actually reading the page in.
    */
   locale?: ApiLocale;
+  /**
+   * `fetch({ keepalive })`: let the request outlive the page — for the
+   * analytics ping fired as the visitor taps a `tel:` link and leaves.
+   * Browsers cap such bodies at 64 KB; unsupported hosts ignore the flag.
+   */
+  keepalive?: boolean;
   headers?: Record<string, string>;
   signal?: AbortSignal;
 }
@@ -210,7 +250,7 @@ async function refreshTokens(): Promise<boolean> {
 /**
  * Core request helper. Automatically:
  *  - prefixes the configured base URL
- *  - serialises JSON
+ *  - serialises JSON (a FormData body goes through untouched)
  *  - attaches Bearer token when `auth` is true
  *  - on 401 with auth — refreshes once and retries
  *  - throws ApiRequestError on non-2xx
@@ -225,15 +265,22 @@ export async function apiFetch<T>(
     auth = false,
     idempotencyKey,
     locale,
+    keepalive,
     signal,
   } = options;
+
+  // A multipart body carries its own Content-Type, boundary included; setting
+  // one by hand is what makes the backend see an empty upload.
+  const multipart = body instanceof FormData;
 
   const doFetch = async (): Promise<Response> => {
     const headers: Record<string, string> = {
       Accept: "application/json",
       ...options.headers,
     };
-    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (body !== undefined && !multipart) {
+      headers["Content-Type"] = "application/json";
+    }
     if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
     if (locale) headers["Accept-Language"] = locale;
     if (auth) {
@@ -243,7 +290,12 @@ export async function apiFetch<T>(
     return fetch(`${apiBaseUrl()}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: multipart
+        ? body
+        : body !== undefined
+          ? JSON.stringify(body)
+          : undefined,
+      keepalive,
       signal,
     });
   };
