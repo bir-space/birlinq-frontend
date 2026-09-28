@@ -21,6 +21,10 @@ import { useApi, useHref } from "@birlinq/platform";
 import { ApiRequestError, isValidationError } from "@birlinq/api";
 import { LIMITS } from "@birlinq/api";
 import { useAuth } from "@birlinq/core";
+import {
+  PRODUCT_HOME,
+  readRememberedProduct,
+} from "@/components/dashboard/products";
 
 interface FormState {
   identifier?: string;
@@ -59,7 +63,11 @@ function LoginForm() {
         password,
       });
       await refresh();
-      router.replace(next ?? href("/dashboard"));
+      // No deep link to return to: land on the product the owner last used,
+      // so someone who lives in Business is not sent through Move each time.
+      router.replace(
+        next ?? href(PRODUCT_HOME[readRememberedProduct() ?? "move"])
+      );
     } catch (err) {
       if (err instanceof ApiRequestError) {
         if (isValidationError(err)) {

@@ -184,6 +184,30 @@ export const MOCK_CARD_MIN: Entity = {
   updated_at: "2026-08-14T13:05:00Z",
 };
 
+/**
+ * A card held by moderation (D-042): the editor's read-only publish state,
+ * the 409 ENTITY_BLOCKED on delete and the "blocked" screen at
+ * `/p/daniyar-a` are all reachable without a backend.
+ */
+export const MOCK_CARD_BLOCKED: Entity = {
+  id: "entity-5",
+  type: "personal",
+  title: null,
+  status: "blocked",
+  alias: "daniyar-a",
+  privacy_settings: MOCK_CARD_PRESET_PRIVACY,
+  vehicle_profile: null,
+  contact_profile: {
+    ...EMPTY_CONTACT_PROFILE,
+    display_name: "Данияр Ахметов",
+    title: "Менеджер по продажам",
+    company: "ТОО «Пример»",
+    theme: "ocean",
+  },
+  created_at: "2026-09-01T08:30:00Z",
+  updated_at: "2026-09-25T17:45:00Z",
+};
+
 export const MOCK_ENTITIES: Entity[] = [
   {
     id: "entity-1",
@@ -225,6 +249,7 @@ export const MOCK_ENTITIES: Entity[] = [
   },
   MOCK_CARD_FULL,
   MOCK_CARD_MIN,
+  MOCK_CARD_BLOCKED,
 ];
 
 export const MOCK_QR_CODES: QrCode[] = [

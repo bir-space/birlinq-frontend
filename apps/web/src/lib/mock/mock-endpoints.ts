@@ -11,7 +11,14 @@
  * entity. Where the real backend filters (PrivacyFilter on the public card),
  * the mock filters the same way — it is playing the server, not the client.
  */
-import { ApiRequestError } from "@birlinq/api";
+import {
+  ALIAS_RE,
+  ApiRequestError,
+  ErrorCode,
+  LIMITS,
+  isReservedAlias,
+  normalizeAlias,
+} from "@birlinq/api";
 import type { AppApi } from "@birlinq/api";
 import type {
   AbuseAccepted,
@@ -125,6 +132,70 @@ function replaceEntity(id: string, patch: (e: Entity) => Entity): Entity {
 
 function byType(type: EntityListParams["type"]): Entity[] {
   return type ? entities.filter((e) => e.type === type) : entities;
+}
+
+/** 422 in the backend's envelope — `details` is `{ field: [message] }`, like Laravel's. */
+function validation(details: Record<string, string>): ApiRequestError {
+  return new ApiRequestError(422, {
+    code: ErrorCode.ValidationError,
+    message: "The given data was invalid.",
+    details: Object.fromEntries(
+      Object.entries(details).map(([field, message]) => [field, [message]])
+    ),
+  });
+}
+
+function conflict(code: string, message: string): ApiRequestError {
+  return new ApiRequestError(409, { code, message });
+}
+
+/**
+ * The alias rules the backend enforces on POST/PATCH (D-040): normalised,
+ * 3..30 of the alphabet, not reserved, not on a car, not held by another
+ * entity. Returns the value to store.
+ */
+function checkAlias(
+  raw: string,
+  type: Entity["type"],
+  exceptId: string | null
+): string {
+  if (type !== "personal") {
+    throw validation({ alias: "Only a business card can have a public link." });
+  }
+  const alias = normalizeAlias(raw);
+  if (!ALIAS_RE.test(alias)) {
+    throw validation({
+      alias: `Use ${LIMITS.aliasMin}–${LIMITS.alias} lower-case letters, digits, "-" or "_".`,
+    });
+  }
+  if (isReservedAlias(alias)) {
+    throw validation({ alias: "This address is reserved." });
+  }
+  if (entities.some((e) => e.alias === alias && e.id !== exceptId)) {
+    throw conflict(ErrorCode.AliasTaken, "Alias is already taken");
+  }
+  return alias;
+}
+
+const ALIAS_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+/** `card-xxxx`, like the backend's fallback when the name cannot be used. */
+function generateAlias(): string {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    let suffix = "";
+    for (let i = 0; i < 4; i++) {
+      suffix += ALIAS_ALPHABET[Math.floor(Math.random() * ALIAS_ALPHABET.length)];
+    }
+    const alias = `card-${suffix}`;
+    if (!entities.some((e) => e.alias === alias)) return alias;
+  }
+  return `card-${Date.now().toString(36).slice(-6)}`;
+}
+
+/** Opaque to the caller, an offset here: enough to walk pages the way the real cursor does. */
+function parseCursor(cursor: string | undefined): number {
+  const n = cursor ? Number.parseInt(cursor, 10) : 0;
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 /** Thirty zero buckets ending today — the shape the charts expect, no numbers yet. */
@@ -314,12 +385,24 @@ export const mockAuthApi = {
 };
 
 export const mockEntitiesApi = {
+  /** Newest first, `limit` per page (1..100, default 20), the cursor an offset in disguise. */
   async list(
     params?: EntityListParams
   ): Promise<CursorPaginated<Entity, EntityCursorMeta>> {
+    const perPage = Math.min(
+      Math.max(params?.limit ?? 20, 1),
+      LIMITS.entitiesLimitMax
+    );
+    const all = byType(params?.type);
+    const start = parseCursor(params?.cursor);
+    const end = start + perPage;
     return delay({
-      data: byType(params?.type),
-      meta: { next_cursor: null, has_more: false, per_page: params?.limit ?? 20 },
+      data: all.slice(start, end),
+      meta: {
+        next_cursor: end < all.length ? String(end) : null,
+        has_more: end < all.length,
+        per_page: perPage,
+      },
     });
   },
 
@@ -327,20 +410,39 @@ export const mockEntitiesApi = {
     return delay(byType(params?.type));
   },
 
+  /**
+   * POST /entities as D-041 shapes it: nested contact and privacy applied
+   * together; a card's alias validated (422) or checked for a holder (409
+   * ALIAS_TAKEN) and minted as `card-xxxx` when the request carries none.
+   * No card limit — `cards.max_per_user` is null by default on the backend
+   * too, so CARD_LIMIT_REACHED is not reachable here.
+   */
   async create(
     body: CreateEntityRequest,
     _opts?: { idempotencyKey?: string }
   ): Promise<{ entity: Entity }> {
     const now = new Date().toISOString();
     const isCard = body.type === "personal";
+    if (isCard) {
+      const name = body.contact?.display_name?.trim() ?? "";
+      if (name.length < 2) {
+        throw validation({
+          "contact.display_name": "The display name must be at least 2 characters.",
+        });
+      }
+    }
+    const alias =
+      body.alias !== undefined && body.alias !== ""
+        ? checkAlias(body.alias, body.type, null)
+        : isCard
+          ? generateAlias()
+          : null;
     const entity: Entity = {
       id: genId("entity"),
       type: body.type,
       title: body.title ?? null,
       status: "active",
-      // Only a card gets a public link; the server mints one when the request
-      // carries none (D-040).
-      alias: isCard ? body.alias ?? genId("card") : null,
+      alias,
       privacy_settings: { ...DEFAULT_MOCK_PRIVACY, ...body.privacy_settings },
       vehicle_profile: null,
       contact_profile: body.contact
@@ -357,21 +459,40 @@ export const mockEntitiesApi = {
     return delay({ entity: findEntity(id) });
   },
 
+  /**
+   * PATCH /entities/{id}: `status` on a blocked entity is 409 ENTITY_BLOCKED
+   * (D-042); `alias: null` closes the link, a slug is validated and checked
+   * against every other entity (D-040).
+   */
   async update(
     id: string,
     body: UpdateEntityRequest
   ): Promise<{ entity: Entity }> {
+    const current = findEntity(id);
+    if (body.status !== undefined && current.status === "blocked") {
+      throw conflict(ErrorCode.EntityBlocked, "Entity is blocked by moderation");
+    }
+    const alias =
+      body.alias === undefined
+        ? current.alias
+        : body.alias === null
+          ? null
+          : checkAlias(body.alias, current.type, id);
     const entity = replaceEntity(id, (e) => ({
       ...e,
       title: body.title !== undefined ? body.title : e.title,
       status: body.status ?? e.status,
-      alias: body.alias !== undefined ? body.alias : e.alias,
+      alias,
     }));
     return delay({ entity });
   },
 
+  /** DELETE — gone for good here (the backend soft-deletes); 409 while moderation holds it. */
   async remove(id: string): Promise<void> {
-    findEntity(id);
+    const entity = findEntity(id);
+    if (entity.status === "blocked") {
+      throw conflict(ErrorCode.EntityBlocked, "Entity is blocked by moderation");
+    }
     entities = entities.filter((e) => e.id !== id);
     return delay(undefined);
   },
@@ -468,12 +589,20 @@ export const mockEntitiesApi = {
 };
 
 export const mockQrApi = {
+  /**
+   * A code from the fixtures answers with its real state, so binding an
+   * already-activated sticker (`AB12CD34`) to a card shows the "taken"
+   * outcome. Any other code resolves as available, so the activation wizard
+   * demo can be walked end to end.
+   */
   async lookup(body: QrLookupRequest): Promise<{ qr_code: QrCode }> {
-    // Always resolves so the activation wizard demo can be walked end to end.
+    const code = (body.code || "DEMO1234").toUpperCase();
+    const known = qrCodes.find((q) => q.code === code);
+    if (known) return delay({ qr_code: known });
     return delay({
       qr_code: {
-        id: "qr-demo",
-        code: (body.code || "DEMO1234").toUpperCase(),
+        id: `qr-${code.toLowerCase()}`,
+        code,
         status: "available",
         entity_id: null,
         activated_at: null,
@@ -483,18 +612,30 @@ export const mockQrApi = {
     });
   },
 
+  /** The sticker joins the in-memory list bound to the entity, so GET /qr shows it afterwards. */
   async activate(body: QrActivateRequest): Promise<{ qr_code: QrCode }> {
-    return delay({
-      qr_code: {
-        id: "qr-demo",
-        code: body.code.toUpperCase(),
-        status: "activated",
-        entity_id: body.entity_id,
-        activated_at: new Date().toISOString(),
-        last_scan_at: null,
-        scan_count: 0,
-      },
-    });
+    const code = body.code.toUpperCase();
+    const known = qrCodes.find((q) => q.code === code);
+    if (known && known.status === "activated") {
+      throw conflict(ErrorCode.QrAlreadyActivated, "QR code is already activated");
+    }
+    if (qrCodes.some((q) => q.entity_id === body.entity_id && q.status === "activated")) {
+      throw conflict(
+        ErrorCode.EntityAlreadyHasQr,
+        "Entity already has an active QR code"
+      );
+    }
+    const qr_code: QrCode = {
+      id: known?.id ?? `qr-${code.toLowerCase()}`,
+      code,
+      status: "activated",
+      entity_id: body.entity_id,
+      activated_at: new Date().toISOString(),
+      last_scan_at: null,
+      scan_count: 0,
+    };
+    qrCodes = [...qrCodes.filter((q) => q.id !== qr_code.id), qr_code];
+    return delay({ qr_code });
   },
 
   async list(_cursor?: string): Promise<CursorPaginated<QrCode, QrCursorMeta>> {
