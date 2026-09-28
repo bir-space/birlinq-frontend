@@ -36,6 +36,34 @@ export default async function MockIndexPage({ params }: Props) {
       ],
     },
     {
+      title: t("sections.business"),
+      links: [
+        { href: "/mock/dashboard/business", label: t("links.businessOverview") },
+        { href: "/mock/dashboard/cards", label: t("links.cards") },
+        { href: "/mock/dashboard/cards/new", label: t("links.cardNew") },
+        {
+          href: "/mock/dashboard/cards/entity-3",
+          label: t("links.cardEdit"),
+        },
+        {
+          href: "/mock/dashboard/cards/entity-5",
+          label: t("links.cardEditBlocked"),
+        },
+        { href: "/mock/dashboard/pricing", label: t("links.pricing") },
+        { href: "/mock/dashboard/profile", label: t("links.profile") },
+      ],
+    },
+    {
+      title: t("sections.card"),
+      links: [
+        { href: "/mock/p/demo", label: t("links.cardPublic") },
+        { href: "/mock/p/demo/qr", label: t("links.cardQr") },
+        { href: "/mock/p/card-x7k2", label: t("links.cardUnpublished") },
+        { href: "/mock/p/daniyar-a", label: t("links.cardBlocked") },
+        { href: "/mock/q/PERS1234", label: t("links.cardScan") },
+      ],
+    },
+    {
       title: t("sections.activation"),
       links: [{ href: "/mock/activate", label: t("links.activate") }],
     },

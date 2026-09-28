@@ -99,6 +99,11 @@ let interactions: Interaction[] = MOCK_INTERACTIONS.map((i) => ({ ...i }));
 const MOCK_ACCESS_TOKEN = "mock-access-token-".padEnd(64, "0");
 const MOCK_REFRESH_TOKEN = "mock-refresh-token-".padEnd(64, "0");
 
+/** The profile page's failure cases: the number another account holds, and the password that never matches. */
+const MOCK_PHONE_RE = /^77\d{9}$/;
+const MOCK_TAKEN_PHONE = "77000000000";
+const MOCK_WRONG_PASSWORD = "wrong";
+
 function mockAuthResponse(): AuthResponse {
   return {
     user,
@@ -358,16 +363,60 @@ export const mockAuthApi = {
     return delay({ user });
   },
 
+  /**
+   * PATCH /auth/me the way UpdateProfileRequest validates it: the name
+   * 2..100, the phone `^77\d{9}$` and unique — `77000000000` plays the
+   * number someone else already holds — and any phone change needs the
+   * current password, `wrong` being the one that does not match.
+   */
   async updateProfile(body: UpdateProfileRequest): Promise<{ user: User }> {
+    const details: Record<string, string> = {};
+    if (body.name !== undefined) {
+      const name = body.name.trim();
+      if (name.length < LIMITS.profileNameMin || name.length > LIMITS.name) {
+        details.name = `The name must be between ${LIMITS.profileNameMin} and ${LIMITS.name} characters.`;
+      }
+    }
+    if (body.phone !== undefined) {
+      if (body.phone === null && user.email === null) {
+        details.phone = "The phone cannot be removed from an account without an email.";
+      } else if (body.phone !== null && !MOCK_PHONE_RE.test(body.phone)) {
+        details.phone = "The phone format is invalid.";
+      } else if (body.phone === MOCK_TAKEN_PHONE) {
+        details.phone = "The phone has already been taken.";
+      }
+      if (!body.current_password) {
+        details.current_password = "The current password field is required.";
+      } else if (body.current_password === MOCK_WRONG_PASSWORD) {
+        details.current_password = "The password is incorrect.";
+      }
+    }
+    if (Object.keys(details).length > 0) throw validation(details);
+
+    await delay(undefined);
     user = {
       ...user,
-      name: body.name ?? user.name,
+      name: body.name !== undefined ? body.name.trim() : user.name,
       phone: body.phone !== undefined ? body.phone : user.phone,
     };
-    return delay({ user });
+    return { user };
   },
 
-  async changePassword(_body: ChangePasswordRequest): Promise<void> {
+  /** POST /auth/password/change: `wrong` fails the current password; the new one is 8..100 and different. */
+  async changePassword(body: ChangePasswordRequest): Promise<void> {
+    const details: Record<string, string> = {};
+    if (body.current_password === MOCK_WRONG_PASSWORD) {
+      details.current_password = "The password is incorrect.";
+    }
+    if (
+      body.password.length < LIMITS.passwordMin ||
+      body.password.length > LIMITS.password
+    ) {
+      details.password = `The password must be between ${LIMITS.passwordMin} and ${LIMITS.password} characters.`;
+    } else if (body.password === body.current_password) {
+      details.password = "The new password must be different from the current one.";
+    }
+    if (Object.keys(details).length > 0) throw validation(details);
     return delay(undefined);
   },
 

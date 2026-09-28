@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Card } from "@/components/ui/Card";
 import { BusinessCardVisual, CarVisual, TagVisual } from "./decor";
 
@@ -96,12 +97,32 @@ function VerticalCard({ vertical }: { vertical: VerticalKey }) {
       </ul>
 
       <div className="relative mt-auto flex items-end justify-between gap-4 pt-2">
-        <a
-          href="#lead"
-          className={`inline-flex h-9 items-center rounded-full border border-card-border px-4 text-[13px] font-semibold text-white transition-colors ${colors.cta}`}
-        >
-          {t("more")}
-        </a>
+        {vertical === "business" ? (
+          // Business is live: straight to the card editor (the cabinet's
+          // guard routes a guest through /login?next=), with the demo
+          // card as the "show, don't tell" beside it.
+          <div className="flex flex-col items-start gap-2.5">
+            <Link
+              href="/dashboard/cards/new"
+              className={`inline-flex h-9 items-center rounded-full border border-card-border px-4 text-[13px] font-semibold text-white transition-colors ${colors.cta}`}
+            >
+              {t("businessCta")}
+            </Link>
+            <Link
+              href="/p/demo"
+              className="text-[13px] font-medium text-muted underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              {t("businessDemo")}
+            </Link>
+          </div>
+        ) : (
+          <a
+            href="#lead"
+            className={`inline-flex h-9 items-center rounded-full border border-card-border px-4 text-[13px] font-semibold text-white transition-colors ${colors.cta}`}
+          >
+            {t("more")}
+          </a>
+        )}
         <div aria-hidden className="w-[45%] min-w-[120px]">
           {VISUALS[vertical]}
         </div>

@@ -33,7 +33,9 @@
       "cardPublic": "Public card (demo)",
       "cardQr": "Card QR page",
       "cardUnpublished": "Hidden card (410)",
-      "cardScan": "Card via QR sticker"
+      "cardScan": "Card via QR sticker",
+      "cardEditBlocked": "Edit a blocked card",
+      "cardBlocked": "Blocked card (410)"
     }
   }
 }
