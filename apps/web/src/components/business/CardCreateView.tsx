@@ -179,7 +179,10 @@ function CardCreate() {
         </section>
 
         <section>
-          <SectionLabel>{t("create.aliasTitle")}</SectionLabel>
+          {/* Optional by design: left empty, the server mints the address (D-040). */}
+          <SectionLabel>
+            {t("create.aliasTitle")} · {t("create.aliasOptional")}
+          </SectionLabel>
           <Card>
             <AliasInput
               value={alias}

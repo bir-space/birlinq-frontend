@@ -93,7 +93,7 @@ npm start -w apps/mobile     # Expo dev server, дальше a / i для уст
 | Редактор визитки: профиль, контакты, соцсети, теги, дата рождения, тема | `/dashboard/cards/[id]` | `GET /entities/{id}`, `PUT /entities/{id}/contact` |
 | Редактор: фото и обложка (downscale до 2048 px в браузере) | `/dashboard/cards/[id]` | `POST /entities/{id}/contact/photo`, `…/contact/cover`; очистка — `PUT …/contact` с `null` |
 | Редактор: приватность (17 переключателей, пресеты) | `/dashboard/cards/[id]` | `PATCH /entities/{id}/privacy` |
-| Редактор: адрес `/p/{alias}`, публикация, удаление | `/dashboard/cards/[id]` | `PATCH /entities/{id}` (`alias`, `status`), `DELETE /entities/{id}` |
+| Редактор: адрес `/p/{alias}` (свой или сгенерированный сервером), публикация, удаление | `/dashboard/cards/[id]` | `PATCH /entities/{id}` (`alias`, `status`), `POST /entities/{id}/alias` (`Idempotency-Key`), `DELETE /entities/{id}` |
 | Редактор: QR визитки и «Привязать наклейку» (код + токен активации) | `/dashboard/cards/[id]` | `POST /qr/lookup`, `POST /qr/activate` |
 | Редактор: статистика (просмотры QR / ссылка, клики по каналам, vCard, шеринг) | `/dashboard/cards/[id]` | `GET /entities/{id}/stats` |
 | Тарифы (статичные планы, CTA «Оставить заявку») | `/dashboard/pricing` | статика |
@@ -149,7 +149,7 @@ apps/mobile/               # Expo SDK 57, файловый роутинг
 Ключевые решения:
 
 - **JWT**: access-токен только в памяти (TTL 15 мин), refresh — в localStorage с автоматической ротацией; на 401 клиент делает один refresh и повторяет запрос. Бэкенд-доки предлагают httpOnly-cookie через BFF — можно добавить позже, заменив `token-store.ts`, call-sites не изменятся.
-- **Idempotency-Key** (UUID) автоматически ставится там, где бэкенд включил middleware: activate, pause, resume, отправка сценария и `POST /entities` (создание визитки или машины; в `useCreateCard` ключ один на попытку формы и сбрасывается после успеха или 422 по полям). На `resolve` его нет — маршрут без middleware, а операция идемпотентна сама по себе.
+- **Idempotency-Key** (UUID) автоматически ставится там, где бэкенд включил middleware: activate, pause, resume, отправка сценария, `POST /entities` (создание визитки или машины; в `useCreateCard` ключ один на попытку формы и сбрасывается после успеха или 422 по полям) и `POST /entities/{id}/alias` (генерация адреса). На `resolve` его нет — маршрут без middleware, а операция идемпотентна сама по себе.
 - **Logout посессионный**: `POST /auth/logout` гасит только текущую сессию (бэкенд кладёт id refresh-токена в claim access-токена), остальные устройства остаются в системе; «выйти везде» — отдельная кнопка на `/auth/logout-all`.
 - **Приватность публичной страницы**: скрытые поля бэкенд *не присылает вовсе* (не `null`). Поэтому «ключа нет» и «владелец скрыл» — один и тот же случай, и фронт никогда не выводит «скрыто» по отсутствию поля.
 - **Дубликаты сценариев**: повторная отправка того же сценария тем же посетителем в окне дедупликации возвращает `202` со `status: "duplicate"` — экран благодарности показывается, но текстом «владелец уже знает».

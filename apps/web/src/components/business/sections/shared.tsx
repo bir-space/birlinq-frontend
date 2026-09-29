@@ -67,6 +67,29 @@ export function useWriteError(): (error: CardActionError) => string {
   };
 }
 
+/**
+ * The message for a failed alias write — shared by the alias section and
+ * the QR section's "open the link" button, which generate through the same
+ * hook call. A 422 carries the server's own words for the field.
+ */
+export function useAliasError(): (card: UseCard) => string {
+  const t = useTranslations("cards");
+  return (card) => {
+    switch (card.actionError) {
+      case "aliasTaken":
+        return t("alias.errors.taken");
+      case "blocked":
+        return t("alias.errors.blocked");
+      case "validation":
+        return card.fieldErrors.alias ?? t("alias.errors.invalid");
+      case "rateLimited":
+        return t("edit.rateLimited");
+      default:
+        return t("alias.errors.generic");
+    }
+  };
+}
+
 /** Label + card, anchored by its key so a `#qr` link from the list lands here. */
 export function Section({
   id,

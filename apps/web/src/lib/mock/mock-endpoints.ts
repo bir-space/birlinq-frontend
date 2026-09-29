@@ -182,19 +182,61 @@ function checkAlias(
   return alias;
 }
 
-const ALIAS_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+/** The sticker alphabet in lower case — no 0/o, no 1/l/i — as `AliasGenerator::suffixAlphabet()`. */
+const ALIAS_SUFFIX_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz";
+const ALIAS_SLUG_MAX_LENGTH = 24;
+const ALIAS_NAMED_SUFFIX_LENGTH = 4;
+const ALIAS_ANONYMOUS_SUFFIX_LENGTH = 6;
 
-/** `card-xxxx`, like the backend's fallback when the name cannot be used. */
-function generateAlias(): string {
+function aliasSuffix(length: number): string {
+  let suffix = "";
+  for (let i = 0; i < length; i++) {
+    suffix +=
+      ALIAS_SUFFIX_ALPHABET[
+        Math.floor(Math.random() * ALIAS_SUFFIX_ALPHABET.length)
+      ];
+  }
+  return suffix;
+}
+
+/**
+ * The backend's AliasGenerator (D-040): the display name's slug plus a
+ * short suffix while the name is shown publicly, `card-` plus a longer one
+ * otherwise, so a hidden name never leaks into the URL. `normalizeAlias`
+ * stands in for `Str::slug` — it drops Cyrillic rather than transliterating
+ * it, so a Russian name falls back to `card-xxxxxx` here.
+ */
+function generateAlias(publicName: string | null): string {
+  let base: string | null =
+    publicName === null
+      ? null
+      : normalizeAlias(publicName)
+          .replace(/-+/g, "-")
+          .slice(0, ALIAS_SLUG_MAX_LENGTH)
+          .replace(/^-+|-+$/g, "");
+  if (base === "") base = null;
   for (let attempt = 0; attempt < 10; attempt++) {
-    let suffix = "";
-    for (let i = 0; i < 4; i++) {
-      suffix += ALIAS_ALPHABET[Math.floor(Math.random() * ALIAS_ALPHABET.length)];
+    const alias =
+      base === null
+        ? `card-${aliasSuffix(ALIAS_ANONYMOUS_SUFFIX_LENGTH)}`
+        : `${base}-${aliasSuffix(ALIAS_NAMED_SUFFIX_LENGTH)}`;
+    if (isReservedAlias(alias)) {
+      // Reservation is a property of the base, so another suffix would not help.
+      base = null;
+      continue;
     }
-    const alias = `card-${suffix}`;
     if (!entities.some((e) => e.alias === alias)) return alias;
   }
   return `card-${Date.now().toString(36).slice(-6)}`;
+}
+
+/** The name the generator may build on: only while the card shows it. */
+function publicNameOf(
+  privacy: Pick<PrivacySettings, "show_display_name">,
+  contact: { display_name?: string | null } | null | undefined
+): string | null {
+  const name = contact?.display_name?.trim() ?? "";
+  return privacy.show_display_name && name !== "" ? name : null;
 }
 
 /** Opaque to the caller, an offset here: enough to walk pages the way the real cursor does. */
@@ -462,7 +504,8 @@ export const mockEntitiesApi = {
   /**
    * POST /entities as D-041 shapes it: nested contact and privacy applied
    * together; a card's alias validated (422) or checked for a holder (409
-   * ALIAS_TAKEN) and minted as `card-xxxx` when the request carries none.
+   * ALIAS_TAKEN) and generated when the request carries none — from the
+   * display name when this request shows it, `card-xxxxxx` otherwise.
    * No card limit — `cards.max_per_user` is null by default on the backend
    * too, so CARD_LIMIT_REACHED is not reachable here.
    */
@@ -480,11 +523,12 @@ export const mockEntitiesApi = {
         });
       }
     }
+    const privacy = { ...DEFAULT_MOCK_PRIVACY, ...body.privacy_settings };
     const alias =
       body.alias !== undefined && body.alias !== ""
         ? checkAlias(body.alias, body.type, null)
         : isCard
-          ? generateAlias()
+          ? generateAlias(publicNameOf(privacy, body.contact))
           : null;
     const entity: Entity = {
       id: genId("entity"),
@@ -492,7 +536,7 @@ export const mockEntitiesApi = {
       title: body.title ?? null,
       status: "active",
       alias,
-      privacy_settings: { ...DEFAULT_MOCK_PRIVACY, ...body.privacy_settings },
+      privacy_settings: privacy,
       vehicle_profile: null,
       contact_profile: body.contact
         ? { ...EMPTY_CONTACT_PROFILE, ...body.contact }
@@ -533,6 +577,28 @@ export const mockEntitiesApi = {
       status: body.status ?? e.status,
       alias,
     }));
+    return delay({ entity });
+  },
+
+  /**
+   * POST /entities/{id}/alias: a fresh alias by the creation rule, replacing
+   * the current one or opening a closed link; 422 for anything but a card.
+   * Not gated on `blocked` — alias edits are not moderation-gated.
+   */
+  async generateAlias(id: string): Promise<{ entity: Entity }> {
+    const current = findEntity(id);
+    if (current.type !== "personal") {
+      throw validation({
+        alias: "Only a business card can have a public link.",
+      });
+    }
+    const alias = generateAlias(
+      publicNameOf(
+        current.privacy_settings ?? DEFAULT_MOCK_PRIVACY,
+        current.contact_profile
+      )
+    );
+    const entity = replaceEntity(id, (e) => ({ ...e, alias }));
     return delay({ entity });
   },
 

@@ -80,6 +80,12 @@ export interface UseCard {
   setPublished: (published: boolean) => Promise<boolean>;
   /** A slug opens or moves the public link, null closes it. */
   saveAlias: (alias: string | null) => Promise<boolean>;
+  /**
+   * POST /entities/{id}/alias — a fresh server-made alias, replacing the
+   * current one or opening a closed link. Never optimistic: the value is
+   * the server's to choose.
+   */
+  generateAlias: () => Promise<boolean>;
   uploadImage: (
     kind: ContactImageKind,
     file: Blob,
@@ -305,6 +311,11 @@ export function useCard(id: string): UseCard {
     [api, id, runWrite]
   );
 
+  const generateAlias = useCallback(
+    () => runWrite("alias", () => api.entities.generateAlias(id)),
+    [api, id, runWrite]
+  );
+
   const uploadImage = useCallback(
     (kind: ContactImageKind, file: Blob, filename?: string) =>
       runWrite(kind, () =>
@@ -408,6 +419,7 @@ export function useCard(id: string): UseCard {
     applyPrivacyPreset,
     setPublished,
     saveAlias,
+    generateAlias,
     uploadImage,
     removeImage,
     attachSticker,

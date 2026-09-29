@@ -16,12 +16,14 @@ import {
   IconQr,
 } from "@/components/dashboard/bits";
 import { qrBadgeTone } from "@/components/dashboard/format";
-import { Section, type SectionProps } from "./shared";
+import { Section, useAliasError, type SectionProps } from "./shared";
 
 /**
  * The card's QR — the code of its public link — and the physical stickers
- * bound to it. A sticker is attached here with the code and token printed
- * on its back: the hook looks it up, then activates it onto this card.
+ * bound to it. While the link is closed there is no code to show, so the
+ * panel offers to open it right here (the same server-made alias as the
+ * alias section). A sticker is attached with the code and token printed on
+ * its back: the hook looks it up, then activates it onto this card.
  */
 export function QrSection({ card, entity, feedback, run }: SectionProps) {
   const t = useTranslations("cards.qr");
@@ -29,12 +31,16 @@ export function QrSection({ card, entity, feedback, run }: SectionProps) {
   const tCard = useTranslations("card");
   const td = useTranslations("dashboard");
   const href = useHref();
+  const aliasError = useAliasError();
   // Built after mount: `appOrigin()` has no value during SSR.
   const [url, setUrl] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [token, setToken] = useState("");
   const [attaching, setAttaching] = useState(false);
   const [attached, setAttached] = useState<string | null>(null);
+  const [opening, setOpening] = useState(false);
+  // Both writes share this section's feedback; the outcome is shown by the one that ran.
+  const [lastWrite, setLastWrite] = useState<"attach" | "open" | null>(null);
 
   useEffect(() => {
     setUrl(entity.alias ? cardUrl(entity.alias) : null);
@@ -43,11 +49,20 @@ export function QrSection({ card, entity, feedback, run }: SectionProps) {
   const name =
     entity.contact_profile?.display_name?.trim() || tCard("fallbackName");
 
+  const openLink = async () => {
+    if (opening || card.busy !== null) return;
+    setOpening(true);
+    setLastWrite("open");
+    await run(() => card.generateAlias());
+    setOpening(false);
+  };
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (attaching || !code.trim() || !token.trim()) return;
     setAttaching(true);
     setAttached(null);
+    setLastWrite("attach");
     // A property rather than a `let`: TypeScript does not see an assignment
     // made inside the closure and would narrow a plain variable to null.
     const outcome: { qr: QrCode | null } = { qr: null };
@@ -64,10 +79,12 @@ export function QrSection({ card, entity, feedback, run }: SectionProps) {
   };
 
   const failed = feedback === "error";
+  const openError = failed && lastWrite === "open" ? aliasError(card) : null;
+  const attachFailed = failed && lastWrite === "attach";
   const fieldError = (key: string) =>
-    failed ? (card.fieldErrors[key] ?? null) : null;
+    attachFailed ? (card.fieldErrors[key] ?? null) : null;
   const attachError = (() => {
-    if (!failed) return null;
+    if (!attachFailed) return null;
     switch (card.actionError) {
       case "qrNotFound":
         return t("attach.errors.notFound");
@@ -99,9 +116,24 @@ export function QrSection({ card, entity, feedback, run }: SectionProps) {
           hint={t("print")}
         />
       ) : (
-        <div className="rounded-(--radius-btn) border border-card-border bg-ink-soft px-4 py-4 text-center">
-          <p className="text-[14px] font-semibold">{t("noAlias")}</p>
-          <p className="mt-1 text-[13px] text-muted">{t("noAliasHint")}</p>
+        <div className="flex flex-col items-center gap-3 rounded-(--radius-btn) border border-card-border bg-ink-soft px-4 py-5 text-center">
+          <div>
+            <p className="text-[14px] font-semibold">{t("noAlias")}</p>
+            <p className="mt-1 text-[13px] text-muted">{t("noAliasHint")}</p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="accent"
+            loading={opening}
+            disabled={card.busy !== null && !opening}
+            onClick={openLink}
+          >
+            {t("openLink")}
+          </Button>
+          {openError && (
+            <p className="text-[13px] text-danger">{openError}</p>
+          )}
         </div>
       )}
 

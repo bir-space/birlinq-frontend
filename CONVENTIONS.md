@@ -68,7 +68,7 @@ one signature gradient moment per section at most.
 ## API layer (do NOT modify)
 - `@birlinq/api` — endpoints, one object per area; there is no `cardsApi`, a business card is a `personal` entity:
   - `authApi`: `register`, `login`, `logout`, `logoutAll`, `me`, `updateProfile(body)` (PATCH /auth/me), `changePassword(body)`, `verifyEmail`, `forgotPassword`, `resetPassword`.
-  - `entitiesApi`: `list({ type?, cursor?, limit? })`, `listAll(params?)`, `create(body, { idempotencyKey? })` — always sends an Idempotency-Key —, `get`, `update(id, { title?, status?, alias? })`, `remove`, `upsertVehicle`, `upsertContact`, `uploadContactImage(id, "photo" | "cover", file, filename?)`, `updatePrivacy`, `stats(id)`, `createVehicle`.
+  - `entitiesApi`: `list({ type?, cursor?, limit? })`, `listAll(params?)`, `create(body, { idempotencyKey? })` — always sends an Idempotency-Key —, `get`, `update(id, { title?, status?, alias? })`, `generateAlias(id)` — a fresh server-made alias, sends an Idempotency-Key —, `remove`, `upsertVehicle`, `upsertContact`, `uploadContactImage(id, "photo" | "cover", file, filename?)`, `updatePrivacy`, `stats(id)`, `createVehicle`.
   - `qrApi`: `lookup`, `activate`, `list`, `listAll`, `get`, `pause`, `resume`.
   - `publicApi`: `scan(code, locale?)`, `card(alias, locale?)`, `vcardUrl(target)` (a string for `<a download>`), `trackEvent(target, body)` (fire-and-forget, `keepalive`), `submitScenario`, `submitLead`, `reportAbuse(target, body)` — `target` is `{ kind: "qr", code }` or `{ kind: "alias", alias }`.
   - `ownerApi`, `pushApi`, `toApiLocale`.

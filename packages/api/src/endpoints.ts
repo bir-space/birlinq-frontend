@@ -279,6 +279,25 @@ export const entitiesApi = {
     });
   },
 
+  /**
+   * POST /entities/{id}/alias → { entity }. Mints a fresh alias for a
+   * personal entity by the creation rule — the display name's slug plus a
+   * short suffix while `show_display_name` is on, `card-xxxxxx` otherwise —
+   * replacing the current one (the old link stops working at once) or
+   * opening the link when it was closed. No body fields; the route sits
+   * behind the idempotency middleware like `create`, so a key is minted per
+   * call. A car or business entity answers 422 with `details.alias`; a
+   * blocked card may still generate — alias edits are not moderation-gated.
+   */
+  generateAlias(id: string): Promise<{ entity: Entity }> {
+    return apiFetch<{ entity: Entity }>(`/entities/${id}/alias`, {
+      method: "POST",
+      body: {},
+      auth: true,
+      idempotencyKey: newIdempotencyKey(),
+    });
+  },
+
   /** DELETE /entities/{id} → 204 (soft). 409 ENTITY_BLOCKED while moderation holds it. */
   remove(id: string): Promise<void> {
     return apiFetch<void>(`/entities/${id}`, { method: "DELETE", auth: true });
