@@ -84,18 +84,24 @@ function CardEdit({ id }: { id: string }) {
 
   if (card.loading) return <PageSpinner />;
 
-  if (card.error || !card.entity) {
+  // Only a business card has these sections: a car or business entity
+  // reached by URL is "not found" here rather than an editor whose "open
+  // the link" the server refuses.
+  const notCard = card.entity !== null && card.entity.type !== "personal";
+
+  if (card.error || !card.entity || notCard) {
+    const notFound = card.error === "notFound" || notCard;
     return (
       <div className="flex flex-col gap-4">
         <BackLink href={href("/dashboard/cards")} label={t("edit.back")} />
         <ErrorCard
           message={
-            card.error === "notFound"
+            notFound
               ? `${t("edit.notFound")} ${t("edit.notFoundHint")}`
               : t("edit.loadError")
           }
           retryLabel={t("stats.retry")}
-          onRetry={card.error === "notFound" ? undefined : card.retry}
+          onRetry={notFound ? undefined : card.retry}
         />
       </div>
     );

@@ -42,6 +42,9 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
   // needs no typing — and unfolds only on request.
   const [manual, setManual] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // Whether the open sheet has made its own attempt — a failure from an
+  // earlier sheet must not greet the next one.
+  const [sheetTried, setSheetTried] = useState(false);
   // Built on the client only — `appOrigin()` is empty on the server.
   const [url, setUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -74,7 +77,12 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
     setSaving(kind);
     setLastWrite(kind);
     const ok = await run(call);
-    if (ok) setDirty(false);
+    // Any successful write also folds the manual form, so a later close
+    // leaves the link closed rather than the field still open.
+    if (ok) {
+      setDirty(false);
+      setManual(false);
+    }
     setSaving(null);
     return ok;
   };
@@ -92,10 +100,17 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
 
   const generate = async () => {
     const ok = await write("generate", () => card.generateAlias());
-    if (ok) {
-      setManual(false);
-      setConfirmOpen(false);
-    }
+    if (ok) setConfirmOpen(false);
+  };
+
+  const openConfirm = () => {
+    setSheetTried(false);
+    setConfirmOpen(true);
+  };
+
+  const confirmGenerate = () => {
+    setSheetTried(true);
+    return generate();
   };
 
   const cancelManual = () => {
@@ -115,16 +130,20 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
   };
 
   const failed = feedback === "error";
-  const serverError = failed ? aliasError(card) : null;
+  // A close cannot be refused for a taken address, so it reads as a save.
+  const serverError = failed
+    ? aliasError(card, lastWrite === "generate" ? "generate" : "save")
+    : null;
   // A refused slug belongs under the field and goes away once the owner
   // edits; a failed close or generate sits by the buttons, or in the sheet
   // while it is the sheet's own action that failed.
   const fieldError = lastWrite === "save" && !edited ? serverError : null;
   const sheetError =
-    confirmOpen && lastWrite === "generate" ? serverError : null;
+    confirmOpen && sheetTried && lastWrite === "generate" ? serverError : null;
   const rowError = lastWrite === "save" || sheetError ? null : serverError;
+  // A closed link speaks for itself — no "address saved" under it.
   const savedMessage =
-    feedback === "saved" && !dirty
+    feedback === "saved" && !dirty && lastWrite !== "close"
       ? lastWrite === "generate"
         ? t("generated")
         : t("saved")
@@ -247,7 +266,7 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
                   variant="secondary"
                   size="sm"
                   disabled={busyElsewhere || saving !== null}
-                  onClick={() => setConfirmOpen(true)}
+                  onClick={openConfirm}
                 >
                   {t("regenerate")}
                 </Button>
@@ -291,7 +310,7 @@ export function AliasSection({ card, entity, feedback, run }: SectionProps) {
           text={t("regenerateText")}
           confirmLabel={t("regenerateConfirm")}
           cancelLabel={tc("cancel")}
-          onConfirm={generate}
+          onConfirm={confirmGenerate}
           onClose={() => setConfirmOpen(false)}
           loading={saving === "generate"}
           error={sheetError}

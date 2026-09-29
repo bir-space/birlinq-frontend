@@ -79,7 +79,8 @@ export function QrSection({ card, entity, feedback, run }: SectionProps) {
   };
 
   const failed = feedback === "error";
-  const openError = failed && lastWrite === "open" ? aliasError(card) : null;
+  const openError =
+    failed && lastWrite === "open" ? aliasError(card, "generate") : null;
   const attachFailed = failed && lastWrite === "attach";
   const fieldError = (key: string) =>
     attachFailed ? (card.fieldErrors[key] ?? null) : null;

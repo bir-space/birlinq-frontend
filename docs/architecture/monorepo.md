@@ -148,7 +148,9 @@ Already there:
 - `useCards` — the owner's business cards (`personal` entities): cursor pagination plus
   delete in place, `blocked` for the 409 a moderated card answers.
 - `useCard` — one card's editor state: contact, privacy (with the presets), publish, alias
-  (409 → `aliasTaken`), photo and cover upload and removal, `attachSticker` (lookup, then
+  (409 → `aliasTaken`), `generateAlias` (POST `/entities/{id}/alias` — the server chooses
+  the address, so the entity is replaced from the response rather than updated
+  optimistically), photo and cover upload and removal, `attachSticker` (lookup, then
   activate onto the card), remove. Every write reports a code, and `busy` names the section
   in flight so the view disables that one alone.
 - `useCreateCard` — the create call with one idempotency key per form attempt, reset after

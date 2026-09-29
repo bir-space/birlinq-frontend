@@ -182,8 +182,8 @@ function checkAlias(
   return alias;
 }
 
-/** The sticker alphabet in lower case — no 0/o, no 1/l/i — as `AliasGenerator::suffixAlphabet()`. */
-const ALIAS_SUFFIX_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz";
+/** The sticker alphabet in lower case — no 0/o, no i/l — as `AliasGenerator::suffixAlphabet()`. */
+const ALIAS_SUFFIX_ALPHABET = "123456789abcdefghjkmnpqrstuvwxyz";
 const ALIAS_SLUG_MAX_LENGTH = 24;
 const ALIAS_NAMED_SUFFIX_LENGTH = 4;
 const ALIAS_ANONYMOUS_SUFFIX_LENGTH = 6;
@@ -204,13 +204,15 @@ function aliasSuffix(length: number): string {
  * short suffix while the name is shown publicly, `card-` plus a longer one
  * otherwise, so a hidden name never leaks into the URL. `normalizeAlias`
  * stands in for `Str::slug` — it drops Cyrillic rather than transliterating
- * it, so a Russian name falls back to `card-xxxxxx` here.
+ * it, so a Russian name falls back to `card-xxxxxx` here — with the slug's
+ * `_` → `-` done by hand.
  */
 function generateAlias(publicName: string | null): string {
   let base: string | null =
     publicName === null
       ? null
       : normalizeAlias(publicName)
+          .replace(/_/g, "-")
           .replace(/-+/g, "-")
           .slice(0, ALIAS_SLUG_MAX_LENGTH)
           .replace(/^-+|-+$/g, "");

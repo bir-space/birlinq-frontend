@@ -67,17 +67,27 @@ export function useWriteError(): (error: CardActionError) => string {
   };
 }
 
+/** Which alias write failed: an address the owner typed, or one the server made. */
+export type AliasWriteKind = "save" | "generate";
+
 /**
  * The message for a failed alias write — shared by the alias section and
  * the QR section's "open the link" button, which generate through the same
- * hook call. A 422 carries the server's own words for the field.
+ * hook call. A 422 carries the server's own words for the field. A taken
+ * address is only worth saying about one the owner chose; a generated one
+ * was never theirs, so a 409 there is just a failed attempt.
  */
-export function useAliasError(): (card: UseCard) => string {
+export function useAliasError(): (
+  card: UseCard,
+  kind: AliasWriteKind
+) => string {
   const t = useTranslations("cards");
-  return (card) => {
+  return (card, kind) => {
     switch (card.actionError) {
       case "aliasTaken":
-        return t("alias.errors.taken");
+        return kind === "generate"
+          ? t("alias.errors.generic")
+          : t("alias.errors.taken");
       case "blocked":
         return t("alias.errors.blocked");
       case "validation":
