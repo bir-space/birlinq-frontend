@@ -240,6 +240,9 @@ function QrDetail({ id }: { id: string }) {
     : null;
   const canPause = qr.status === "activated";
   const canResume = qr.status === "paused";
+  // Pausing closes the sticker door only: a card's permanent link keeps
+  // working, and hiding the card is its own switch (D-044).
+  const pauseHintKey = isCard ? "detail.pauseHintCard" : "detail.pauseHint";
 
   return (
     <div className="flex flex-col gap-6">
@@ -452,7 +455,7 @@ function QrDetail({ id }: { id: string }) {
                   {canPause ? t("detail.pauseTitle") : t("detail.resumeTitle")}
                 </p>
                 <p className="mt-0.5 text-[12px] text-muted-2">
-                  {canPause ? t("detail.pauseHint") : t("detail.resumeHint")}
+                  {canPause ? t(pauseHintKey) : t("detail.resumeHint")}
                 </p>
               </div>
               <Button

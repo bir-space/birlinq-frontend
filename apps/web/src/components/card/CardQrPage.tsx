@@ -6,7 +6,11 @@ import { Link } from "@/i18n/navigation";
 import { toApiLocale } from "@birlinq/api";
 import type { PublicEntityPayload, PublicTarget } from "@birlinq/api";
 import { useApi, useHref } from "@birlinq/platform";
-import { cardUrl } from "@/lib/public-url";
+import {
+  cardUrl,
+  markReferrerSent,
+  pendingReferrerHost,
+} from "@/lib/public-url";
 import { Card } from "@/components/ui/Card";
 import { AbuseModal } from "@/components/public/AbuseModal";
 import { mapPublicError, type PublicErrorKind } from "@/components/public/errors";
@@ -52,7 +56,14 @@ export function CardQrPage({ alias }: { alias: string }) {
   const load = useCallback(async () => {
     setState({ status: "loading" });
     try {
-      const payload = await api.public.card(alias, toApiLocale(locale));
+      // The referrer's host, on the document's first successful fetch only
+      // (D-045) — see `PublicPage`.
+      const payload = await api.public.card(
+        alias,
+        toApiLocale(locale),
+        pendingReferrerHost()
+      );
+      markReferrerSent();
       setState({ status: "ready", payload });
     } catch (err) {
       setState({ status: "error", kind: mapPublicError(err) });

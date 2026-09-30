@@ -144,6 +144,21 @@ export function StatsSection({ id }: { id: string }) {
               empty={t("noClicks")}
             />
           </div>
+
+          <div>
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-2">
+              {t("referrers")}
+            </p>
+            {/* Hosts only (D-045): the server never keeps the path of a
+                referrer. A backend from before D-045 sends no list at all. */}
+            <ChannelList
+              byChannel={Object.fromEntries(
+                (stats.referrers_30d ?? []).map((r) => [r.host, r.views])
+              )}
+              label={(host) => host}
+              empty={t("noReferrers")}
+            />
+          </div>
         </>
       )}
     </Section>

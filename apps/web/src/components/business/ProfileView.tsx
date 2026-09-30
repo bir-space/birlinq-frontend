@@ -11,6 +11,8 @@ import { Card } from "@/components/ui/Card";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Input } from "@/components/ui/Input";
 import { PageSpinner } from "@/components/ui/Spinner";
+import { ImageUpload } from "@/components/forms/ImageUpload";
+import { imageSrc } from "@/components/card/hrefs";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { IconChevronRight, SectionLabel } from "@/components/dashboard/bits";
 import {
@@ -34,16 +36,18 @@ export function ProfileView({ banner }: { banner?: ReactNode }) {
 /** The four documents, in the order the footer lists them. Routes match the keys. */
 const LEGAL_DOCS = ["privacy", "terms", "offer", "consent"] as const;
 
-type ProfileForm = "account" | "password";
+type ProfileForm = "avatar" | "account" | "password";
 
 /** Tags a write with the form that made it, so only that form shows the outcome. */
 type Run = (write: () => Promise<boolean>) => Promise<boolean>;
 
 /**
  * The account page — product-neutral, reached from the profile pill of
- * either product. Two forms over one hook: `useProfile` has a single `busy`
- * and one `actionError`, so the outcome is remembered together with the
- * form that made the last write and the other form stays quiet.
+ * either product. Three writers over one hook — the avatar control, the
+ * account form and the password form: `useProfile` has a single `busy` and
+ * one `actionError`, so the outcome is remembered together with the writer
+ * that made the last write, the other two stay quiet, and each is disabled
+ * while another one's write is in flight.
  */
 function Profile() {
   const t = useTranslations("dashboard.profile");
@@ -99,6 +103,15 @@ function Profile() {
         <h1 className="text-[24px] font-bold tracking-tight">{t("title")}</h1>
         <p className="mt-1 text-[13px] text-muted-2">{t("subtitle")}</p>
       </div>
+
+      <Block title={t("sections.avatar")}>
+        <AvatarControl
+          profile={profile}
+          user={user}
+          feedback={feedbackFor("avatar")}
+          run={runAs("avatar")}
+        />
+      </Block>
 
       <Block title={t("sections.account")}>
         <AccountForm
@@ -188,6 +201,53 @@ function Block({
   );
 }
 
+/**
+ * The account avatar (D-045): one face in the cabinet whatever the number
+ * of cards, separate from any card's photo. Each control is its own write,
+ * so the outcome shows under the control that was used.
+ */
+function AvatarControl({
+  profile,
+  user,
+  feedback,
+  run,
+}: {
+  profile: UseProfile;
+  user: User;
+  feedback: SectionFeedback;
+  run: Run;
+}) {
+  const t = useTranslations("dashboard.profile");
+  const [action, setAction] = useState<"upload" | "remove" | null>(null);
+
+  const attempt = async (kind: "upload" | "remove", write: () => Promise<boolean>) => {
+    setAction(kind);
+    return run(write);
+  };
+
+  const error = (() => {
+    if (feedback !== "error" || action === null) return null;
+    if (profile.actionError === "rateLimited") return t("errors.rateLimited");
+    // A 422 on the upload names the `file` field.
+    return profile.fieldErrors.file ?? t(`avatar.errors.${action}`);
+  })();
+
+  return (
+    <ImageUpload
+      kind="avatar"
+      label={t("avatar.label")}
+      src={imageSrc(user.avatar_url)}
+      busy={profile.busy === "avatar"}
+      disabled={profile.busy !== null && profile.busy !== "avatar"}
+      onUpload={(file, filename) =>
+        attempt("upload", () => profile.uploadAvatar(file, filename))
+      }
+      onRemove={() => attempt("remove", () => profile.removeAvatar())}
+      error={error}
+    />
+  );
+}
+
 interface AccountFields {
   name: string;
   phone: string;
@@ -227,8 +287,9 @@ function AccountForm({
   const [local, setLocal] = useState<AccountErrors>({});
   const [saving, setSaving] = useState(false);
 
-  // Follow the session user while untouched — after a save the hook
-  // re-reads it, and the form (password field included) resets from it.
+  // Follow the session user while untouched — after a save the hook puts
+  // the user the API returned into the session, and the form (password
+  // field included) resets from it.
   useEffect(() => {
     if (!dirty) setForm(fromUser(user));
   }, [user, dirty]);

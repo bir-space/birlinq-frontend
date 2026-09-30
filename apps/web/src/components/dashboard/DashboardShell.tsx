@@ -8,6 +8,7 @@ import { useHref, usePlatform } from "@birlinq/platform";
 import { Logo } from "@/components/ui/Logo";
 import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { PageSpinner } from "@/components/ui/Spinner";
+import { imageSrc } from "@/components/card/hrefs";
 import { IconLogout, IconUser } from "./bits";
 import { ProductSwitcher } from "./ProductSwitcher";
 import {
@@ -65,6 +66,8 @@ export function DashboardShell({
   const rel = stripBasePath(pathname, basePath);
   const fromPath = productFromPath(rel);
   const product: Product = fromPath ?? remembered ?? "move";
+  // The account avatar in the profile pill (D-045); `imageSrc` keeps it to our origin.
+  const avatar = imageSrc(user?.avatar_url);
 
   // Read the memory after mount only: the server has no localStorage, and a
   // highlight that differed between the two renders would be a hydration error.
@@ -200,7 +203,18 @@ export function DashboardShell({
               aria-current={profileActive ? "page" : undefined}
               className={`ml-auto inline-flex items-center gap-1.5 ${tabCls(profileActive)}`}
             >
-              <IconUser className="size-4" />
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  className="size-5 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <IconUser className="size-4" />
+              )}
               {t("nav.profile")}
             </Link>
           </nav>

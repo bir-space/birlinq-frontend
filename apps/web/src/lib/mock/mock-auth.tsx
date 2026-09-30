@@ -49,6 +49,10 @@ export function MockAuthProvider({
     setUser(user);
   }, []);
 
+  const applyUser = useCallback((fresh: User) => {
+    setUser(fresh);
+  }, []);
+
   const logout = useCallback(async () => {
     await mockAuthApi.logout();
     setUser(null);
@@ -65,10 +69,11 @@ export function MockAuthProvider({
       loading: !hydrated,
       isAuthenticated: user !== null,
       refresh,
+      applyUser,
       logout,
       logoutAll,
     }),
-    [user, hydrated, refresh, logout, logoutAll]
+    [user, hydrated, refresh, applyUser, logout, logoutAll]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -29,6 +29,8 @@ export const MOCK_USER: User = {
   phone: "77011234567",
   locale: "ru",
   email_verified_at: "2025-11-01T10:02:00Z",
+  privacy_accepted_at: "2025-11-01T09:58:00Z",
+  avatar_url: null,
   created_at: "2025-11-01T09:58:00Z",
 };
 
@@ -121,7 +123,8 @@ export const EMPTY_CONTACT_PROFILE: ContactProfile = {
 /**
  * The demo business card — alias `demo`, the persona of the old product,
  * identical to the backend's DemoCardSeeder so the landing's "see an
- * example" link previews the same card with and without a backend. No
+ * example" link previews the same card with and without a backend. `demo`
+ * predates D-044 and keeps its shape, as every earlier address does. No
  * images: a hotlinked photo would expire, and null shows the initials path.
  */
 export const MOCK_CARD_FULL: Entity = {
@@ -166,13 +169,13 @@ export const MOCK_CARD_FULL: Entity = {
   updated_at: "2026-09-20T11:15:00Z",
 };
 
-/** A second card, hidden by its owner — the 410 screen at `/p/card-x7k2`. */
+/** A second card, hidden by its owner — the 410 screen at `/p/k7m2p9xq`. */
 export const MOCK_CARD_MIN: Entity = {
   id: "entity-4",
   type: "personal",
   title: null,
   status: "deactivated",
-  alias: "card-x7k2",
+  alias: "k7m2p9xq",
   privacy_settings: MOCK_CARD_PRESET_PRIVACY,
   vehicle_profile: null,
   contact_profile: {
@@ -186,15 +189,15 @@ export const MOCK_CARD_MIN: Entity = {
 
 /**
  * A card held by moderation (D-042): the editor's read-only publish state,
- * the 409 ENTITY_BLOCKED on delete and the "blocked" screen at
- * `/p/daniyar-a` are all reachable without a backend.
+ * the 409 ENTITY_BLOCKED on a status change and the "blocked" screen at
+ * `/p/h3k9dn4y` are all reachable without a backend.
  */
 export const MOCK_CARD_BLOCKED: Entity = {
   id: "entity-5",
   type: "personal",
   title: null,
   status: "blocked",
-  alias: "daniyar-a",
+  alias: "h3k9dn4y",
   privacy_settings: MOCK_CARD_PRESET_PRIVACY,
   vehicle_profile: null,
   contact_profile: {
@@ -490,6 +493,12 @@ function demoStats(): EntityStats {
     shares_total: 31,
     shares_30d: 9,
     last_view_at: lastView.toISOString(),
+    referrers_30d: [
+      { host: "t.me", views: 41 },
+      { host: "instagram.com", views: 27 },
+      { host: "linkedin.com", views: 14 },
+      { host: "bir.space", views: 6 },
+    ],
     daily,
   };
 }

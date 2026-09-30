@@ -154,6 +154,31 @@ export const authApi = {
   },
 
   /**
+   * POST /auth/me/avatar → { user } (D-045). Multipart, same rules as a
+   * card image: JPEG, PNG or WebP up to `LIMITS.imageMaxBytes` in a field
+   * named `file`; the previous file is deleted. The avatar belongs to the
+   * account, not to a card. No Idempotency-Key — re-uploading is harmless.
+   */
+  uploadAvatar(file: Blob, filename?: string): Promise<{ user: User }> {
+    const form = new FormData();
+    if (filename === undefined) form.append("file", file);
+    else form.append("file", file, filename);
+    return apiFetch<{ user: User }>("/auth/me/avatar", {
+      method: "POST",
+      body: form,
+      auth: true,
+    });
+  },
+
+  /** DELETE /auth/me/avatar → { user } with `avatar_url: null`; the same 200 when there was none. */
+  removeAvatar(): Promise<{ user: User }> {
+    return apiFetch<{ user: User }>("/auth/me/avatar", {
+      method: "DELETE",
+      auth: true,
+    });
+  },
+
+  /**
    * POST /auth/verify-email → 204. Single use, 24 h TTL.
    * The token is 64 hex characters and arrives in the email as a code to
    * paste — there is no link, so the UI has to offer a field for it.
@@ -247,8 +272,10 @@ export const entitiesApi = {
    * submission, so a double tap cannot create two cards.
    * `contact` and `privacy_settings` ride along and are applied in the same
    * transaction (D-041); a car still gets its profile through `upsertVehicle`
-   * (see `createVehicle`). 409 ALIAS_TAKEN / CARD_LIMIT_REACHED are business
-   * outcomes to surface, not bugs.
+   * (see `createVehicle`). A card comes back with its permanent `alias`,
+   * drawn by the server (D-044); an `alias` key in the body, even `null`, is
+   * 422 `details.alias`. 409 CARD_LIMIT_REACHED is a business outcome to
+   * surface, not a bug.
    */
   create(
     body: CreateEntityRequest,
@@ -267,9 +294,12 @@ export const entitiesApi = {
   },
 
   /**
-   * PATCH /entities/{id} — `title`, `status` and `alias`. `alias: null`
-   * closes the public link (D-040); a taken alias is 409 ALIAS_TAKEN, an
-   * alias on a car 422. `status` on a blocked entity is 409 ENTITY_BLOCKED.
+   * PATCH /entities/{id} — `title` and `status`. For a card, `deactivated`
+   * is the "unpublished" mark (D-044). `status` on a blocked entity is 409
+   * ENTITY_BLOCKED; someone else's entity is 403 before any validation. The
+   * address is permanent: an `alias` key in the body, even `null`, is 422
+   * `details.alias`. No Idempotency-Key — the route carries no idempotency
+   * middleware.
    */
   update(id: string, body: UpdateEntityRequest): Promise<{ entity: Entity }> {
     return apiFetch<{ entity: Entity }>(`/entities/${id}`, {
@@ -280,25 +310,12 @@ export const entitiesApi = {
   },
 
   /**
-   * POST /entities/{id}/alias → { entity }. Mints a fresh alias for a
-   * personal entity by the creation rule — the display name's slug plus a
-   * short suffix while `show_display_name` is on, `card-xxxxxx` otherwise —
-   * replacing the current one (the old link stops working at once) or
-   * opening the link when it was closed. No body fields; the route sits
-   * behind the idempotency middleware like `create`, so a key is minted per
-   * call. A car or business entity answers 422 with `details.alias`; a
-   * blocked card may still generate — alias edits are not moderation-gated.
+   * DELETE /entities/{id} → 204 (soft) — `car` and `business` entities. A
+   * personal card is never deleted: 409 CARD_PERMANENT whatever its status,
+   * blocked included (D-044) — hide it with `update(id, { status:
+   * "deactivated" })` instead. A blocked car or business entity is 409
+   * ENTITY_BLOCKED; someone else's entity is 403 before either.
    */
-  generateAlias(id: string): Promise<{ entity: Entity }> {
-    return apiFetch<{ entity: Entity }>(`/entities/${id}/alias`, {
-      method: "POST",
-      body: {},
-      auth: true,
-      idempotencyKey: newIdempotencyKey(),
-    });
-  },
-
-  /** DELETE /entities/{id} → 204 (soft). 409 ENTITY_BLOCKED while moderation holds it. */
   remove(id: string): Promise<void> {
     return apiFetch<void>(`/entities/${id}`, { method: "DELETE", auth: true });
   },
@@ -469,16 +486,37 @@ export const qrApi = {
 // `reportAbuse`, which deliberately accepts reports on a paused or blocked
 // target, because abuse is often *why* it was paused.
 
+/**
+ * `path?ref=<host>` when there is a referrer host to report (D-045), else the
+ * path untouched. A query parameter, not a header: a custom header would
+ * turn every referred visit into a CORS preflight. Only a hostname ever goes
+ * here — the caller computes it in the browser, so the full referrer URL
+ * never leaves the page.
+ */
+function withReferrer(path: string, referrerHost: string | undefined): string {
+  const host = referrerHost?.trim();
+  return host ? `${path}?ref=${encodeURIComponent(host)}` : path;
+}
+
 export const publicApi = {
   /**
    * GET /public/q/{code}. Records the scan as an append-only event; the
    * visitor IP is stored only as an HMAC salted per entity. Throttled to
-   * 30/min per visitor IP.
+   * 30/min per visitor IP. `referrerHost` is the hostname of the page that
+   * sent the visitor here (D-045) — an XHR's own Referer always names our
+   * page, so the real one travels as `?ref=<host>`. The server normalises it
+   * and drops our own hosts; the web passes it on the first fetch of a
+   * document only (`pendingReferrerHost()` in `lib/public-url.ts`).
    */
-  scan(code: string, locale?: ApiLocale): Promise<PublicEntityPayload> {
-    return apiFetch<PublicEntityPayload>(publicPath({ kind: "qr", code }), {
-      locale,
-    });
+  scan(
+    code: string,
+    locale?: ApiLocale,
+    referrerHost?: string
+  ): Promise<PublicEntityPayload> {
+    return apiFetch<PublicEntityPayload>(
+      withReferrer(publicPath({ kind: "qr", code }), referrerHost),
+      { locale }
+    );
   },
 
   /**
@@ -487,10 +525,15 @@ export const publicApi = {
    * at all for known bots. Same throttle as `scan`, which is why the page
    * fetches this from the browser and never server-side: one SSR origin
    * would spend the whole 30/min on itself and count as the visitor.
+   * `referrerHost` as in `scan`.
    */
-  card(alias: string, locale?: ApiLocale): Promise<PublicEntityPayload> {
+  card(
+    alias: string,
+    locale?: ApiLocale,
+    referrerHost?: string
+  ): Promise<PublicEntityPayload> {
     return apiFetch<PublicEntityPayload>(
-      publicPath({ kind: "alias", alias }),
+      withReferrer(publicPath({ kind: "alias", alias }), referrerHost),
       { locale }
     );
   },

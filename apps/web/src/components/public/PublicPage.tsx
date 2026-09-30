@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toApiLocale } from "@birlinq/api";
 import { useApi } from "@birlinq/platform";
+import { markReferrerSent, pendingReferrerHost } from "@/lib/public-url";
 import type {
   CardTheme,
   PublicEntityPayload,
@@ -58,12 +59,17 @@ export function PublicPage({
     setScreen({ name: "entity" });
     try {
       // Without the locale the event is logged against whatever the
-      // browser advertises, not the language the page is showing.
+      // browser advertises, not the language the page is showing. The
+      // referrer's host travels along on the first successful fetch of the
+      // document only (D-045) — a language switch refetches, and must not
+      // count the same arrival twice.
       const apiLocale = toApiLocale(locale);
+      const referrerHost = pendingReferrerHost();
       const payload =
         target.kind === "qr"
-          ? await api.public.scan(target.code, apiLocale)
-          : await api.public.card(target.alias, apiLocale);
+          ? await api.public.scan(target.code, apiLocale, referrerHost)
+          : await api.public.card(target.alias, apiLocale, referrerHost);
+      markReferrerSent();
       setState({ status: "ready", payload });
     } catch (err) {
       setState({ status: "error", kind: mapPublicError(err) });

@@ -43,19 +43,16 @@
     "empty": "No cards yet",
     "emptyHint": "Create your first card — it gets a link and a QR code.",
     "emptyCta": "Create a card",
-    "linkClosed": "link closed",
     "noName": "Unnamed",
     "actions": {
       "open": "Open",
       "qr": "QR code",
       "edit": "Edit",
-      "delete": "Delete"
+      "hide": "Hide",
+      "show": "Show"
     },
-    "deleteTitle": "Delete this card?",
-    "deleteText": "The link and the QR stop working. This cannot be undone.",
-    "deleteConfirm": "Delete",
-    "deleteError": "Could not delete the card. Please try again.",
-    "deleteBlocked": "This card is blocked by moderation and cannot be deleted for now."
+    "publishError": "Could not change publishing. Please try again.",
+    "publishBlocked": "This card is blocked by moderation — publishing cannot be changed for now."
   },
   "create": {
     "title": "New card",
@@ -69,22 +66,18 @@
       "companyPlaceholder": "Where you work"
     },
     "themeTitle": "Theme",
-    "aliasTitle": "Card address",
-    "aliasOptional": "optional",
-    "aliasHint": "Leave it empty — we will create the address for you",
     "privacyTitle": "What to show",
+    "addressNote": "The card's address /p/… is assigned automatically: it is permanent and appears right after the card is created.",
     "submit": "Create the card",
-    "created": "Card created",
     "errors": {
       "nameRequired": "Enter a name",
       "nameMin": "The name needs at least {n} characters",
-      "aliasTaken": "This address is already taken — pick another one",
       "generic": "Could not create the card. Please try again.",
       "rateLimited": "Too many attempts. Please wait a minute."
     },
     "limit": {
       "title": "Card limit reached",
-      "text": "Your plan does not allow more cards. Check the plans or delete a card you no longer need.",
+      "text": "You can't create more cards for now. Leave a request for an extended plan — we'll write when it becomes available.",
       "cta": "See the plans",
       "close": "Close"
     }
@@ -94,7 +87,7 @@
     "title": "Card",
     "open": "Open the card",
     "notFound": "Card not found",
-    "notFoundHint": "It may have been deleted.",
+    "notFoundHint": "Check the page address.",
     "loadError": "Could not load the card.",
     "saved": "Saved",
     "saveError": "Could not save. Please try again.",
@@ -112,8 +105,7 @@
     "alias": "Card address",
     "publish": "Publishing",
     "qr": "QR code",
-    "stats": "Statistics",
-    "danger": "Danger zone"
+    "stats": "Statistics"
   },
   "profile": {
     "hint": "Who you are and what you do",
@@ -238,37 +230,13 @@
     "error": "Could not update the setting. Please try again."
   },
   "alias": {
-    "hint": "The public link of the card. Change it with care: the old one stops working.",
-    "label": "Address",
-    "placeholder": "for example, ivan-petrov",
-    "prefix": "/p/",
-    "rules": "3–30 characters: Latin letters, digits, dash, underscore",
-    "save": "Save address",
-    "close": "Close the link",
-    "reopen": "Open with this address",
-    "generate": "Open the link",
-    "generateHint": "We make the address for you: from your name when it is shown, otherwise card-xxxxxx. You can change it later.",
-    "custom": "Set my own address",
-    "regenerate": "Generate a new address",
-    "regenerateTitle": "Generate a new address?",
-    "regenerateText": "The current address is replaced with a new one, by the same rule as when the card was created.",
-    "regenerateConfirm": "Generate",
-    "closed": "Link closed",
-    "closedHint": "The card opens only from a QR sticker. Open the link and we will create the address for you.",
-    "current": "Current link",
+    "hint": "The card's permanent public link — the one printed on cards and stickers",
+    "current": "Link",
     "copy": "Copy",
     "copied": "Copied",
-    "changeWarning": "The old address stops working immediately — QR codes and links you shared will need updating.",
-    "saved": "Address saved",
-    "generated": "New address created",
-    "errors": {
-      "short": "At least {n} characters",
-      "invalid": "Only lower-case Latin letters, digits, dash and underscore",
-      "reserved": "This address is reserved",
-      "taken": "This address is already taken",
-      "blocked": "The card is blocked — the address cannot be changed",
-      "generic": "Could not save the address. Please try again."
-    }
+    "open": "Open",
+    "permanent": "The address is assigned at creation and never changes. To take the card out of reach, turn publishing off — the link stays yours.",
+    "pending": "The address is being assigned — reload the page in a minute."
   },
   "publish": {
     "hint": "A hidden card answers “Page hidden” both by link and by QR",
@@ -283,19 +251,11 @@
   },
   "qr": {
     "hint": "The QR leads to the public link of the card",
-    "noAlias": "Link closed",
-    "noAliasHint": "The QR code is built from the /p/… link. Open the link — we will create the address for you and the code appears at once.",
-    "openLink": "Open the link",
-    "download": "Download PNG",
-    "copy": "Copy link",
-    "copied": "Copied",
-    "share": "Share",
     "print": "For print, the 512×512 PNG works on a sticker from 2 cm.",
     "stickersTitle": "Stickers",
     "stickersHint": "Physical birlinq QR stickers bound to this card",
     "noStickers": "No stickers yet",
     "sticker": "Sticker {code}",
-    "stickerPaused": "paused",
     "attach": {
       "title": "Attach a sticker",
       "hint": "The code and the token are printed on the back of the sticker",
@@ -329,6 +289,8 @@
     "clicksChart": "Clicks by day: {n} in the last 30 days",
     "byChannel": "By channel",
     "noClicks": "No clicks yet",
+    "referrers": "Where visitors come from",
+    "noReferrers": "No visits from other sites yet",
     "channels": {
       "phone": "Phone",
       "phone2": "Second phone",
@@ -347,21 +309,8 @@
       "other": "Other"
     },
     "totals": "Total",
-    "period30": "30 days",
-    "period7": "7 days",
     "error": "Could not load the statistics.",
     "retry": "Retry"
-  },
-  "danger": {
-    "hint": "Actions that cannot be undone",
-    "deleteTitle": "Delete the card",
-    "deleteHint": "The link, the QR and the statistics disappear",
-    "delete": "Delete",
-    "confirmTitle": "Delete this card?",
-    "confirmText": "The link and the QR stop working immediately. This cannot be undone.",
-    "confirm": "Delete",
-    "blocked": "This card is blocked by moderation and cannot be deleted for now.",
-    "error": "Could not delete the card. Please try again."
   },
   "pricing": {
     "title": "Pricing",
@@ -371,7 +320,7 @@
     "perMonth": "per month",
     "free": "Free",
     "cta": "Leave a request",
-    "note": "Prices in tenge. Limits are not enforced yet.",
+    "note": "Prices in tenge.",
     "plans": {
       "free": {
         "name": "Free",
@@ -385,9 +334,9 @@
         "name": "Pro",
         "price": "499 ₸",
         "f1": "Up to 5 cards",
-        "f2": "Statistics by channel",
+        "f2": "Extended statistics",
         "f3": "Priority support",
-        "f4": "Custom link address"
+        "f4": "Export the card to PDF"
       },
       "corporate": {
         "name": "Corporate",
@@ -400,10 +349,6 @@
     }
   },
   "errors": {
-    "generic": "Something went wrong. Please try again.",
-    "validation": "Check the form fields",
-    "blocked": "This card is blocked by moderation",
-    "rateLimited": "Too many requests. Please wait a minute.",
-    "load": "Could not load the data."
+    "validation": "Check the form fields"
   }
 }

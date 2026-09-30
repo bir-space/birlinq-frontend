@@ -18,7 +18,6 @@ import {
 
 export type CreateCardError =
   | "validation"
-  | "aliasTaken"
   | "cardLimit"
   | "rateLimited"
   | "create"
@@ -44,9 +43,10 @@ export interface UseCreateCard {
  * The key is minted on the first submit and kept across retries of the
  * *same* body — a double tap or a flaky network cannot create two cards. It
  * is dropped whenever the next submit will carry a different body: after
- * success, after a 422 the owner has to fix, after 409 ALIAS_TAKEN (they will
- * pick another alias) and after the card limit. Reusing a key with a changed
- * body is what the backend answers with IDEMPOTENCY_KEY_MISUSE.
+ * success, after a 422 the owner has to fix and after the card limit.
+ * Reusing a key with a changed body is what the backend answers with
+ * IDEMPOTENCY_KEY_MISUSE. The card's address is the server's to draw
+ * (D-044); it arrives on the created entity.
  */
 export function useCreateCard(): UseCreateCard {
   const api = useApi();
@@ -91,9 +91,6 @@ export function useCreateCard(): UseCreateCard {
             keyRef.current = null;
             setFieldErrors(detailsToFieldErrors(err.details));
             setError("validation");
-          } else if (err.code === ErrorCode.AliasTaken) {
-            keyRef.current = null;
-            setError("aliasTaken");
           } else if (err.code === ErrorCode.CardLimitReached) {
             keyRef.current = null;
             setError("cardLimit");

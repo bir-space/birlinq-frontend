@@ -31,9 +31,6 @@ export const LIMITS = {
 
   // Entity/CreateEntityRequest + UpdateEntityRequest
   entityTitle: 255,
-  /** App\Domain\Entity\Alias::PATTERN — `^[a-z0-9_-]{3,30}$`. */
-  aliasMin: 3,
-  alias: 30,
 
   // Entity/UpsertContactProfileRequest
   contactDisplayName: 100,

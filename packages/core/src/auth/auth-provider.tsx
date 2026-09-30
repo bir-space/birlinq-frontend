@@ -95,6 +95,20 @@ export function AuthProvider({
     };
   }, [api, store]);
 
+  /**
+   * The cached snapshot follows too, so a reload hydrates with the new
+   * name or avatar. Ignored once the session is gone: a write that lands
+   * after sign-out must not resurrect the user.
+   */
+  const applyUser = useCallback(
+    (fresh: User) => {
+      if (!store.hasSession()) return;
+      store.setUser(fresh);
+      setUser(fresh);
+    },
+    [store]
+  );
+
   const logout = useCallback(async () => {
     await api.auth.logout();
     setUser(null);
@@ -111,10 +125,11 @@ export function AuthProvider({
       loading,
       isAuthenticated: user !== null,
       refresh,
+      applyUser,
       logout,
       logoutAll,
     }),
-    [user, loading, refresh, logout, logoutAll]
+    [user, loading, refresh, applyUser, logout, logoutAll]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

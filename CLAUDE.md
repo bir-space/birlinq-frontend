@@ -111,10 +111,15 @@ boot and `apps/mobile/src/api-config.ts` mirrors with Expo's values. So: don't i
 ## Critical Invariants (NEVER violate)
 
 1. **Cursor pagination only**, matching the backend. Never build offset/page-number UI.
-2. **`Idempotency-Key` header required** on every state-changing call: `qr/activate`,
-   `qr/{id}/pause`, `qr/{id}/resume`, `POST /entities` (create card), `POST /entities/{id}/alias`, scenario submit,
-   interaction resolve. Already wired in `endpoints.ts` via `newIdempotencyKey()` — use
-   those functions, don't hand-roll `fetch`.
+2. **`Idempotency-Key` header** on exactly the calls whose backend routes carry the
+   idempotency middleware: `POST /qr/activate`, `POST /qr/{id}/pause`,
+   `POST /qr/{id}/resume`, `POST /entities` (create a card or a car) and scenario submit
+   (`POST /public/q/{code}/scenarios/{id}`). Interaction resolve, entity
+   `PATCH`/`PUT`/`DELETE` (title, status, vehicle, contact, privacy), card image and
+   account avatar uploads and the profile writes deliberately send none: their routes
+   carry no idempotency middleware, and a repeat is harmless. Already wired in
+   `endpoints.ts` via `newIdempotencyKey()` — use those functions, don't hand-roll
+   `fetch`.
 3. **JWT handling**: access token lives in memory only (never localStorage/cookies), refresh
    token in localStorage, single-flight refresh-and-retry on 401. Don't "simplify" this by
    storing the access token — it's the one thing the backend's threat model cares about.

@@ -138,7 +138,8 @@ presentation is deliberately not shared.
 
 Already there:
 
-- `AuthProvider` / `useAuth` — session restore, background verify, sign-out. The store is a
+- `AuthProvider` / `useAuth` — session restore, background verify, `applyUser` (take the
+  user a write just returned), sign-out. The store is a
   prop, not an import, because where the session physically lives is the one genuine
   difference between the apps.
 - `useOverview` — the cabinet summary.
@@ -146,21 +147,24 @@ Already there:
 - `useQrList` — cursor pagination plus optimistic pause/resume, with entity titles treated as
   optional context rather than a reason to fail the screen.
 - `useCards` — the owner's business cards (`personal` entities): cursor pagination plus
-  delete in place, `blocked` for the 409 a moderated card answers.
-- `useCard` — one card's editor state: contact, privacy (with the presets), publish, alias
-  (409 → `aliasTaken`), `generateAlias` (POST `/entities/{id}/alias` — the server chooses
-  the address, so the entity is replaced from the response rather than updated
-  optimistically), photo and cover upload and removal, `attachSticker` (lookup, then
-  activate onto the card), remove. Every write reports a code, and `busy` names the section
-  in flight so the view disables that one alone.
+  show / hide in place (`setPublished`, optimistic), `blocked` for the 409 a moderated card
+  answers. A card is never deleted (FE-015): there is no `remove`.
+- `useCard` — one card's editor state: contact, privacy (with the presets), publish, photo
+  and cover upload and removal, `attachSticker` (lookup, then activate onto the card). The
+  address is read-only — the server assigned it at creation — so there is nothing to save
+  for it. Every write reports a code, and `busy` names the section in flight so the view
+  disables that one alone.
 - `useCreateCard` — the create call with one idempotency key per form attempt, reset after
   success or a field-level 422; `cardLimit` for 409 `CARD_LIMIT_REACHED`.
 - `useCardStats` — `GET /entities/{id}/stats`, with the per-channel clicks folded into
   calls / social / website.
 - `useBusinessOverview` — the first page of cards plus one stats call per card, settled
   together; a card whose figures fail arrives without them rather than failing the page.
-- `useProfile` — `PATCH /auth/me` and the password change; `wrongCurrent` for the 422 on
-  `current_password`.
+- `useProfile` — `PATCH /auth/me`, the password change and the account avatar
+  (`uploadAvatar` / `removeAvatar`). The profile and avatar writes answer `{ user }`, and
+  the hook hands that user to `useAuth().applyUser` — no second `GET /auth/me`. One write
+  at a time across the page (a ref guards the double tap, `busy` names the writer);
+  `wrongCurrent` for the 422 on `current_password`.
 - `cards/privacy-presets.ts` (the card's privacy keys, groups and presets) and
   `shared/field-errors.ts` (`detailsToFieldErrors`, the one implementation — the web's
   `auth/helpers.ts` re-exports it).

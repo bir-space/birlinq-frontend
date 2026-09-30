@@ -6,18 +6,17 @@
  * real page.
  *
  * Signatures track the real module, including the split between
- * `POST /entities` (type, title, alias + nested contact/privacy) and
+ * `POST /entities` (type, title + nested contact/privacy) and
  * `PUT /entities/{id}/vehicle`, and privacy updates returning the whole
  * entity. Where the real backend filters (PrivacyFilter on the public card),
  * the mock filters the same way — it is playing the server, not the client.
  */
 import {
-  ALIAS_RE,
+  ALIAS_ALPHABET,
+  ALIAS_LENGTH,
   ApiRequestError,
   ErrorCode,
   LIMITS,
-  isReservedAlias,
-  normalizeAlias,
 } from "@birlinq/api";
 import type { AppApi } from "@birlinq/api";
 import type {
@@ -155,90 +154,20 @@ function conflict(code: string, message: string): ApiRequestError {
 }
 
 /**
- * The alias rules the backend enforces on POST/PATCH (D-040): normalised,
- * 3..30 of the alphabet, not reserved, not on a car, not held by another
- * entity. Returns the value to store.
+ * The backend's AliasGenerator (D-044): eight characters of the sticker
+ * alphabet, drawn once when the card is created and never touched again.
+ * Nothing about the person goes into it. Addresses issued before D-044
+ * (`demo` among the fixtures) keep their older shape.
  */
-function checkAlias(
-  raw: string,
-  type: Entity["type"],
-  exceptId: string | null
-): string {
-  if (type !== "personal") {
-    throw validation({ alias: "Only a business card can have a public link." });
-  }
-  const alias = normalizeAlias(raw);
-  if (!ALIAS_RE.test(alias)) {
-    throw validation({
-      alias: `Use ${LIMITS.aliasMin}–${LIMITS.alias} lower-case letters, digits, "-" or "_".`,
-    });
-  }
-  if (isReservedAlias(alias)) {
-    throw validation({ alias: "This address is reserved." });
-  }
-  if (entities.some((e) => e.alias === alias && e.id !== exceptId)) {
-    throw conflict(ErrorCode.AliasTaken, "Alias is already taken");
-  }
-  return alias;
-}
-
-/** The sticker alphabet in lower case — no 0/o, no i/l — as `AliasGenerator::suffixAlphabet()`. */
-const ALIAS_SUFFIX_ALPHABET = "123456789abcdefghjkmnpqrstuvwxyz";
-const ALIAS_SLUG_MAX_LENGTH = 24;
-const ALIAS_NAMED_SUFFIX_LENGTH = 4;
-const ALIAS_ANONYMOUS_SUFFIX_LENGTH = 6;
-
-function aliasSuffix(length: number): string {
-  let suffix = "";
-  for (let i = 0; i < length; i++) {
-    suffix +=
-      ALIAS_SUFFIX_ALPHABET[
-        Math.floor(Math.random() * ALIAS_SUFFIX_ALPHABET.length)
-      ];
-  }
-  return suffix;
-}
-
-/**
- * The backend's AliasGenerator (D-040): the display name's slug plus a
- * short suffix while the name is shown publicly, `card-` plus a longer one
- * otherwise, so a hidden name never leaks into the URL. `normalizeAlias`
- * stands in for `Str::slug` — it drops Cyrillic rather than transliterating
- * it, so a Russian name falls back to `card-xxxxxx` here — with the slug's
- * `_` → `-` done by hand.
- */
-function generateAlias(publicName: string | null): string {
-  let base: string | null =
-    publicName === null
-      ? null
-      : normalizeAlias(publicName)
-          .replace(/_/g, "-")
-          .replace(/-+/g, "-")
-          .slice(0, ALIAS_SLUG_MAX_LENGTH)
-          .replace(/^-+|-+$/g, "");
-  if (base === "") base = null;
+function drawAlias(): string {
   for (let attempt = 0; attempt < 10; attempt++) {
-    const alias =
-      base === null
-        ? `card-${aliasSuffix(ALIAS_ANONYMOUS_SUFFIX_LENGTH)}`
-        : `${base}-${aliasSuffix(ALIAS_NAMED_SUFFIX_LENGTH)}`;
-    if (isReservedAlias(alias)) {
-      // Reservation is a property of the base, so another suffix would not help.
-      base = null;
-      continue;
+    let alias = "";
+    for (let i = 0; i < ALIAS_LENGTH; i++) {
+      alias += ALIAS_ALPHABET[Math.floor(Math.random() * ALIAS_ALPHABET.length)];
     }
     if (!entities.some((e) => e.alias === alias)) return alias;
   }
-  return `card-${Date.now().toString(36).slice(-6)}`;
-}
-
-/** The name the generator may build on: only while the card shows it. */
-function publicNameOf(
-  privacy: Pick<PrivacySettings, "show_display_name">,
-  contact: { display_name?: string | null } | null | undefined
-): string | null {
-  const name = contact?.display_name?.trim() ?? "";
-  return privacy.show_display_name && name !== "" ? name : null;
+  return Date.now().toString(36).slice(-ALIAS_LENGTH).padStart(ALIAS_LENGTH, "x");
 }
 
 /** Opaque to the caller, an offset here: enough to walk pages the way the real cursor does. */
@@ -268,6 +197,7 @@ function emptyStats(): EntityStats {
     shares_total: 0,
     shares_30d: 0,
     last_view_at: null,
+    referrers_30d: [],
     daily,
   };
 }
@@ -387,7 +317,14 @@ function buildVcard(payload: PublicEntityPayload): string {
 }
 
 export const mockAuthApi = {
-  async register(_body: RegisterRequest): Promise<AuthResponse> {
+  /** The consent flag is required, as RegisterRequest validates it (D-045); the moment is stamped on the user. */
+  async register(body: RegisterRequest): Promise<AuthResponse> {
+    if (body.privacy_accepted !== true) {
+      throw validation({
+        privacy_accepted: "The privacy policy and terms must be accepted.",
+      });
+    }
+    user = { ...user, privacy_accepted_at: new Date().toISOString() };
     return delay(mockAuthResponse());
   },
 
@@ -464,6 +401,23 @@ export const mockAuthApi = {
     return delay(undefined);
   },
 
+  /** The real endpoint stores the file and returns its URL; here the browser keeps it (D-045). */
+  async uploadAvatar(file: Blob, _filename?: string): Promise<{ user: User }> {
+    const url =
+      typeof URL.createObjectURL === "function"
+        ? URL.createObjectURL(file)
+        : null;
+    await delay(undefined);
+    user = { ...user, avatar_url: url };
+    return { user };
+  },
+
+  async removeAvatar(): Promise<{ user: User }> {
+    await delay(undefined);
+    user = { ...user, avatar_url: null };
+    return { user };
+  },
+
   async verifyEmail(_token: string): Promise<void> {
     return delay(undefined);
   },
@@ -505,9 +459,9 @@ export const mockEntitiesApi = {
 
   /**
    * POST /entities as D-041 shapes it: nested contact and privacy applied
-   * together; a card's alias validated (422) or checked for a holder (409
-   * ALIAS_TAKEN) and generated when the request carries none — from the
-   * display name when this request shows it, `card-xxxxxx` otherwise.
+   * together; a card's permanent address drawn here, as the server does
+   * (D-044) — a client that still sends an `alias` key, even `null`, gets
+   * the same 422 the backend's `missing` rule answers.
    * No card limit — `cards.max_per_user` is null by default on the backend
    * too, so CARD_LIMIT_REACHED is not reachable here.
    */
@@ -517,6 +471,11 @@ export const mockEntitiesApi = {
   ): Promise<{ entity: Entity }> {
     const now = new Date().toISOString();
     const isCard = body.type === "personal";
+    if ("alias" in body) {
+      throw validation({
+        alias: "The address of a card is assigned by the server and cannot be chosen.",
+      });
+    }
     if (isCard) {
       const name = body.contact?.display_name?.trim() ?? "";
       if (name.length < 2) {
@@ -526,18 +485,12 @@ export const mockEntitiesApi = {
       }
     }
     const privacy = { ...DEFAULT_MOCK_PRIVACY, ...body.privacy_settings };
-    const alias =
-      body.alias !== undefined && body.alias !== ""
-        ? checkAlias(body.alias, body.type, null)
-        : isCard
-          ? generateAlias(publicNameOf(privacy, body.contact))
-          : null;
     const entity: Entity = {
       id: genId("entity"),
       type: body.type,
       title: body.title ?? null,
       status: "active",
-      alias,
+      alias: isCard ? drawAlias() : null,
       privacy_settings: privacy,
       vehicle_profile: null,
       contact_profile: body.contact
@@ -556,57 +509,44 @@ export const mockEntitiesApi = {
 
   /**
    * PATCH /entities/{id}: `status` on a blocked entity is 409 ENTITY_BLOCKED
-   * (D-042); `alias: null` closes the link, a slug is validated and checked
-   * against every other entity (D-040).
+   * (D-042); the address is permanent, so an `alias` key in the body, even
+   * `null`, is the same 422 the server answers (D-044).
    */
   async update(
     id: string,
     body: UpdateEntityRequest
   ): Promise<{ entity: Entity }> {
     const current = findEntity(id);
+    if ("alias" in body) {
+      throw validation({
+        alias: "The address of a card is permanent and cannot be changed.",
+      });
+    }
     if (body.status !== undefined && current.status === "blocked") {
       throw conflict(ErrorCode.EntityBlocked, "Entity is blocked by moderation");
     }
-    const alias =
-      body.alias === undefined
-        ? current.alias
-        : body.alias === null
-          ? null
-          : checkAlias(body.alias, current.type, id);
     const entity = replaceEntity(id, (e) => ({
       ...e,
       title: body.title !== undefined ? body.title : e.title,
       status: body.status ?? e.status,
-      alias,
     }));
     return delay({ entity });
   },
 
   /**
-   * POST /entities/{id}/alias: a fresh alias by the creation rule, replacing
-   * the current one or opening a closed link; 422 for anything but a card.
-   * Not gated on `blocked` — alias edits are not moderation-gated.
+   * DELETE — a car or business entity is gone for good here (the backend
+   * soft-deletes); a card answers 409 CARD_PERMANENT whatever its status,
+   * blocked included, because the type is checked first (D-044); 409
+   * ENTITY_BLOCKED while moderation holds any other entity.
    */
-  async generateAlias(id: string): Promise<{ entity: Entity }> {
-    const current = findEntity(id);
-    if (current.type !== "personal") {
-      throw validation({
-        alias: "Only a business card can have a public link.",
-      });
-    }
-    const alias = generateAlias(
-      publicNameOf(
-        current.privacy_settings ?? DEFAULT_MOCK_PRIVACY,
-        current.contact_profile
-      )
-    );
-    const entity = replaceEntity(id, (e) => ({ ...e, alias }));
-    return delay({ entity });
-  },
-
-  /** DELETE — gone for good here (the backend soft-deletes); 409 while moderation holds it. */
   async remove(id: string): Promise<void> {
     const entity = findEntity(id);
+    if (entity.type === "personal") {
+      throw conflict(
+        ErrorCode.CardPermanent,
+        "A business card cannot be deleted; unpublish it instead."
+      );
+    }
     if (entity.status === "blocked") {
       throw conflict(ErrorCode.EntityBlocked, "Entity is blocked by moderation");
     }
@@ -798,7 +738,11 @@ export const mockPublicApi = {
    * code the fixtures do not know keeps answering the demo car, so the
    * existing `/mock/q/…` links stay a preview and never a 404.
    */
-  async scan(code: string, _locale?: ApiLocale): Promise<PublicEntityPayload> {
+  async scan(
+    code: string,
+    _locale?: ApiLocale,
+    _referrerHost?: string
+  ): Promise<PublicEntityPayload> {
     const qr = qrCodes.find((q) => q.code === code.toUpperCase());
     if (!qr) return delay(MOCK_PUBLIC_PAYLOAD);
     if (qr.status !== "activated") {
@@ -823,7 +767,11 @@ export const mockPublicApi = {
   },
 
   /** 404 / 410 exactly like the real resolver, so the error screens are reachable. */
-  async card(alias: string, _locale?: ApiLocale): Promise<PublicEntityPayload> {
+  async card(
+    alias: string,
+    _locale?: ApiLocale,
+    _referrerHost?: string
+  ): Promise<PublicEntityPayload> {
     const entity = resolveTarget({ kind: "alias", alias });
     if (!entity) {
       throw new ApiRequestError(404, {

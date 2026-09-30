@@ -3,7 +3,7 @@ import { MockShell } from "@/components/mock/MockShell";
 import { MockBanner } from "@/components/mock/MockBanner";
 import { PublicCardPage } from "@/components/public/PublicCardPage";
 
-/** Mock counterpart of the public card page — `demo` and `card-x7k2` live in the fixtures. */
+/** Mock counterpart of the public card page — `demo`, `k7m2p9xq` (hidden) and `h3k9dn4y` (blocked) live in the fixtures. */
 export default async function Page({
   params,
 }: {

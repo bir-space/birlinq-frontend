@@ -9,7 +9,6 @@
     "privacyTitle": "The owner's data is protected",
     "privacyText": "The phone number stays hidden unless the owner allows it",
     "personalFallback": "Personal page",
-    "contactTitle": "Get in touch",
     "channels": {
       "phone": "Phone",
       "phone2": "Second phone",
@@ -89,9 +88,9 @@
     "genericText": "The request could not be completed. Please try again.",
     "retry": "Retry",
     "cardNotFoundTitle": "Card not found",
-    "cardNotFoundText": "Check the link — the address may have changed or the card was deleted",
+    "cardNotFoundText": "Check the link — there is no card at this address",
     "unpublishedTitle": "Page hidden",
-    "unpublishedText": "The owner has temporarily turned publishing off",
+    "unpublishedText": "The owner has hidden this page",
     "blockedTitle": "Page blocked",
     "blockedText": "This page was blocked by moderation for breaking the rules"
   },
@@ -103,7 +102,6 @@
   "card": {
     "hiddenBadge": "Contacts protected",
     "privacyTitle": "The data is protected",
-    "privacyText": "The owner decides which contacts to show",
-    "scenarioBanner": "Your message goes to the card owner"
+    "privacyText": "The owner decides which contacts to show"
   }
 }

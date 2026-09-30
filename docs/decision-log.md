@@ -576,6 +576,137 @@ channels, privacy rules — belongs to the backend log. Reference it from here, 
 
 ---
 
+## FE-015 — Permanent card address, hide instead of delete; consent, account avatar, referrer
+
+- **Status:** Accepted
+- **Date:** 2026-09-29 (review follow-ups 2026-09-30)
+- **Owner:** Product owner, Frontend lead
+- **Context:** Backend D-044 made a card's address permanent: the server assigns it and it
+  is never changed, closed, released or reused, because it is printed on paper. An address
+  drawn since D-044 is eight lower-case characters of the sticker alphabet with nothing of
+  the person in it; the ones issued before — chosen or generated from a name under D-040,
+  3–30 characters, `demo` among them — are grandfathered and stay exactly as they are,
+  because the owner's requirement is that a link never changes. For the same reason a card
+  is never deleted; `status: deactivated` is the "unpublished" mark. D-045 added three
+  things the old product had: a consent flag on registration, an account avatar and the
+  referrer of a page open. The cabinet built for D-040 offered the opposite on every count:
+  an address field with validation and a "taken" flow, "open / close the link", "generate
+  a new address", a danger zone that deleted the card, and a registration checkbox that
+  never left the browser.
+- **Decision:**
+  - **The address is read-only everywhere.** `AliasSection` shows the link with copy and
+    open and says it is permanent. `AliasInput`, the address field of the create form,
+    `useCard.saveAlias` / `generateAlias`, `entitiesApi.generateAlias`, `ALIAS_RE`,
+    `normalizeAlias`, `isReservedAlias`, `LIMITS.alias*` and `ErrorCode.AliasTaken` are
+    removed; `CreateEntityRequest` and `UpdateEntityRequest` have no `alias` (the backend
+    refuses the key with its `missing` rule — any presence, `null` included, is 422
+    `details.alias`). `card.ts` keeps only `ALIAS_ALPHABET` and `ALIAS_LENGTH`, so the mock
+    tree mints the same shape; nothing validates an alias or assumes its length, because a
+    grandfathered one can be anything from 3 to 30 characters.
+  - **A card with no address yet says so.** An old row the backend's backfill has not
+    reached arrives with `alias: null`. `AliasSection` and `QrSection` then show one
+    sentence, `cards.alias.pending` ("the address is being assigned — reload in a
+    minute"), instead of `/p/…`, a dead copy button or a QR of nothing.
+  - **A card is hidden, never deleted.** `DangerSection` and the list's delete button are
+    gone. The list offers Hide / Show (`useCards.setPublished` — optimistic, rolled back on
+    failure, `blocked` for the 409 of a moderated card) and the editor keeps its publish
+    switch. `entitiesApi.remove` stays for cars and business entities; on a card the
+    backend answers 409 `CARD_PERMANENT` whatever its status (`ErrorCode.CardPermanent`),
+    which no screen reaches any more. Erasing a card's data is a staff moderation action
+    on the backend (content wiped, address kept, card deactivated); owners hide the card
+    or clear fields.
+  - **Pausing a sticker bound to a card closes the sticker only.** The card's permanent
+    link keeps working, so `QrDetailView` says so for a card (`dashboard.detail.pauseHintCard`)
+    and points at the publish switch; hiding the card closes both doors.
+  - **Consent is sent and linked.** `RegisterView` and the activation wizard's `AuthStep`
+    refuse to submit without the checkbox and send `privacy_accepted: true`;
+    `RegisterRequest` types the field as the literal `true`, so a call site cannot forget
+    it (the backend accepts only JSON `true`). The checkbox text `auth.register.terms`
+    gains a `<consent>` tag linking to `/consent` beside `<terms>` and `<privacy>`: the
+    consent to the processing of personal data is given in the same tick, so it has to be
+    readable from it. The privacy policy and the consent name what is now collected — the
+    account photo, the moment of consent, visit statistics with the referring domain and
+    a hashed visitor IP — and the privacy policy says a data-erasure request wipes the
+    card's content while its address stays reserved. The email banner no longer promises
+    that the email "can be deleted".
+  - **Account avatar.** `useProfile.uploadAvatar` / `removeAvatar` over
+    `authApi.uploadAvatar` / `removeAvatar`. `ImageUpload` takes `kind: "avatar"` — round,
+    with its own copy under `dashboard.profile.avatar` — and reuses the client-side
+    downscale; its `disabled` prop keeps it still while the account or password form is
+    saving. The profile pill shows the avatar through `imageSrc`, which keeps it to the
+    API origin.
+  - **Profile writes take the returned user.** `PATCH /auth/me` and both avatar calls
+    answer `{ user }`; `useProfile` hands it to the new `useAuth().applyUser`, which
+    replaces the session user and its cached snapshot, instead of a second
+    `GET /auth/me`. A ref guards concurrent writes on top of `busy`, as in
+    `useCreateCard`.
+  - **Referrer.** `publicApi.scan` and `card` take a third argument, `referrerHost`, sent
+    as the query parameter `?ref=<host>`. `pendingReferrerHost()` in `lib/public-url.ts`
+    computes it in the browser — the lower-cased hostname of `document.referrer`, nothing
+    when there is no referrer, when it does not parse or when it is our own host — and
+    `markReferrerSent()` retires it after the first successful public fetch of the
+    document, so a client-side navigation or a language switch that refetches never
+    counts the same arrival twice. `PublicPage` and `CardQrPage` take it before the fetch
+    and mark it after. The server normalises the value again and drops its internal hosts;
+    the statistics section lists `referrers_30d`.
+  - **Deploy order for this release: frontend first, then backend.** The new frontend
+    works against the old backend (no `alias` in any request; `?ref=` is ignored by a
+    server that does not read it); the old frontend cannot register against the new
+    backend, which requires `privacy_accepted`.
+- **Rationale:** The cabinet must not offer what the server will refuse, and must not name
+  an action by something it does not do. A "delete" that unpublishes would be a label that
+  lies, and a disabled address field would be dead UI inviting a support question; a
+  read-only link with a sentence of explanation is the whole truth. The standard `Referer`
+  of an XHR is always our own page, so the real one has to be forwarded by the page. A
+  query parameter carrying a hostname is the smallest thing that does it: a custom header
+  made every referred visit pay a CORS preflight, and the full referrer URL — path and
+  query of the visitor's previous page — reached the server and its error tracker although
+  only the host is ever kept.
+- **Alternatives considered:** (a) Keep "delete" and map it onto `status: deactivated` —
+  rejected, above. (b) Keep `ALIAS_RE` and the reserved list for display-time checks —
+  nothing types an address any more, and the grandfathered ones would fail an
+  eight-character check. (c) Store the consent moment in `localStorage` — the server is
+  the record, the browser is not. (d) Reuse the card photo as the account avatar — a
+  person with two cards has two photos and one face. (e) Send the full referrer in a
+  custom request header and let the server trim it — the first cut of this entry did; it
+  cost a preflight per referred visit and sent the full URL out of the browser.
+  (f) Send `?ref=` on every public fetch — a language switch refetches, and each would
+  count as a new arrival from the same site.
+- **Consequences:**
+  - The mock tree follows: `drawAlias()`, 422 for an `alias` key in create or update, 409
+    `CARD_PERMANENT` on removing a card, the register call validates the flag, the avatar
+    is an object URL, `applyUser` on the mock session. The fixtures' new aliases are eight
+    characters (`k7m2p9xq` hidden, `h3k9dn4y` blocked); `demo` stays, as the seeder's
+    grandfathered one.
+  - i18n, RU/KK/EN together: `cards.alias` keeps its link, copy, permanence and the new
+    `pending` sentence and loses `label` (the section title is `cards.sections.alias`);
+    `cards.danger`, `cards.list.delete*`, `cards.list.linkClosed`, `cards.create.alias*`
+    and `cards.qr.noAlias*` are removed, and so are the keys no screen reads any more
+    (`cards.create.created`, `cards.qr.download/copy/copied/share/stickerPaused`,
+    `cards.stats.period30/period7`, `cards.errors.generic/blocked/rateLimited/load`,
+    `common.delete/confirm`, `card.actions.copyLink`, `public.entity.contactTitle`,
+    `public.card.scenarioBanner`); `cards.list.actions.hide/show`, `cards.list.publish*`,
+    `cards.create.addressNote`, `cards.alias.pending`, `cards.stats.referrers/noReferrers`,
+    `dashboard.detail.pauseHintCard` and `dashboard.profile.avatar.*` are added.
+  - Copy that promised what no longer exists is corrected: the Pro plan's "custom link
+    address" bullet, and its "statistics by channel" and "traffic sources" bullets, which
+    every card already has; the pricing note that limits are not enforced; the card-limit
+    text that suggested deleting a card; the "address may have changed" line of the
+    card-not-found screen; the "turned publishing off temporarily" line of the hidden-page
+    screen; and the "can be deleted" promise under the registration email.
+  - With a card limit configured on the backend, hidden cards still count: a card cannot
+    be removed to make room. Whether `deactivated` cards should stop counting is a product
+    decision for the day billing exists.
+  - `NEXT_PUBLIC_APP_URL` is now part of every printed address: the frontend domain has to
+    be final before owners print, and a retired host must keep answering 301 to the new
+    one (README deploy checklist).
+  - FE-011 never recorded alias editing or card deletion: the D-040-era behaviour —
+    choosing, closing and regenerating the address, deleting a card — was described only
+    in `README.md`, `CONVENTIONS.md` and `docs/architecture/monorepo.md`, and this entry
+    replaces it there. FE-011 itself stands as written.
+
+---
+
 ## Decisions yet to be made
 
 | ID | Question | Owner | Target |

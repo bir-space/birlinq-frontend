@@ -39,8 +39,8 @@ export const ErrorCode = {
   EntityNotPublished: "ENTITY_NOT_PUBLISHED",
   /** 409: moderation blocked this entity; the owner can neither change its status nor delete it. */
   EntityBlocked: "ENTITY_BLOCKED",
-  /** 409 on POST/PATCH /entities: another card already holds this alias. */
-  AliasTaken: "ALIAS_TAKEN",
+  /** 409 on DELETE /entities/{id}: a business card is never deleted (D-044) — unpublish it instead. */
+  CardPermanent: "CARD_PERMANENT",
   /** 409 on POST /entities: `cards.max_per_user` reached. */
   CardLimitReached: "CARD_LIMIT_REACHED",
   ScenarioNotFound: "SCENARIO_NOT_FOUND",

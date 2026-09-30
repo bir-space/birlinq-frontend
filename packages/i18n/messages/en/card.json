@@ -6,8 +6,7 @@
     "save": "Save contact",
     "share": "Share",
     "qr": "QR code",
-    "open": "Open the card",
-    "copyLink": "Copy link"
+    "open": "Open the card"
   },
   "sections": {
     "contacts": "Contacts",

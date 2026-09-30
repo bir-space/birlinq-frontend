@@ -8,9 +8,10 @@ export const CARDS_PAGE_SIZE = 20;
 
 /**
  * Codes, not text — the view maps them onto its own messages. `blocked` is
- * the 409 a moderated card answers to DELETE; the row stays, the view says why.
+ * the 409 a moderated card answers to a status change; the row keeps its
+ * status, the view says why.
  */
-export type CardsActionError = "loadMore" | "remove" | "blocked" | null;
+export type CardsActionError = "loadMore" | "publish" | "blocked" | null;
 
 export interface UseCards {
   items: Entity[];
@@ -19,13 +20,17 @@ export interface UseCards {
   error: boolean;
   hasMore: boolean;
   loadingMore: boolean;
-  /** The card being deleted; one at a time. */
+  /** The card whose status is being changed; one at a time. */
   busyId: string | null;
   actionError: CardsActionError;
   retry: () => void;
   loadMore: () => Promise<void>;
-  /** Resolves true once the card is gone server-side. */
-  remove: (id: string) => Promise<boolean>;
+  /**
+   * Show or hide a card from the list — `active` or `deactivated`, in
+   * place. Hiding is as far as it goes: a card is never deleted, its
+   * address is permanent (D-044). Resolves true once the server agreed.
+   */
+  setPublished: (id: string, published: boolean) => Promise<boolean>;
 }
 
 /** True when another page follows — a backend from before D-041 sends no `has_more`. */
@@ -36,7 +41,7 @@ export function nextHasMore(meta: {
   return meta.has_more ?? meta.next_cursor !== null;
 }
 
-/** The owner's business cards (`personal` entities), one cursor page at a time, delete in place. */
+/** The owner's business cards (`personal` entities), one cursor page at a time, show/hide in place. */
 export function useCards(): UseCards {
   const api = useApi();
 
@@ -97,35 +102,41 @@ export function useCards(): UseCards {
     }
   }, [api, cursor, loadingMore]);
 
-  const remove = useCallback(
-    async (id: string) => {
+  const setPublished = useCallback(
+    async (id: string, published: boolean) => {
       if (busyId !== null) return false;
+      const status = published ? "active" : "deactivated";
       setBusyId(id);
       setActionError(null);
-      // Optimistic: the row disappears now and comes back only on failure.
-      // Only the removed row is remembered, so a page appended by loadMore
+      // Optimistic: the badge flips now and flips back only on failure.
+      // Only the one row is remembered, so a page appended by loadMore
       // while the request is in flight survives the rollback.
-      let removed: Entity | undefined;
-      let index = -1;
-      setItems((cur) => {
-        index = cur.findIndex((e) => e.id === id);
-        removed = cur[index];
-        return cur.filter((e) => e.id !== id);
-      });
+      let previous: Entity["status"] | null = null;
+      setItems((cur) =>
+        cur.map((e) => {
+          if (e.id !== id) return e;
+          previous = e.status;
+          return { ...e, status };
+        })
+      );
       try {
-        await api.entities.remove(id);
+        const { entity } = await api.entities.update(id, { status });
+        setItems((cur) => cur.map((e) => (e.id === id ? entity : e)));
         return true;
       } catch (err) {
-        setItems((cur) => {
-          if (!removed || cur.some((e) => e.id === id)) return cur;
-          const at = Math.min(Math.max(index, 0), cur.length);
-          return [...cur.slice(0, at), removed, ...cur.slice(at)];
-        });
-        setActionError(
-          err instanceof ApiRequestError && err.code === ErrorCode.EntityBlocked
-            ? "blocked"
-            : "remove"
+        const blocked =
+          err instanceof ApiRequestError && err.code === ErrorCode.EntityBlocked;
+        const rollback = previous;
+        setItems((cur) =>
+          cur.map((e) => {
+            if (e.id !== id) return e;
+            // The server is the authority on `blocked`: show it rather than
+            // the status the row had before moderation stepped in.
+            if (blocked) return { ...e, status: "blocked" };
+            return rollback !== null ? { ...e, status: rollback } : e;
+          })
         );
+        setActionError(blocked ? "blocked" : "publish");
         return false;
       } finally {
         setBusyId(null);
@@ -144,6 +155,6 @@ export function useCards(): UseCards {
     actionError,
     retry,
     loadMore,
-    remove,
+    setPublished,
   };
 }

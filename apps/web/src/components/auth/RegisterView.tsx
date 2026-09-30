@@ -69,6 +69,8 @@ function RegisterForm() {
         ...identifierPayload(method, identifier),
         password,
         locale: toApiLocale(locale),
+        // The checkbox is validated above; the server records the moment (D-045).
+        privacy_accepted: true,
       });
       await refresh();
       router.replace(next ?? href("/dashboard"));
@@ -194,6 +196,16 @@ function RegisterForm() {
                 privacy: (chunks) => (
                   <Link
                     href="/privacy"
+                    target="_blank"
+                    rel="noopener"
+                    className={legalLink}
+                  >
+                    {chunks}
+                  </Link>
+                ),
+                consent: (chunks) => (
+                  <Link
+                    href="/consent"
                     target="_blank"
                     rel="noopener"
                     className={legalLink}

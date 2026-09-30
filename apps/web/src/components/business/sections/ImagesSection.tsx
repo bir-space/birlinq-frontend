@@ -39,6 +39,9 @@ export function ImagesSection({ card, entity, feedback, run }: SectionProps) {
       label={t(`images.${kind}`)}
       src={imageSrc(kind === "photo" ? profile?.photo_url : profile?.cover_url)}
       busy={card.busy === kind}
+      // Another section is writing: `useCard` would refuse this write and
+      // it would read as a failed upload.
+      disabled={card.busy !== null && card.busy !== kind}
       onUpload={(file, filename) =>
         attempt({ kind, action: "upload" }, () =>
           card.uploadImage(kind, file, filename)

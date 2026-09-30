@@ -55,6 +55,13 @@ export interface User {
   locale: string;
   /** null for phone-only accounts and for an address not confirmed yet. */
   email_verified_at: string | null;
+  /**
+   * When the person accepted the privacy policy and terms at registration
+   * (D-045); null for accounts registered before consent was recorded.
+   */
+  privacy_accepted_at: string | null;
+  /** The account avatar set through `authApi.uploadAvatar`; null when none. */
+  avatar_url: string | null;
   created_at: string;
 }
 
@@ -91,6 +98,13 @@ export interface RegisterRequest {
   password: string; // min 8
   locale?: ApiLocale;
   device_name?: string;
+  /**
+   * Consent to the terms, the privacy policy and the processing of personal
+   * data (D-045): must be JSON `true` — `false`, `null`, `"yes"`, `"on"` or
+   * `"true"` are 422 with `details.privacy_accepted`. The moment comes back
+   * as `user.privacy_accepted_at`.
+   */
+  privacy_accepted: true;
 }
 
 export interface LoginRequest {
@@ -281,9 +295,14 @@ export interface Entity {
   title: string | null;
   status: EntityStatus;
   /**
-   * Slug of the public link `/p/{alias}` — `personal` entities only, always
-   * null for the rest. null means the link entry is closed (D-040): cards
-   * created before the alias existed stay closed until the owner opens one.
+   * The public link `/p/{alias}` — `personal` entities only, always null for
+   * the rest. Assigned by the server and permanent (D-044): never chosen,
+   * changed, released or reused. An address drawn since D-044 is eight
+   * lower-case characters of the sticker alphabet; one issued earlier keeps
+   * its 3..30-character shape (`demo`, `asel-nurlanova-k3p9`), so never
+   * assume a length. A card created on the new backend always has one; null
+   * on a card means an old row the backfill has not reached yet — show that
+   * the address is pending rather than a broken link.
    */
   alias: string | null;
   privacy_settings: PrivacySettings | null;
@@ -303,28 +322,25 @@ export interface EntityListParams {
 /**
  * POST /entities (D-041). `contact` and `privacy_settings` are applied in the
  * same transaction, so a business card is one request instead of three.
- * `alias` is `personal`-only: omitted, the server generates one (from the
- * display name when `show_display_name` is on in this request, else
- * `card-xxxxxx`); a taken alias answers 409 ALIAS_TAKEN, a reserved or
- * malformed one 422. 409 CARD_LIMIT_REACHED when `cards.max_per_user` is hit.
+ * The card's address is not a field: the server assigns it (D-044) and
+ * answers 422 to any `alias` sent. 409 CARD_LIMIT_REACHED when
+ * `cards.max_per_user` is hit.
  */
 export interface CreateEntityRequest {
   type: EntityType;
   title?: string | null;
-  alias?: string;
   privacy_settings?: Partial<PrivacySettings>;
   contact?: UpsertContactRequest;
 }
 
 /**
- * PATCH /entities/{id}. `alias: null` closes the public link; a taken alias
- * answers 409 ALIAS_TAKEN, an alias on a `car` 422. `status` while blocked
- * answers 409 ENTITY_BLOCKED.
+ * PATCH /entities/{id}. `status` while blocked answers 409 ENTITY_BLOCKED.
+ * For a card, `deactivated` is the "unpublished" mark — a card is never
+ * deleted (D-044). The address is permanent and cannot be sent here.
  */
 export interface UpdateEntityRequest {
   title?: string | null;
   status?: PublishStatus;
-  alias?: string | null;
 }
 
 /** PUT /entities/{id}/vehicle — make/model/color are required. */
@@ -383,8 +399,20 @@ export interface EntityStats {
   shares_total: number;
   shares_30d: number;
   last_view_at: string | null;
+  /**
+   * Where the last 30 days of page opens came from, by referrer host,
+   * most frequent first, ten at most (D-045). Opens with no referrer — a
+   * camera app, a typed address, our own pages — are not listed.
+   */
+  referrers_30d: ReferrerStat[];
   /** 30 buckets, zero-filled, oldest first. */
   daily: DailyStat[];
+}
+
+/** One row of `EntityStats.referrers_30d`. */
+export interface ReferrerStat {
+  host: string;
+  views: number;
 }
 
 // ---------- QR ----------
@@ -492,7 +520,11 @@ export interface PublicEntityPayload {
   entity: {
     type: EntityType;
     title?: string | null;
-    /** Present when the card has an open public link — the value to build `/p/{alias}` and the QR from. */
+    /**
+     * Present for a `personal` card — its permanent address, the value to
+     * build `/p/{alias}` and the QR from. Eight characters when drawn since
+     * D-044, 3..30 when issued earlier; both are kept as they are.
+     */
     alias?: string;
     /** Present for `car` entities. */
     vehicle?: PublicVehicle;

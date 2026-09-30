@@ -58,8 +58,8 @@ export default async function MockIndexPage({ params }: Props) {
       links: [
         { href: "/mock/p/demo", label: t("links.cardPublic") },
         { href: "/mock/p/demo/qr", label: t("links.cardQr") },
-        { href: "/mock/p/card-x7k2", label: t("links.cardUnpublished") },
-        { href: "/mock/p/daniyar-a", label: t("links.cardBlocked") },
+        { href: "/mock/p/k7m2p9xq", label: t("links.cardUnpublished") },
+        { href: "/mock/p/h3k9dn4y", label: t("links.cardBlocked") },
         { href: "/mock/q/PERS1234", label: t("links.cardScan") },
       ],
     },

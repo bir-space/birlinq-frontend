@@ -30,24 +30,20 @@ export type CardBusy =
   | "contact"
   | "privacy"
   | "publish"
-  | "alias"
   | "photo"
   | "cover"
   | "attach"
-  | "remove"
   | null;
 
 /**
  * Codes, not text. `blocked` is 409 ENTITY_BLOCKED — moderation holds the
- * card, so publishing and deleting are off until it is released; `aliasTaken`
- * is 409 ALIAS_TAKEN; `validation` comes with `fieldErrors`. The `qr*` and
- * `entityHasQr` codes belong to `attachSticker`.
+ * card, so publishing is off until it is released; `validation` comes with
+ * `fieldErrors`. The `qr*` and `entityHasQr` codes belong to `attachSticker`.
  */
 export type CardActionError =
   | "save"
   | "validation"
   | "blocked"
-  | "aliasTaken"
   | "rateLimited"
   | "attach"
   | "qrNotFound"
@@ -76,16 +72,11 @@ export interface UseCard {
   saveContact: (body: UpsertContactRequest) => Promise<boolean>;
   togglePrivacy: (key: CardPrivacyKey, value: boolean) => Promise<boolean>;
   applyPrivacyPreset: (preset: CardPrivacyPreset) => Promise<boolean>;
-  /** `active` or `deactivated`; 409 while blocked. */
-  setPublished: (published: boolean) => Promise<boolean>;
-  /** A slug opens or moves the public link, null closes it. */
-  saveAlias: (alias: string | null) => Promise<boolean>;
   /**
-   * POST /entities/{id}/alias — a fresh server-made alias, replacing the
-   * current one or opening a closed link. Never optimistic: the value is
-   * the server's to choose.
+   * `active` or `deactivated`; 409 while blocked. Hiding is as far as a
+   * card goes — it is never deleted, its address is permanent (D-044).
    */
-  generateAlias: () => Promise<boolean>;
+  setPublished: (published: boolean) => Promise<boolean>;
   uploadImage: (
     kind: ContactImageKind,
     file: Blob,
@@ -97,8 +88,6 @@ export interface UseCard {
     code: string,
     activationToken: string
   ) => Promise<QrCode | null>;
-  /** DELETE — resolves true once gone; the view navigates away. */
-  remove: () => Promise<boolean>;
 }
 
 const BOUND_STATUSES: ReadonlySet<QrCode["status"]> = new Set([
@@ -122,9 +111,6 @@ function mapWriteError(err: unknown): Failure {
     }
     if (err.code === ErrorCode.EntityBlocked) {
       return { error: "blocked", fieldErrors: {} };
-    }
-    if (err.code === ErrorCode.AliasTaken) {
-      return { error: "aliasTaken", fieldErrors: {} };
     }
     if (err.status === 429) return { error: "rateLimited", fieldErrors: {} };
   }
@@ -304,18 +290,6 @@ export function useCard(id: string): UseCard {
     [api, id, busy, clearActionError, fail]
   );
 
-  // Not optimistic: the backend normalises the slug and may refuse it.
-  const saveAlias = useCallback(
-    (alias: string | null) =>
-      runWrite("alias", () => api.entities.update(id, { alias })),
-    [api, id, runWrite]
-  );
-
-  const generateAlias = useCallback(
-    () => runWrite("alias", () => api.entities.generateAlias(id)),
-    [api, id, runWrite]
-  );
-
   const uploadImage = useCallback(
     (kind: ContactImageKind, file: Blob, filename?: string) =>
       runWrite(kind, () =>
@@ -388,21 +362,6 @@ export function useCard(id: string): UseCard {
     [api, id, busy, clearActionError, fail]
   );
 
-  const remove = useCallback(async () => {
-    if (busy !== null) return false;
-    setBusy("remove");
-    clearActionError();
-    try {
-      await api.entities.remove(id);
-      return true;
-    } catch (err) {
-      fail(mapWriteError(err));
-      return false;
-    } finally {
-      setBusy(null);
-    }
-  }, [api, id, busy, clearActionError, fail]);
-
   return {
     entity,
     stickers,
@@ -418,11 +377,8 @@ export function useCard(id: string): UseCard {
     togglePrivacy,
     applyPrivacyPreset,
     setPublished,
-    saveAlias,
-    generateAlias,
     uploadImage,
     removeImage,
     attachSticker,
-    remove,
   };
 }

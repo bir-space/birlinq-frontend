@@ -136,6 +136,7 @@
     "sectionDanger": "Danger zone",
     "pauseTitle": "Pause QR",
     "pauseHint": "The public page will become unavailable",
+    "pauseHintCard": "The sticker stops opening the card. The /p/… link keeps working — to hide the card completely, turn publishing off in its settings.",
     "resumeTitle": "Resume QR",
     "resumeHint": "The public page will be available again",
     "notFound": "QR code not found",
@@ -178,8 +179,9 @@
   },
   "profile": {
     "title": "Profile",
-    "subtitle": "Account, password and sessions",
+    "subtitle": "Photo, account, password and sessions",
     "sections": {
+      "avatar": "Profile photo",
       "account": "Account",
       "password": "Password",
       "sessions": "Sessions",
@@ -209,6 +211,21 @@
     "logoutAllHint": "Ends every session, including this one",
     "logoutAll": "Sign out everywhere",
     "legalHint": "birlinq rules and policies",
+    "avatar": {
+      "label": "Profile photo",
+      "hint": "JPEG, PNG or WebP up to 5 MB. Larger files are resized for you.",
+      "upload": "Upload",
+      "replace": "Replace",
+      "remove": "Remove",
+      "processing": "Processing…",
+      "errors": {
+        "badType": "Use a JPEG, PNG or WebP",
+        "tooLarge": "The file is too large even after resizing",
+        "read": "Could not read the file",
+        "upload": "Could not upload the photo. Please try again.",
+        "remove": "Could not remove the photo. Please try again."
+      }
+    },
     "errors": {
       "nameRequired": "Enter a name",
       "nameMin": "The name needs at least {n} characters",

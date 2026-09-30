@@ -15,11 +15,6 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Input } from "@/components/ui/Input";
-import {
-  AliasInput,
-  aliasIssue,
-  trimAliasDashes,
-} from "@/components/forms/AliasInput";
 import { ThemePicker } from "@/components/forms/ThemePicker";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { BackLink, IconCheck, SectionLabel } from "@/components/dashboard/bits";
@@ -36,18 +31,17 @@ export function CardCreateView({ banner }: { banner?: ReactNode }) {
 
 interface LocalErrors {
   displayName?: string;
-  alias?: string;
 }
 
 /**
  * The essentials of a new card in one POST: name (required), title and
- * company, a theme, an optional address and a privacy preset — `contact`
- * and `privacy_settings` ride inside the create request (D-041). Everything
- * else is added on the edit page the owner lands on afterwards.
+ * company, a theme and a privacy preset — `contact` and `privacy_settings`
+ * ride inside the create request (D-041). The address is the server's to
+ * draw (D-044); it arrives with the created card. Everything else is added
+ * on the edit page the owner lands on afterwards.
  */
 function CardCreate() {
   const t = useTranslations("cards");
-  const tAlias = useTranslations("cards.alias");
   const router = useRouter();
   const href = useHref();
   const { submitting, error, fieldErrors, create, clearError } = useCreateCard();
@@ -56,7 +50,6 @@ function CardCreate() {
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
   const [theme, setTheme] = useState<CardTheme>("default");
-  const [alias, setAlias] = useState("");
   const [preset, setPreset] = useState<CardPrivacyPreset>("card");
   const [localErrors, setLocalErrors] = useState<LocalErrors>({});
   const [limitOpen, setLimitOpen] = useState(false);
@@ -73,12 +66,8 @@ function CardCreate() {
     if (!name) next.displayName = t("create.errors.nameRequired");
     else if (name.length < NAME_MIN)
       next.displayName = t("create.errors.nameMin", { n: NAME_MIN });
-    const slug = trimAliasDashes(alias);
-    if (slug !== alias) setAlias(slug);
-    const issue = aliasIssue(slug);
-    if (issue) next.alias = tAlias(`errors.${issue}`, { n: LIMITS.aliasMin });
     setLocalErrors(next);
-    if (next.displayName || next.alias) return;
+    if (next.displayName) return;
 
     const entity = await create({
       contact: {
@@ -88,7 +77,6 @@ function CardCreate() {
         theme,
       },
       privacy_settings: PRIVACY_PRESETS[preset],
-      ...(slug ? { alias: slug } : {}),
     });
     if (entity) router.replace(href(`/dashboard/cards/${entity.id}`));
   };
@@ -96,19 +84,12 @@ function CardCreate() {
   const nameError =
     localErrors.displayName ??
     (error === "validation" ? (fieldErrors.display_name ?? null) : null);
-  const aliasError =
-    localErrors.alias ??
-    (error === "aliasTaken"
-      ? t("create.errors.aliasTaken")
-      : error === "validation"
-        ? (fieldErrors.alias ?? null)
-        : null);
   const formError =
     error === "rateLimited"
       ? t("create.errors.rateLimited")
       : error === "create"
         ? t("create.errors.generic")
-        : error === "validation" && !nameError && !aliasError
+        : error === "validation" && !nameError
           ? t("errors.validation")
           : null;
 
@@ -179,26 +160,6 @@ function CardCreate() {
         </section>
 
         <section>
-          {/* Optional by design: left empty, the server mints the address (D-040). */}
-          <SectionLabel>
-            {t("create.aliasTitle")} · {t("create.aliasOptional")}
-          </SectionLabel>
-          <Card>
-            <AliasInput
-              value={alias}
-              onChange={(next) => {
-                setAlias(next);
-                setLocalErrors((cur) => ({ ...cur, alias: undefined }));
-                if (error === "aliasTaken") clearError();
-              }}
-              hint={t("create.aliasHint")}
-              error={aliasError}
-              disabled={submitting}
-            />
-          </Card>
-        </section>
-
-        <section>
           <SectionLabel>{t("create.privacyTitle")}</SectionLabel>
           <div
             role="radiogroup"
@@ -244,6 +205,9 @@ function CardCreate() {
             })}
           </div>
         </section>
+
+        {/* The address is drawn by the server and shown on the edit page; nothing to type here. */}
+        <p className="text-[12px] text-muted-2">{t("create.addressNote")}</p>
 
         {formError && (
           <p className="rounded-(--radius-btn) border border-danger/30 bg-danger/10 px-4 py-2.5 text-[13px] text-danger">

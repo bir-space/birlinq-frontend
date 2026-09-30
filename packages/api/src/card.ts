@@ -1,4 +1,3 @@
-import { LIMITS } from "./limits";
 import type {
   CardTheme,
   ContactChannel,
@@ -9,7 +8,8 @@ import type {
 
 /**
  * Business-card vocabulary shared by every client: the closed enums as
- * iterable lists, the alias rules and the two public paths (D-040, D-041).
+ * iterable lists, the shape of the permanent address and the two public
+ * paths (D-040, D-041, D-044).
  *
  * The backend is the authority on all of it. These mirrors let a form warn
  * before the round trip; they never replace the 422 or 409 that follows a
@@ -75,88 +75,15 @@ export const SHARE_CHANNELS = [
   "telegram",
 ] as const satisfies readonly ShareChannel[];
 
-/** App\Domain\Entity\Alias::PATTERN — lower-case, 3..30 of `a-z 0-9 _ -`. */
-export const ALIAS_RE = /^[a-z0-9_-]{3,30}$/;
-
 /**
- * Mirror of `config/birlinq.php` → `alias.reserved`: route segments and
- * words that would read as ours. Used to warn in the field; the backend
- * answers 422 for these regardless, and its list is the one that counts.
- * `demo` is deliberately absent — the seeded demo card lives there.
+ * The shape of a card address drawn since D-044: eight characters of the
+ * sticker alphabet in lower case — no 0/o, no i/l. The server draws it;
+ * clients never build one. Here so the mock tree can mint the same shape.
+ * Not a rule to validate against: addresses issued earlier keep their
+ * 3..30-character shape forever (`demo`, `asel-nurlanova-k3p9`).
  */
-export const RESERVED_ALIASES: ReadonlySet<string> = new Set([
-  "admin",
-  "api",
-  "app",
-  "auth",
-  "login",
-  "logout",
-  "register",
-  "signup",
-  "dashboard",
-  "cabinet",
-  "public",
-  "card",
-  "cards",
-  "new",
-  "edit",
-  "profile",
-  "settings",
-  "pricing",
-  "design",
-  "mock",
-  "static",
-  "assets",
-  "storage",
-  "www",
-  "mail",
-  "support",
-  "help",
-  "about",
-  "terms",
-  "privacy",
-  "offer",
-  "consent",
-  "contact",
-  "themes",
-  "qr",
-  "root",
-  "system",
-  "test",
-  "null",
-  "undefined",
-]);
-
-/** An alias starting with any of these is reserved as well. */
-export const RESERVED_ALIAS_PREFIXES = [
-  "birlinq",
-  "bir-",
-  "support",
-  "admin",
-] as const;
-
-/** True for a value the backend will refuse as reserved (expects a normalised alias). */
-export function isReservedAlias(alias: string): boolean {
-  return (
-    RESERVED_ALIASES.has(alias) ||
-    RESERVED_ALIAS_PREFIXES.some((prefix) => alias.startsWith(prefix))
-  );
-}
-
-/**
- * What the alias field does to whatever was typed or pasted: lower-case,
- * whitespace to dashes, everything outside the alphabet dropped, clipped to
- * the limit. Does not guarantee validity — a two-character result still
- * fails `ALIAS_RE`, and a reserved word still fails `isReservedAlias`.
- */
-export function normalizeAlias(raw: string): string {
-  return raw
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9_-]/g, "")
-    .slice(0, LIMITS.alias);
-}
+export const ALIAS_ALPHABET = "123456789abcdefghjkmnpqrstuvwxyz";
+export const ALIAS_LENGTH = 8;
 
 /** Scheme, optional userinfo, then the host — stops at port, path, query or fragment. */
 const HTTPS_HOST_RE = /^https:\/\/(?:[^@/?#]*@)?([^/?#:]+)/i;

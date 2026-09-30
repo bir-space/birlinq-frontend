@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import type { Entity } from "@birlinq/api";
 import { useHref } from "@birlinq/platform";
 import { useCards } from "@birlinq/core";
 import { Button } from "@/components/ui/Button";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import {
@@ -17,7 +15,6 @@ import {
   IconPlus,
   IconQr,
 } from "@/components/dashboard/bits";
-import { IconTrash } from "@/components/card/icons";
 import { CardTile, LinkButton } from "@/components/business/bits";
 
 export function CardsListView({ banner }: { banner?: ReactNode }) {
@@ -28,7 +25,11 @@ export function CardsListView({ banner }: { banner?: ReactNode }) {
   );
 }
 
-/** Every card the owner has, newest first, one cursor page at a time. */
+/**
+ * Every card the owner has, newest first, one cursor page at a time. A
+ * card is shown or hidden from here, never deleted: its address is
+ * permanent (D-044), and hiding is what "getting rid of it" means.
+ */
 function CardsList() {
   const t = useTranslations("cards.list");
   const tc = useTranslations("common");
@@ -43,23 +44,14 @@ function CardsList() {
     actionError,
     retry,
     loadMore,
-    remove,
+    setPublished,
   } = useCards();
-  const [confirm, setConfirm] = useState<Entity | null>(null);
 
-  const confirmRemove = async () => {
-    if (!confirm) return;
-    const ok = await remove(confirm.id);
-    if (ok) setConfirm(null);
-    // On failure the row is already back (optimistic rollback) and the
-    // modal stays open with the reason.
-  };
-
-  const removeError =
+  const publishError =
     actionError === "blocked"
-      ? t("deleteBlocked")
-      : actionError === "remove"
-        ? t("deleteError")
+      ? t("publishBlocked")
+      : actionError === "publish"
+        ? t("publishError")
         : null;
 
   const createButton = (
@@ -105,51 +97,57 @@ function CardsList() {
               {t("loadMoreError")}
             </p>
           )}
-          {!confirm && removeError && (
+          {publishError && (
             <p className="rounded-(--radius-btn) border border-danger/30 bg-danger/10 px-4 py-2.5 text-[13px] text-danger">
-              {removeError}
+              {publishError}
             </p>
           )}
 
           {/* grid-cols-1 / min-w-0: see QrListView — a `truncate` line's
               min-content is the whole string. */}
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {items.map((entity) => (
-              <li key={entity.id} className="flex min-w-0">
-                <CardTile
-                  entity={entity}
-                  href={href(`/dashboard/cards/${entity.id}`)}
-                >
-                  {entity.alias && (
-                    <LinkButton
-                      href={href(`/p/${entity.alias}`)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <IconExternal />
-                      {t("actions.open")}
-                    </LinkButton>
-                  )}
-                  <LinkButton href={href(`/dashboard/cards/${entity.id}#qr`)}>
-                    <IconQr className="size-4" />
-                    {t("actions.qr")}
-                  </LinkButton>
-                  <LinkButton href={href(`/dashboard/cards/${entity.id}`)}>
-                    {t("actions.edit")}
-                  </LinkButton>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto text-danger hover:text-danger"
-                    disabled={busyId !== null}
-                    onClick={() => setConfirm(entity)}
+            {items.map((entity) => {
+              const published = entity.status === "active";
+              const blocked = entity.status === "blocked";
+              return (
+                <li key={entity.id} className="flex min-w-0">
+                  <CardTile
+                    entity={entity}
+                    href={href(`/dashboard/cards/${entity.id}`)}
                   >
-                    <IconTrash className="size-4" />
-                    {t("actions.delete")}
-                  </Button>
-                </CardTile>
-              </li>
-            ))}
+                    {entity.alias && (
+                      <LinkButton
+                        href={href(`/p/${entity.alias}`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <IconExternal />
+                        {t("actions.open")}
+                      </LinkButton>
+                    )}
+                    <LinkButton href={href(`/dashboard/cards/${entity.id}#qr`)}>
+                      <IconQr className="size-4" />
+                      {t("actions.qr")}
+                    </LinkButton>
+                    <LinkButton href={href(`/dashboard/cards/${entity.id}`)}>
+                      {t("actions.edit")}
+                    </LinkButton>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto"
+                      loading={busyId === entity.id}
+                      disabled={blocked || busyId !== null}
+                      onClick={() => {
+                        void setPublished(entity.id, !published);
+                      }}
+                    >
+                      {published ? t("actions.hide") : t("actions.show")}
+                    </Button>
+                  </CardTile>
+                </li>
+              );
+            })}
           </ul>
 
           {hasMore && (
@@ -163,20 +161,6 @@ function CardsList() {
             </Button>
           )}
         </>
-      )}
-
-      {confirm && (
-        <ConfirmModal
-          title={t("deleteTitle")}
-          text={t("deleteText")}
-          confirmLabel={t("deleteConfirm")}
-          cancelLabel={tc("cancel")}
-          onConfirm={confirmRemove}
-          onClose={() => setConfirm(null)}
-          loading={busyId === confirm.id}
-          danger
-          error={removeError}
-        />
       )}
     </div>
   );

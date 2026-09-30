@@ -152,9 +152,11 @@ export function CardTile({
           {line && (
             <p className="mt-0.5 truncate text-[13px] text-muted">{line}</p>
           )}
-          <p className="mt-0.5 truncate font-mono text-[12px] text-muted-2">
-            {entity.alias ? `/p/${entity.alias}` : t("linkClosed")}
-          </p>
+          {entity.alias && (
+            <p className="mt-0.5 truncate font-mono text-[12px] text-muted-2">
+              /p/{entity.alias}
+            </p>
+          )}
         </div>
         <IconChevronRight className="size-5 shrink-0 text-muted-2 transition-colors group-hover:text-white" />
       </Link>

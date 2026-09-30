@@ -14,33 +14,42 @@ export const MAX_EDGE = 2048;
 
 type LocalError = "badType" | "tooLarge" | "read" | null;
 
+/** The card's two images, or the account avatar (D-045) — the same control, its own copy. */
+export type UploadKind = ContactImageKind | "avatar";
+
 /**
- * A photo or cover picker for the card editor. The file is checked and,
- * when it is over the upload limit or larger than 2048 px on a side,
- * downscaled on a canvas before `onUpload` sees it — a 12 MB phone photo
- * becomes a ~1 MB JPEG without the owner learning what a megabyte is.
- * The server still validates; this only spares the round trip.
+ * A photo, cover or avatar picker. The file is checked and, when it is over
+ * the upload limit or larger than 2048 px on a side, downscaled on a canvas
+ * before `onUpload` sees it — a 12 MB phone photo becomes a ~1 MB JPEG
+ * without the owner learning what a megabyte is. The server still
+ * validates; this only spares the round trip.
  */
 export function ImageUpload({
   kind,
   label,
   src,
   busy,
+  disabled: disabledByPage = false,
   onUpload,
   onRemove,
   error = null,
 }: {
-  kind: ContactImageKind;
+  kind: UploadKind;
   label: string;
   /** The stored image, already passed through `imageSrc`. */
   src: string | null;
+  /** This control's own write is in flight — shows the spinner. */
   busy: boolean;
+  /** Another write on the page is in flight — pick, upload and remove wait, without a spinner. */
+  disabled?: boolean;
   onUpload: (file: Blob, filename: string) => Promise<boolean>;
   onRemove: () => Promise<boolean>;
   /** A message from the server (upload/remove failure), shown under the control. */
   error?: string | null;
 }) {
-  const t = useTranslations("cards.images");
+  const t = useTranslations(
+    kind === "avatar" ? "dashboard.profile.avatar" : "cards.images"
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
   const [localError, setLocalError] = useState<LocalError>(null);
@@ -54,7 +63,11 @@ export function ImageUpload({
     [preview]
   );
 
-  const pick = () => inputRef.current?.click();
+  const disabled = busy || disabledByPage || processing;
+
+  const pick = () => {
+    if (!disabled) inputRef.current?.click();
+  };
 
   const handleChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,13 +97,13 @@ export function ImageUpload({
   };
 
   const handleRemove = async () => {
+    if (disabled) return;
     setLocalError(null);
     const ok = await onRemove();
     if (ok) setPreview(null);
   };
 
   const shown = preview ?? src;
-  const disabled = busy || processing;
   const message = localError ? t(`errors.${localError}`) : error;
 
   return (
@@ -103,9 +116,9 @@ export function ImageUpload({
           disabled={disabled}
           aria-label={shown ? t("replace") : t("upload")}
           className={`flex shrink-0 cursor-pointer items-center justify-center overflow-hidden border border-card-border bg-ink-soft text-muted-2 transition-colors hover:border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60 ${
-            kind === "photo"
-              ? "size-24 rounded-full"
-              : "h-20 w-40 rounded-(--radius-btn)"
+            kind === "cover"
+              ? "h-20 w-40 rounded-(--radius-btn)"
+              : "size-24 rounded-full"
           }`}
         >
           {shown ? (

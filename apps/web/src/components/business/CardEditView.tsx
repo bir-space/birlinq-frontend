@@ -31,7 +31,6 @@ import { AliasSection } from "@/components/business/sections/AliasSection";
 import { PublishSection } from "@/components/business/sections/PublishSection";
 import { QrSection } from "@/components/business/sections/QrSection";
 import { StatsSection } from "@/components/business/sections/StatsSection";
-import { DangerSection } from "@/components/business/sections/DangerSection";
 
 export function CardEditView({
   id,
@@ -85,8 +84,8 @@ function CardEdit({ id }: { id: string }) {
   if (card.loading) return <PageSpinner />;
 
   // Only a business card has these sections: a car or business entity
-  // reached by URL is "not found" here rather than an editor whose "open
-  // the link" the server refuses.
+  // reached by URL is "not found" here rather than an editor for fields
+  // the server refuses.
   const notCard = card.entity !== null && card.entity.type !== "personal";
 
   if (card.error || !card.entity || notCard) {
@@ -170,7 +169,6 @@ function CardEdit({ id }: { id: string }) {
       <PublishSection {...sectionProps("publish")} />
       <QrSection {...sectionProps("qr")} />
       <StatsSection id={entity.id} />
-      <DangerSection {...sectionProps("danger")} />
     </div>
   );
 }
