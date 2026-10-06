@@ -21,11 +21,13 @@ touching anything visual.
 - **Next.js 15**, App Router, `apps/web/src/`, TypeScript **strict**
 - **Expo SDK 57** (React Native, Expo Router, NativeWind) in `apps/mobile/`
 - **Tailwind CSS v4** (`@theme` tokens in `packages/tokens/theme.css`, `@utility` for custom classes — NOT a `tailwind.config.js`)
-- **next-intl v3** — RU (default, no URL prefix) / KK / EN
+- **next-intl v4** — RU (default, no URL prefix) / KK / EN
 - **No new runtime dependencies without asking first.** No CSS-in-JS libraries, no icon
   packs (icons are inline SVG), no state managers (React state + the two contexts we have
   is enough at this size), no CDNs, no image hotlinking (including Figma asset URLs — they
-  expire and are not for production use).
+  expire and are not for production use). The one approved exception is `qrcode` (with
+  `@types/qrcode`) in `apps/web`, dynamically imported from `lib/qr.ts` — FE-010. It stays
+  out of `packages/*`.
 - Package manager: **npm** (there's a `package-lock.json`; don't switch to pnpm/yarn)
 - **React, react-dom and the native modules are pinned in the ROOT `package.json`** to the
   versions in `expo/bundledNativeModules.json` (FE-006). One copy of each, repo-wide. Don't
@@ -60,20 +62,27 @@ packages/                  # shared by every client; no Next.js, no DOM
 ├── platform/src/          # Platform contract: PlatformProvider, usePlatform,
 │                          # useApi, useHref. No implementations live here.
 └── core/src/              # headless hooks both apps render over: AuthProvider/useAuth,
-                           # useOverview, useInteractions, useQrList. No JSX, no DOM,
-                           # and no translated strings — errors come back as codes.
+                           # useOverview, useInteractions, useQrList, useCards, useCard,
+                           # useCreateCard, useCardStats, useBusinessOverview, useProfile,
+                           # privacy presets. No JSX, no DOM, and no translated strings —
+                           # errors come back as codes.
 
 apps/web/src/
 ├── app/[locale]/          # App Router pages, one per route; locale-aware via next-intl
 │   └── layout.tsx         # <html>/<body>, NextIntlClientProvider, WebPlatform, AuthProvider
 ├── components/
-│   ├── ui/                # Shared design system — Button, Card, Input, Badge, Logo,
-│   │                      # LogoMark, Spinner, LangSwitcher. Changes here cascade
-│   │                      # everywhere; treat as a mini design-system package.
-│   └── {landing,public,auth,activation,dashboard}/   # feature-scoped, own their section only
+│   ├── ui/                # Shared design system — Button, Card, Input, Select, Badge,
+│   │                      # ConfirmModal, Logo, LogoMark, Spinner, LangSwitcher. Changes
+│   │                      # here cascade everywhere; treat as a mini design-system package.
+│   ├── {landing,public,auth,activation,dashboard}/   # feature-scoped, own their section only
+│   └── {card,business,forms,legal}/   # public card + themes, Business cabinet, form
+│                          # primitives, legal pages (FE-011…FE-013)
+├── content/legal/         # the four legal documents, RU, server-only (FE-013)
 ├── lib/
 │   ├── api-config.ts      # configureApi({ baseUrl, tokenStore }) — the web binding
 │   ├── platform.tsx       # WebPlatform: the real API, no link prefix (/mock nests its own)
+│   ├── qr.ts              # qrcode behind a dynamic import (FE-010); share.ts, public-url.ts
+│   │                      # (cardUrl() on NEXT_PUBLIC_APP_URL) around it
 │   └── auth/              # token-store.ts (access in memory, refresh in localStorage),
 │                          # auth-provider.tsx (binds @birlinq/core's AuthProvider to it —
 │                          # a server component can't pass an object of functions to a
@@ -102,9 +111,15 @@ boot and `apps/mobile/src/api-config.ts` mirrors with Expo's values. So: don't i
 ## Critical Invariants (NEVER violate)
 
 1. **Cursor pagination only**, matching the backend. Never build offset/page-number UI.
-2. **`Idempotency-Key` header required** on every state-changing call: `qr/activate`,
-   `qr/{id}/pause`, `qr/{id}/resume`, scenario submit, interaction resolve. Already wired in
-   `endpoints.ts` via `newIdempotencyKey()` — use those functions, don't hand-roll `fetch`.
+2. **`Idempotency-Key` header** on exactly the calls whose backend routes carry the
+   idempotency middleware: `POST /qr/activate`, `POST /qr/{id}/pause`,
+   `POST /qr/{id}/resume`, `POST /entities` (create a card or a car) and scenario submit
+   (`POST /public/q/{code}/scenarios/{id}`). Interaction resolve, entity
+   `PATCH`/`PUT`/`DELETE` (title, status, vehicle, contact, privacy), card image and
+   account avatar uploads and the profile writes deliberately send none: their routes
+   carry no idempotency middleware, and a repeat is harmless. Already wired in
+   `endpoints.ts` via `newIdempotencyKey()` — use those functions, don't hand-roll
+   `fetch`.
 3. **JWT handling**: access token lives in memory only (never localStorage/cookies), refresh
    token in localStorage, single-flight refresh-and-retry on 401. Don't "simplify" this by
    storing the access token — it's the one thing the backend's threat model cares about.
@@ -130,14 +145,21 @@ boot and `apps/mobile/src/api-config.ts` mirrors with Expo's values. So: don't i
 8. **PrivacyFilter is a backend concept, not a frontend one** — never render a field the
    public payload didn't send, and never add a client-side toggle that fakes hiding a field
    the API already sent. If something needs hiding, it needs a backend privacy setting.
+9. **Legal bodies stay out of the i18n packages** (FE-013). The four documents are Russian
+   content in `apps/web/src/content/legal/*.ru.json`, imported by the server component
+   `LegalPage` only; the `legal` namespace carries the frame (titles, notice) and nothing
+   else. Never move a paragraph of them into a message file, and never import `content/`
+   from a client component.
 
 ## Design System — read `CONVENTIONS.md` before touching anything visual
 
 Short version: dark, near-black premium surfaces; the "bq" logo mark (`LogoMark.tsx`) is the
 one gradient signature — use it and `text-brand-gradient`/`bg-brand-gradient` sparingly, not
 on every button. Vertical sub-brand colors (`move`/`id`/`biz`) are landing-page-only, never
-in the dashboard/auth/public product UI. Full token list, component API, and Figma workflow
-notes live in `CONVENTIONS.md` — that file is the working reference; this file is the rules.
+in the dashboard/auth/public product UI. Card themes are the one scoped exception (FE-012):
+CSS variables on the card's `<article>` from `components/card/themes.ts`, nowhere else. Full
+token list, component API, and Figma workflow notes live in `CONVENTIONS.md` — that file is
+the working reference; this file is the rules.
 
 ## Working Approach
 

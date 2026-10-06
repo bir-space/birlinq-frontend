@@ -15,6 +15,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  // Absolute base for OpenGraph and canonical URLs. Inlined at build time,
+  // so a production bundle has to be built with NEXT_PUBLIC_APP_URL set;
+  // the fallback only keeps `next dev` and local builds from throwing.
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  ),
   title: {
     default: "birlinq — QR-стикеры для связи с владельцем",
     template: "%s · birlinq",

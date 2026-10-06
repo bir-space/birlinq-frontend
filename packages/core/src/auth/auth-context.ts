@@ -14,6 +14,12 @@ export interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   refresh: () => Promise<void>;
+  /**
+   * Replace the session user with one the API just returned — PATCH
+   * /auth/me and the avatar endpoints answer `{ user }`, so there is no
+   * need for a second GET /auth/me after them.
+   */
+  applyUser: (user: User) => void;
   /** Ends this session only — other devices stay signed in. */
   logout: () => Promise<void>;
   /** Ends every session of this user (POST /auth/logout-all). */

@@ -40,6 +40,9 @@ export function AuthStep({
 }) {
   const t = useTranslations("auth");
   const ta = useTranslations("activation.auth");
+  // Legal pages open in a new tab so the half-filled form is not lost.
+  const legalLink =
+    "font-medium text-white underline underline-offset-4 hover:text-accent";
   const locale = useLocale();
   const { refresh } = useAuth();
   const api = useApi();
@@ -83,6 +86,8 @@ export function AuthStep({
           ...identifierPayload(method, identifier),
           password,
           locale: toApiLocale(locale),
+          // The checkbox is validated above; the server records the moment (D-045).
+          privacy_accepted: true,
         });
       } else {
         await api.auth.login({
@@ -203,7 +208,40 @@ export function AuthStep({
                 onChange={(e) => setTerms(e.target.checked)}
                 className="mt-0.5 size-4 shrink-0 cursor-pointer accent-accent"
               />
-              <span>{t("register.terms")}</span>
+              <span>
+                {t.rich("register.terms", {
+                  terms: (chunks) => (
+                    <Link
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener"
+                      className={legalLink}
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                  privacy: (chunks) => (
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener"
+                      className={legalLink}
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                  consent: (chunks) => (
+                    <Link
+                      href="/consent"
+                      target="_blank"
+                      rel="noopener"
+                      className={legalLink}
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </span>
             </label>
             {errors.terms && (
               <p className="text-[12px] text-danger">{errors.terms}</p>

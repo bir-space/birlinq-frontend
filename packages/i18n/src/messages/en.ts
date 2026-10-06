@@ -6,6 +6,9 @@ import activationMessages from "../../messages/en/activation.json";
 import dashboardMessages from "../../messages/en/dashboard.json";
 import guideMessages from "../../messages/en/guide.json";
 import mockMessages from "../../messages/en/mock.json";
+import cardMessages from "../../messages/en/card.json";
+import cardsMessages from "../../messages/en/cards.json";
+import legalMessages from "../../messages/en/legal.json";
 
 /**
  * Static imports on purpose: Metro rejects a template-literal `import()`, so a
@@ -24,4 +27,7 @@ export default {
   dashboard: dashboardMessages,
   guide: guideMessages,
   mock: mockMessages,
+  card: cardMessages,
+  cards: cardsMessages,
+  legal: legalMessages,
 };

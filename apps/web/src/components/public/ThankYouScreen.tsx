@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import type { PartnerCode } from "@birlinq/api";
+import type { EntityType, PartnerCode } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PARTNERS } from "@/components/partner/partners";
@@ -10,12 +10,14 @@ import { IconCar, IconCheck, IconShieldCheck } from "./icons";
 
 /**
  * P3 — thank-you screen after a scenario submission. Shows the optional
- * "show_message" action payload from the owner, a privacy reassurance banner
- * and the "I want such a sticker" lead block.
+ * "show_message" action payload from the owner and a privacy reassurance
+ * banner. Behind a car it also carries the "I want such a sticker" lead
+ * block; a business card gets none — the pitch is about windshields.
  */
 export function ThankYouScreen({
   code,
   partner = null,
+  entityType,
   ownerMessage,
   duplicate = false,
   onClose,
@@ -23,6 +25,7 @@ export function ThankYouScreen({
   code: string;
   /** Co-branded card: the lead block sells the partner's card, not ours. */
   partner?: PartnerCode | null;
+  entityType: EntityType;
   ownerMessage: string | null;
   /**
    * The backend recognised this as a repeat of a submission it already has
@@ -33,6 +36,7 @@ export function ThankYouScreen({
   onClose: () => void;
 }) {
   const t = useTranslations("public");
+  const isCar = entityType === "car";
   const partnerName = partner ? PARTNERS[partner].name : null;
 
   return (
@@ -70,41 +74,45 @@ export function ThankYouScreen({
             {t("thanks.privacyTitle")}
           </p>
           <p className="mt-0.5 text-[12px] text-muted">
-            {t("thanks.privacyText")}
+            {t(isCar ? "thanks.privacyText" : "thanks.privacyTextCard")}
           </p>
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="mt-8 flex items-center gap-3" aria-hidden>
-        <span className="h-px flex-1 bg-line" />
-        <span className="text-[12px] text-muted-2">
-          {t("thanks.leadDivider")}
-        </span>
-        <span className="h-px flex-1 bg-line" />
-      </div>
-
-      {/* Lead block */}
-      <Card className="mt-4">
-        <div className="flex items-start gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-card-border bg-ink-soft text-accent">
-            <IconCar className="size-6" />
-          </span>
-          <div>
-            <p className="text-[14px] font-bold">
-              {partnerName
-                ? t("partner.leadTitle", { partner: partnerName })
-                : t("lead.cardTitle")}
-            </p>
-            <p className="mt-0.5 text-[12px] text-muted">
-              {partnerName ? t("partner.leadText") : t("lead.cardText")}
-            </p>
+      {isCar && (
+        <>
+          {/* Divider */}
+          <div className="mt-8 flex items-center gap-3" aria-hidden>
+            <span className="h-px flex-1 bg-line" />
+            <span className="text-[12px] text-muted-2">
+              {t("thanks.leadDivider")}
+            </span>
+            <span className="h-px flex-1 bg-line" />
           </div>
-        </div>
-        <div className="mt-4">
-          <LeadForm code={code} />
-        </div>
-      </Card>
+
+          {/* Lead block */}
+          <Card className="mt-4">
+            <div className="flex items-start gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-card-border bg-ink-soft text-accent">
+                <IconCar className="size-6" />
+              </span>
+              <div>
+                <p className="text-[14px] font-bold">
+                  {partnerName
+                    ? t("partner.leadTitle", { partner: partnerName })
+                    : t("lead.cardTitle")}
+                </p>
+                <p className="mt-0.5 text-[12px] text-muted">
+                  {partnerName ? t("partner.leadText") : t("lead.cardText")}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <LeadForm code={code} />
+            </div>
+          </Card>
+        </>
+      )}
 
       <Button variant="ghost" className="mt-4 w-full" onClick={onClose}>
         {t("thanks.close")}

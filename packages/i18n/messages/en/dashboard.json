@@ -2,7 +2,11 @@
   "nav": {
     "overview": "Overview",
     "interactions": "Messages",
-    "qr": "My QRs"
+    "qr": "My QRs",
+    "businessOverview": "Overview",
+    "cards": "Cards",
+    "pricing": "Pricing",
+    "profile": "Profile"
   },
   "time": {
     "justNow": "just now",
@@ -95,7 +99,9 @@
     "actionError": "Couldn't change the QR status. Please try again.",
     "empty": "No active QRs",
     "emptyHint": "Activate a sticker and it will appear here.",
-    "emptyCta": "Activate a QR"
+    "emptyCta": "Activate a QR",
+    "card": "Business card",
+    "openCard": "Open the card"
   },
   "detail": {
     "sectionQr": "QR code",
@@ -130,10 +136,14 @@
     "sectionDanger": "Danger zone",
     "pauseTitle": "Pause QR",
     "pauseHint": "The public page will become unavailable",
+    "pauseHintCard": "The sticker stops opening the card. The /p/… link keeps working — to hide the card completely, turn publishing off in its settings.",
     "resumeTitle": "Resume QR",
     "resumeHint": "The public page will be available again",
     "notFound": "QR code not found",
     "noEntity": "No vehicle is linked to this QR yet",
+    "cardTitle": "This sticker is bound to a business card",
+    "cardHint": "Contacts, privacy and theme are managed in the Business section",
+    "cardOpen": "Open the card",
     "partnerNote": "Issued through {partner}. The public page carries the partner's branding.",
     "partnerBadge": "{partner} card"
   },
@@ -163,5 +173,70 @@
     "deviceDesktop": "Desktop",
     "deviceIos": "iPhone / iPad",
     "deviceAndroid": "Android"
+  },
+  "switcher": {
+    "label": "Product",
+    "moveHint": "QR stickers for cars",
+    "businessHint": "Digital business cards"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Photo, account, password and sessions",
+    "sections": {
+      "avatar": "Profile photo",
+      "account": "Account",
+      "password": "Password",
+      "sessions": "Sessions",
+      "legal": "Documents"
+    },
+    "fields": {
+      "name": "Name",
+      "phone": "Phone",
+      "phoneHint": "Format: 77XXXXXXXXX. Leave empty to remove the number",
+      "email": "Email",
+      "emailHint": "The email cannot be changed",
+      "currentPassword": "Current password",
+      "currentPasswordHint": "Needed to change the phone number",
+      "newPassword": "New password",
+      "confirmPassword": "Repeat the new password"
+    },
+    "save": "Save",
+    "saved": "Saved",
+    "saveError": "Could not save. Please try again.",
+    "phoneChangeNote": "After changing the number, your other devices are signed out",
+    "phoneRemoveNote": "The number can be removed only if the account has an email",
+    "changePassword": "Change password",
+    "passwordChanged": "Password updated",
+    "passwordChangedHint": "Your other devices have been signed out",
+    "wrongPassword": "The current password is wrong",
+    "logoutAllTitle": "Sign out everywhere",
+    "logoutAllHint": "Ends every session, including this one",
+    "logoutAll": "Sign out everywhere",
+    "legalHint": "birlinq rules and policies",
+    "avatar": {
+      "label": "Profile photo",
+      "hint": "JPEG, PNG or WebP up to 5 MB. Larger files are resized for you.",
+      "upload": "Upload",
+      "replace": "Replace",
+      "remove": "Remove",
+      "processing": "Processing…",
+      "errors": {
+        "badType": "Use a JPEG, PNG or WebP",
+        "tooLarge": "The file is too large even after resizing",
+        "read": "Could not read the file",
+        "upload": "Could not upload the photo. Please try again.",
+        "remove": "Could not remove the photo. Please try again."
+      }
+    },
+    "errors": {
+      "nameRequired": "Enter a name",
+      "nameMin": "The name needs at least {n} characters",
+      "invalidPhone": "Enter a number in the 77XXXXXXXXX format",
+      "currentRequired": "Enter the current password",
+      "passwordMin": "The password must be at least {n} characters",
+      "passwordMismatch": "Passwords do not match",
+      "rateLimited": "Too many attempts. Try again later.",
+      "generic": "Something went wrong. Please try again."
+    }
   }
 }

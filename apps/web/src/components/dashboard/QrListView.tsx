@@ -17,6 +17,7 @@ import {
   ErrorCard,
   IconBubble,
   IconCar,
+  IconCard,
   IconChevronRight,
   IconQr,
 } from "@/components/dashboard/bits";
@@ -95,6 +96,9 @@ function QrList() {
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((qr) => {
               const entity = qr.entity_id ? entities[qr.entity_id] : undefined;
+              // A sticker on a business card is managed from the card: the
+              // row leads there, and the Business icon says why (FE-011).
+              const isCard = entity?.type === "personal";
               const canPause = qr.status === "activated";
               const canResume = qr.status === "paused";
               const partner = qrPartner(qr);
@@ -102,7 +106,12 @@ function QrList() {
                 <li key={qr.id} className="flex min-w-0">
                   <Card className="flex w-full flex-col gap-4">
                     <Link
-                      href={href(`/dashboard/qr/${qr.id}`)}
+                      href={href(
+                        isCard && entity
+                          ? `/dashboard/cards/${entity.id}`
+                          : `/dashboard/qr/${qr.id}`
+                      )}
+                      title={isCard ? t("qrList.openCard") : undefined}
                       className="group flex items-center gap-3"
                     >
                       <IconBubble
@@ -132,9 +141,16 @@ function QrList() {
                         </div>
                         {entity && (
                           <p className="mt-0.5 flex items-center gap-1.5 truncate text-[13px] text-muted">
-                            <IconCar className="size-4 shrink-0" />
+                            {isCard ? (
+                              <IconCard className="size-4 shrink-0" />
+                            ) : (
+                              <IconCar className="size-4 shrink-0" />
+                            )}
                             <span className="truncate">
-                              {entityLabel(entity)}
+                              {isCard
+                                ? entity.contact_profile?.display_name?.trim() ||
+                                  t("qrList.card")
+                                : entityLabel(entity)}
                             </span>
                           </p>
                         )}

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useApi } from "@birlinq/platform";
 import { isRateLimited } from "@birlinq/api";
 import { LIMITS } from "@birlinq/api";
-import type { AbuseReason } from "@birlinq/api";
+import type { AbuseReason, PublicTarget } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Input";
@@ -15,13 +15,14 @@ const REASONS: AbuseReason[] = ["spam", "harassment", "impersonation", "other"];
 
 /**
  * Abuse report modal: reason radio group + optional note →
- * api.public.reportAbuse. Closes on backdrop click / Escape.
+ * api.public.reportAbuse, behind either door (D-040). Closes on backdrop
+ * click / Escape.
  */
 export function AbuseModal({
-  code,
+  target,
   onClose,
 }: {
-  code: string;
+  target: PublicTarget;
   onClose: () => void;
 }) {
   const t = useTranslations("public");
@@ -45,7 +46,7 @@ export function AbuseModal({
     setSubmitting(true);
     setError(null);
     try {
-      await api.public.reportAbuse(code, {
+      await api.public.reportAbuse(target, {
         reason,
         ...(note.trim() ? { note: note.trim() } : {}),
       });

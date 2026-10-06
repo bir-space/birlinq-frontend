@@ -18,10 +18,12 @@ import { Input } from "@/components/ui/Input";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import {
+  BackLink,
   ErrorCard,
-  IconArrowLeft,
   IconBubble,
   IconCar,
+  IconCard,
+  IconChevronRight,
   IconExternal,
   SectionLabel,
   Toggle,
@@ -220,7 +222,7 @@ function QrDetail({ id }: { id: string }) {
   if (error || !qr) {
     return (
       <div className="flex flex-col gap-4">
-        <BackLink label={tc("back")} />
+        <BackLink href={href("/dashboard/qr")} label={tc("back")} />
         <ErrorCard
           message={error === "notFound" ? t("detail.notFound") : tc("error")}
           retryLabel={tc("retry")}
@@ -232,25 +234,35 @@ function QrDetail({ id }: { id: string }) {
     );
   }
 
+  // A sticker bound to a business card: the card's own page owns the
+  // profile, privacy and look, so this page only shows the sticker itself.
+  const isCard = entity?.type === "personal";
   const v = entity?.vehicle_profile;
   const vehicleDesc = v
     ? [v.color, v.make, v.model].filter(Boolean).join(" · ")
     : null;
   const canPause = qr.status === "activated";
   const canResume = qr.status === "paused";
+  // Pausing closes the sticker door only: a card's permanent link keeps
+  // working, and hiding the card is its own switch (D-044).
+  const pauseHintKey = isCard ? "detail.pauseHintCard" : "detail.pauseHint";
   const partner = qrPartner(qr);
 
   return (
     // The editor of a partner card lives in the partner palette, same as the
     // public page it edits — the owner sees the card the way visitors will.
     <PartnerTheme partner={partner} className="flex flex-col gap-6">
-      <BackLink label={tc("back")} />
+      <BackLink href={href("/dashboard/qr")} label={tc("back")} />
 
       {/* Header card */}
       <Card className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <IconBubble tone={qr.status === "activated" ? "accent" : "muted"}>
-            <IconCar className="size-6" />
+            {isCard ? (
+              <IconCard className="size-6" />
+            ) : (
+              <IconCar className="size-6" />
+            )}
           </IconBubble>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-[18px] font-bold">
@@ -315,8 +327,34 @@ function QrDetail({ id }: { id: string }) {
         </Card>
       </section>
 
+      {/* Bound to a business card — a summary and the way there */}
+      {entity && isCard && (
+        <section>
+          <SectionLabel>{t("qrList.card")}</SectionLabel>
+          <Link href={href(`/dashboard/cards/${entity.id}`)} className="block">
+            <Card className="flex items-center gap-3 !p-4 transition-colors hover:border-line">
+              <IconBubble tone="accent">
+                <IconCard />
+              </IconBubble>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-semibold">
+                  {t("detail.cardTitle")}
+                </p>
+                <p className="mt-0.5 text-[12px] text-muted-2">
+                  {t("detail.cardHint")}
+                </p>
+                <p className="mt-1.5 text-[13px] font-semibold text-accent">
+                  {t("detail.cardOpen")} →
+                </p>
+              </div>
+              <IconChevronRight className="size-5 shrink-0 text-muted-2" />
+            </Card>
+          </Link>
+        </section>
+      )}
+
       {/* Vehicle card */}
-      {entity && form && (
+      {entity && !isCard && form && (
         <section>
           <SectionLabel>{t("detail.sectionVehicle")}</SectionLabel>
           <Card>
@@ -386,8 +424,8 @@ function QrDetail({ id }: { id: string }) {
         </section>
       )}
 
-      {/* Privacy */}
-      {entity && privacy && (
+      {/* Privacy — the car's switches; a card's live on its own page */}
+      {entity && !isCard && privacy && (
         <section>
           <SectionLabel>{t("detail.sectionPrivacy")}</SectionLabel>
           <Card>
@@ -436,7 +474,7 @@ function QrDetail({ id }: { id: string }) {
                   {canPause ? t("detail.pauseTitle") : t("detail.resumeTitle")}
                 </p>
                 <p className="mt-0.5 text-[12px] text-muted-2">
-                  {canPause ? t("detail.pauseHint") : t("detail.resumeHint")}
+                  {canPause ? t(pauseHintKey) : t("detail.resumeHint")}
                 </p>
               </div>
               <Button
@@ -455,19 +493,6 @@ function QrDetail({ id }: { id: string }) {
         </section>
       )}
     </PartnerTheme>
-  );
-}
-
-function BackLink({ label }: { label: string }) {
-  const href = useHref();
-  return (
-    <Link
-      href={href("/dashboard/qr")}
-      className="inline-flex items-center gap-1.5 self-start text-[13px] font-semibold text-muted transition-colors hover:text-white"
-    >
-      <IconArrowLeft className="size-4" />
-      {label}
-    </Link>
   );
 }
 

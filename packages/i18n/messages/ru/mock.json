@@ -8,7 +8,9 @@
       "dashboard": "Личный кабинет",
       "activation": "Активация QR",
       "public": "Публичный сценарий",
-      "auth": "Авторизация"
+      "auth": "Авторизация",
+      "business": "Business",
+      "card": "Визитка"
     },
     "links": {
       "dashboardOverview": "Обзор",
@@ -22,6 +24,18 @@
       "forgotPassword": "Забыли пароль",
       "resetPassword": "Сброс пароля",
       "verifyEmail": "Подтверждение почты",
+      "businessOverview": "Обзор Business",
+      "cards": "Список визиток",
+      "cardNew": "Новая визитка",
+      "cardEdit": "Редактирование визитки",
+      "pricing": "Тарифы",
+      "profile": "Профиль",
+      "cardPublic": "Публичная визитка (demo)",
+      "cardQr": "QR-страница визитки",
+      "cardUnpublished": "Скрытая визитка (410)",
+      "cardScan": "Визитка по QR-наклейке",
+      "cardEditBlocked": "Редактирование заблокированной визитки",
+      "cardBlocked": "Заблокированная визитка (410)",
       "publicScanGeely": "Сканирование QR-стикера (карточка Geely)"
     }
   }

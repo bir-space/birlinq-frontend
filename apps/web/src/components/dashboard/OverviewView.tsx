@@ -19,6 +19,7 @@ import {
   IconChevronRight,
   IconPlus,
   IconQr,
+  StatCard,
 } from "@/components/dashboard/bits";
 import {
   formatRelativeTime,
@@ -180,43 +181,6 @@ function Overview() {
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  sub,
-  tone = "default",
-  dot = false,
-}: {
-  label: string;
-  value: number;
-  sub?: string;
-  tone?: "default" | "accent";
-  dot?: boolean;
-}) {
-  const toneCls =
-    tone === "accent"
-      ? "border-accent/30 bg-accent/10"
-      : "border-card-border bg-card";
-  return (
-    <div className={`relative rounded-(--radius-card) border p-4 ${toneCls}`}>
-      {dot && (
-        <span className="absolute right-3.5 top-3.5 size-2 rounded-full bg-danger" />
-      )}
-      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-2">
-        {label}
-      </p>
-      <p
-        className={`mt-1 text-[28px] font-bold leading-none ${
-          tone === "accent" ? "text-accent" : "text-white"
-        }`}
-      >
-        {value}
-      </p>
-      {sub && <p className="mt-1.5 text-[11px] text-muted-2">{sub}</p>}
     </div>
   );
 }
