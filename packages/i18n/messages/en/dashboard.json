@@ -143,7 +143,9 @@
     "noEntity": "No vehicle is linked to this QR yet",
     "cardTitle": "This sticker is bound to a business card",
     "cardHint": "Contacts, privacy and theme are managed in the Business section",
-    "cardOpen": "Open the card"
+    "cardOpen": "Open the card",
+    "partnerNote": "Issued through {partner}. The public page carries the partner's branding.",
+    "partnerBadge": "{partner} card"
   },
   "notifications": {
     "title": "Notifications",

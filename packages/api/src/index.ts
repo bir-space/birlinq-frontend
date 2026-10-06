@@ -12,6 +12,7 @@ export * from "./endpoints";
 export * from "./limits";
 export * from "./card";
 export * from "./app-api";
+export * from "./partner";
 
 export { apiBaseUrl, configureApi } from "./config";
 export type { ApiConfig, TokenStore } from "./config";

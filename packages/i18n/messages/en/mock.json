@@ -35,7 +35,8 @@
       "cardUnpublished": "Hidden card (410)",
       "cardScan": "Card via QR sticker",
       "cardEditBlocked": "Edit a blocked card",
-      "cardBlocked": "Blocked card (410)"
+      "cardBlocked": "Blocked card (410)",
+      "publicScanGeely": "QR sticker scan (Geely card)"
     }
   }
 }

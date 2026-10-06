@@ -67,6 +67,7 @@ import {
   MOCK_ENTITIES,
   MOCK_INTERACTIONS,
   MOCK_PUBLIC_PAYLOAD,
+  MOCK_PUBLIC_PAYLOAD_GEELY,
   MOCK_QR_CODES,
   MOCK_USER,
 } from "./fixtures";
@@ -736,13 +737,17 @@ export const mockPublicApi = {
    * QR_NOT_SCANNABLE, a hidden card behind it → 410 ENTITY_NOT_PUBLISHED,
    * `PERS1234` → the demo card with `source: "qr"` and its scenarios. Any
    * code the fixtures do not know keeps answering the demo car, so the
-   * existing `/mock/q/…` links stay a preview and never a 404.
+   * existing `/mock/q/…` links stay a preview and never a 404; `GEELY…`
+   * answers the partner-themed car (FE-016).
    */
   async scan(
     code: string,
     _locale?: ApiLocale,
     _referrerHost?: string
   ): Promise<PublicEntityPayload> {
+    if (code.toUpperCase().startsWith("GEELY")) {
+      return delay(MOCK_PUBLIC_PAYLOAD_GEELY);
+    }
     const qr = qrCodes.find((q) => q.code === code.toUpperCase());
     if (!qr) return delay(MOCK_PUBLIC_PAYLOAD);
     if (qr.status !== "activated") {

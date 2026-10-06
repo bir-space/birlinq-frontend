@@ -2,18 +2,23 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { toApiLocale } from "@birlinq/api";
+import { publicPartner, toApiLocale } from "@birlinq/api";
 import { useApi } from "@birlinq/platform";
 import { markReferrerSent, pendingReferrerHost } from "@/lib/public-url";
 import type {
   CardTheme,
+  PartnerCode,
   PublicEntityPayload,
   PublicScenario,
   PublicTarget,
 } from "@birlinq/api";
 import { Button } from "@/components/ui/Button";
+import { LangSwitcher } from "@/components/ui/LangSwitcher";
 import { Logo } from "@/components/ui/Logo";
 import { Spinner } from "@/components/ui/Spinner";
+import { PartnerMark } from "@/components/partner/PartnerMark";
+import { PartnerTheme } from "@/components/partner/PartnerTheme";
+import { PARTNERS } from "@/components/partner/partners";
 import { BusinessCardView } from "@/components/card/BusinessCardView";
 import { EntityView, entityTitle } from "./EntityView";
 import { ScenarioForm } from "./ScenarioForm";
@@ -39,6 +44,10 @@ type Screen =
  * error / entity / scenario / thank-you. A `car` renders `EntityView`, a
  * `personal` renders the business card; scenarios and the lead form exist
  * behind the sticker only, the abuse link behind both.
+ *
+ * A partner-sold card (payload.meta.partner, FE-016) swaps the chrome for the
+ * partner's lockup and re-tunes the tokens through PartnerTheme; the flow
+ * itself is the same component tree.
  */
 export function PublicPage({
   target,
@@ -96,9 +105,13 @@ export function PublicPage({
         ? t("productBusiness")
         : null;
 
+  const partner = state.status === "ready" ? publicPartner(state.payload) : null;
+
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-6 pt-5">
-      {showChrome && <PublicHeader product={product} />}
+    <PartnerTheme partner={partner} className="min-h-dvh bg-ink">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-6 pt-5">
+      {showChrome && <PublicHeader product={product} partner={partner} />}
+      {showChrome && partner && <PartnerStrip partner={partner} />}
 
       <main className="flex flex-1 flex-col">
         {state.status === "loading" && <PublicLoading />}
@@ -128,6 +141,7 @@ export function PublicPage({
             <EntityView
               payload={state.payload}
               code={target.code}
+              partner={partner}
               onSelectScenario={(scenario) =>
                 setScreen({ name: "scenario", scenario })
               }
@@ -165,6 +179,7 @@ export function PublicPage({
           target.kind === "qr" && (
             <ThankYouScreen
               code={target.code}
+              partner={partner}
               entityType={state.payload.entity.type}
               ownerMessage={screen.ownerMessage}
               duplicate={screen.duplicate}
@@ -173,33 +188,87 @@ export function PublicPage({
           )}
       </main>
 
-      {showChrome && <PublicFooter onReport={() => setAbuseOpen(true)} />}
+      {showChrome && (
+        <PublicFooter partner={partner} onReport={() => setAbuseOpen(true)} />
+      )}
 
       {abuseOpen && (
         <AbuseModal target={target} onClose={() => setAbuseOpen(false)} />
       )}
-    </div>
+      </div>
+    </PartnerTheme>
   );
 }
 
-/** Logo, "· Move" / "· Business", shield. */
-export function PublicHeader({ product }: { product: string | null }) {
+/**
+ * Logo + "· Move" / "· Business" (or the partner's lockup on a co-branded
+ * card) and the language switcher. The visitor is a stranger with no
+ * account: the URL is the only place their language lives, so the switcher
+ * has to be right here.
+ */
+export function PublicHeader({
+  product,
+  partner = null,
+}: {
+  product: string | null;
+  partner?: PartnerCode | null;
+}) {
   return (
-    <header className="mb-6 flex items-center justify-between">
-      <div className="flex items-baseline gap-2">
-        <Logo />
-        {product && <span className="text-sm text-muted-2">· {product}</span>}
-      </div>
-      <IconShieldCheck className="size-5 text-accent" />
+    <header className="mb-6 flex items-center justify-between gap-3">
+      {partner ? (
+        <PartnerMark partner={partner} />
+      ) : (
+        <div className="flex items-baseline gap-2">
+          <Logo />
+          {product && (
+            <span className="text-sm text-muted-2">· {product}</span>
+          )}
+        </div>
+      )}
+      <LangSwitcher />
     </header>
   );
 }
 
+/**
+ * "Official <partner> card" strip under the header — tells the visitor whose
+ * customer they are reaching and that the relay (and the privacy) is birlinq's.
+ */
+function PartnerStrip({ partner }: { partner: PartnerCode }) {
+  const t = useTranslations("public");
+  const { name } = PARTNERS[partner];
+  return (
+    <div className="mb-6 flex items-start gap-3 rounded-(--radius-card) border border-accent/25 bg-accent/10 p-4">
+      <IconShieldCheck className="mt-0.5 size-5 shrink-0 text-accent" />
+      <div>
+        <p className="text-[13px] font-semibold text-accent">
+          {t("partner.badge", { partner: name })}
+        </p>
+        <p className="mt-0.5 text-[12px] text-muted">
+          {t("partner.intro", { partner: name })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /** The note line and the abuse link — present on every public screen. */
-export function PublicFooter({ onReport }: { onReport: () => void }) {
+export function PublicFooter({
+  partner = null,
+  onReport,
+}: {
+  partner?: PartnerCode | null;
+  onReport: () => void;
+}) {
   const t = useTranslations("public");
   return (
     <footer className="mt-10 flex flex-col items-center gap-2 pb-2 text-center">
+      {partner && (
+        <p className="flex items-center gap-1.5 text-[11px] text-muted-2">
+          {t("partner.poweredBy")}
+          <Logo size="sm" markOnly />
+        </p>
+      )}
       <p className="text-[11px] text-muted-2">{t("footer.note")}</p>
       <button
         type="button"
